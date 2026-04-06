@@ -209,9 +209,11 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool PauseMediaWhileDictating { get; set; }
+    partial void OnPauseMediaWhileDictatingChanged(bool value) => _settings.PauseMediaWhileDictating = value;
 
     [ObservableProperty]
     public partial bool AutoAddToDictionary { get; set; }
+    partial void OnAutoAddToDictionaryChanged(bool value) => _settings.AutoAddToDictionary = value;
 
     // ── Keybinds ───────────────────────────────────────────────
 

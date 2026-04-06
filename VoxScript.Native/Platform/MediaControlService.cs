@@ -6,36 +6,49 @@ namespace VoxScript.Native.Platform;
 
 public sealed class MediaControlService : IMediaControlService
 {
-    private const byte VK_MEDIA_PLAY_PAUSE = 0xB3;
-    private const uint KEYEVENTF_KEYUP = 0x0002;
+    private const int WM_APPCOMMAND = 0x0319;
+    private const int APPCOMMAND_MEDIA_PLAY_PAUSE = 14;
+    private const int FAPPCOMMAND_KEY = 0;
 
     private bool _paused;
 
     public void PauseMedia()
     {
         if (_paused) return;
-        Log.Debug("Sending media pause key");
-        SendMediaKey();
+        Log.Debug("Sending media pause via WM_APPCOMMAND");
+        SendMediaPlayPause();
         _paused = true;
     }
 
     public void ResumeMedia()
     {
         if (!_paused) return;
-        Log.Debug("Sending media resume key");
-        SendMediaKey();
+        Log.Debug("Sending media resume via WM_APPCOMMAND");
+        SendMediaPlayPause();
         _paused = false;
     }
 
-    private static void SendMediaKey()
+    private static void SendMediaPlayPause()
     {
-        // Media keys are NOT extended keys — do not use KEYEVENTF_EXTENDEDKEY.
-        // Use keybd_event (not SendInput) because SendInput is blocked by UIPI
-        // for unpackaged apps.
-        keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 0, 0);
-        keybd_event(VK_MEDIA_PLAY_PAUSE, 0, KEYEVENTF_KEYUP, 0);
+        // Send WM_APPCOMMAND to the shell window (Progman).
+        // This is more reliable than keybd_event for media keys because:
+        // 1. It goes through the shell's app-command pipeline (same as physical media keys)
+        // 2. It's not affected by UIPI restrictions on keystroke injection
+        // 3. It works regardless of which window has focus
+        var shell = GetShellWindow();
+        if (shell == IntPtr.Zero)
+        {
+            Log.Warning("GetShellWindow returned null — cannot send media command");
+            return;
+        }
+
+        nint lParam = (nint)(APPCOMMAND_MEDIA_PLAY_PAUSE << 16 | FAPPCOMMAND_KEY);
+        SendMessageW(shell, WM_APPCOMMAND, shell, lParam);
     }
 
     [DllImport("user32.dll")]
-    private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
+    private static extern IntPtr GetShellWindow();
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern nint SendMessageW(IntPtr hWnd, int msg, IntPtr wParam, nint lParam);
 }
