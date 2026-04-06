@@ -49,6 +49,7 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
 
         _engine.PropertyChanged += OnEnginePropertyChanged;
         _engine.TranscriptionCompleted += OnTranscriptionCompleted;
+        _settings.RecordingIndicatorModeChanged += OnIndicatorModeChanged;
 
         // Timer ticks every second on the UI thread to update elapsed time.
         _elapsedTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -77,6 +78,34 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
     {
         await _engine.CancelRecordingAsync();
         HideRequested?.Invoke();
+    }
+
+    // ── Setting change handling ────────────────────────────
+
+    private void OnIndicatorModeChanged(object? sender, RecordingIndicatorMode newMode)
+    {
+        switch (newMode)
+        {
+            case RecordingIndicatorMode.Off:
+                // Hide immediately regardless of state
+                HideRequested?.Invoke();
+                break;
+
+            case RecordingIndicatorMode.AlwaysVisible:
+                // Show immediately (idle state if not recording)
+                ShowRequested?.Invoke();
+                break;
+
+            case RecordingIndicatorMode.DuringRecording:
+                // Show only if currently recording, hide otherwise
+                if (_engine.State == RecordingState.Recording
+                    || _engine.State == RecordingState.Transcribing
+                    || _engine.State == RecordingState.Enhancing)
+                    ShowRequested?.Invoke();
+                else
+                    HideRequested?.Invoke();
+                break;
+        }
     }
 
     // ── Engine property forwarding ───────────────────────────
@@ -153,6 +182,7 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
 
         _engine.PropertyChanged -= OnEnginePropertyChanged;
         _engine.TranscriptionCompleted -= OnTranscriptionCompleted;
+        _settings.RecordingIndicatorModeChanged -= OnIndicatorModeChanged;
         _elapsedTimer.Stop();
     }
 }

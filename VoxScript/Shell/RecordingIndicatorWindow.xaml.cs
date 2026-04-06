@@ -10,6 +10,8 @@ using Microsoft.UI.Xaml.Media.Animation;
 using VoxScript.Core.Transcription.Core;
 using VoxScript.ViewModels;
 using WinRT.Interop;
+using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Composition;
 using Windows.Graphics;
 
 namespace VoxScript.Shell;
@@ -42,6 +44,9 @@ public sealed partial class RecordingIndicatorWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Collapsed;
+
+        // Transparent window background so only the pill is visible
+        SystemBackdrop = new TransparentBackdrop();
 
         _pulseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
         _pulseTimer.Tick += (_, _) =>
@@ -337,6 +342,36 @@ public sealed partial class RecordingIndicatorWindow : Window
         public RECT rcMonitor;
         public RECT rcWork;
         public uint dwFlags;
+    }
+}
+
+// ── Transparent window backdrop ─────────────────────────────────
+// Makes the window background fully transparent so only the pill border is visible.
+
+internal sealed class TransparentBackdrop : Microsoft.UI.Xaml.Media.SystemBackdrop
+{
+    private DesktopAcrylicController? _controller;
+
+    protected override void OnTargetConnected(ICompositionSupportsSystemBackdrop connectedTarget, Microsoft.UI.Xaml.XamlRoot xamlRoot)
+    {
+        base.OnTargetConnected(connectedTarget, xamlRoot);
+        _controller = new DesktopAcrylicController
+        {
+            TintColor = Windows.UI.Color.FromArgb(0, 0, 0, 0),
+            TintOpacity = 0f,
+            LuminosityOpacity = 0f,
+            FallbackColor = Windows.UI.Color.FromArgb(0, 0, 0, 0)
+        };
+        _controller.AddSystemBackdropTarget(connectedTarget);
+        _controller.SetSystemBackdropConfiguration(GetDefaultSystemBackdropConfiguration(connectedTarget, xamlRoot));
+    }
+
+    protected override void OnTargetDisconnected(ICompositionSupportsSystemBackdrop disconnectedTarget)
+    {
+        base.OnTargetDisconnected(disconnectedTarget);
+        _controller?.RemoveSystemBackdropTarget(disconnectedTarget);
+        _controller?.Dispose();
+        _controller = null;
     }
 }
 

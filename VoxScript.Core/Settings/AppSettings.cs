@@ -117,9 +117,15 @@ public sealed class AppSettings
 
     public RecordingIndicatorMode RecordingIndicatorMode
     {
-        get => _store.Get<RecordingIndicatorMode?>(nameof(RecordingIndicatorMode)) ?? RecordingIndicatorMode.Off;
-        set => _store.Set(nameof(RecordingIndicatorMode), value);
+        get => _store.Get<RecordingIndicatorMode?>(nameof(RecordingIndicatorMode)) ?? RecordingIndicatorMode.DuringRecording;
+        set
+        {
+            _store.Set(nameof(RecordingIndicatorMode), value);
+            RecordingIndicatorModeChanged?.Invoke(this, value);
+        }
     }
+
+    public event EventHandler<RecordingIndicatorMode>? RecordingIndicatorModeChanged;
 
     public bool PauseMediaWhileDictating
     {

@@ -4,7 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Grid x:Name="RootGrid" Background="#EB1E1E1E">
+    <Grid x:Name="RootGrid" Background="Transparent">
         <Border
             x:Name="PillBorder"
             Background="#EB1E1E1E"

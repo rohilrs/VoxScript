@@ -60,10 +60,10 @@ public class AppSettingsTests
     }
 
     [Fact]
-    public void AppSettings_RecordingIndicatorMode_defaults_Off()
+    public void AppSettings_RecordingIndicatorMode_defaults_DuringRecording()
     {
         var settings = new AppSettings(new InMemorySettingsStore());
-        settings.RecordingIndicatorMode.Should().Be(RecordingIndicatorMode.Off);
+        settings.RecordingIndicatorMode.Should().Be(RecordingIndicatorMode.DuringRecording);
     }
 
     [Fact]
