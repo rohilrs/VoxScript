@@ -8,6 +8,10 @@ namespace VoxScript.Native.Platform;
 public sealed class CursorPasterService : IPasteService
 {
     private const byte VK_CONTROL = 0x11;
+    private const byte VK_LSHIFT = 0xA0;
+    private const byte VK_RSHIFT = 0xA1;
+    private const byte VK_LMENU = 0xA4;  // Left Alt
+    private const byte VK_RMENU = 0xA5;  // Right Alt
     private const byte VK_LWIN = 0x5B;
     private const byte VK_RWIN = 0x5C;
     private const byte VK_V = 0x56;
@@ -25,10 +29,15 @@ public sealed class CursorPasterService : IPasteService
         // Wait for clipboard + any held modifier keys from the hotkey to be physically released
         await Task.Delay(100, ct);
 
-        // Release any modifier keys that might still be logically held (Win, Ctrl)
-        // to avoid the target app seeing Ctrl+Win+V instead of Ctrl+V
+        // Release any modifier keys that might still be logically held
+        // to avoid the target app seeing Alt+Shift+Ctrl+V instead of Ctrl+V
+        // (e.g., paste-last hotkey is Alt+Shift+Z — those are still down)
         PasteNative.keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
         PasteNative.keybd_event(VK_RWIN, 0, KEYEVENTF_KEYUP, 0);
+        PasteNative.keybd_event(VK_LSHIFT, 0, KEYEVENTF_KEYUP, 0);
+        PasteNative.keybd_event(VK_RSHIFT, 0, KEYEVENTF_KEYUP, 0);
+        PasteNative.keybd_event(VK_LMENU, 0, KEYEVENTF_KEYUP, 0);
+        PasteNative.keybd_event(VK_RMENU, 0, KEYEVENTF_KEYUP, 0);
 
         // Send Ctrl+V
         PasteNative.keybd_event(VK_CONTROL, 0, 0, 0);           // Ctrl down
