@@ -160,18 +160,39 @@ public partial class App : Application
                 await engine.CancelRecordingAsync();
             });
         };
+        var paste = ServiceLocator.Get<VoxScript.Core.Platform.IPasteService>();
+        _hotkey.PasteLastRequested += () =>
+        {
+            var text = engine.LastTranscription;
+            if (!string.IsNullOrEmpty(text))
+            {
+                _mainWindow!.DispatcherQueue.TryEnqueue(async () =>
+                {
+                    try
+                    {
+                        await paste.PasteAtCursorAsync(text, CancellationToken.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        Serilog.Log.Warning(ex, "Paste-last failed");
+                    }
+                });
+            }
+        };
         // Apply saved hotkey bindings from settings
         var settings = ServiceLocator.Get<AppSettings>();
         var holdCombo = VoxScript.Helpers.HotkeySerializer.Parse(settings.HoldHotkey);
         var toggleCombo = VoxScript.Helpers.HotkeySerializer.Parse(settings.ToggleHotkey);
         var cancelCombo = VoxScript.Helpers.HotkeySerializer.Parse(settings.CancelHotkey);
+        var pasteLastCombo = VoxScript.Helpers.HotkeySerializer.Parse(settings.PasteLastHotkey);
         if (holdCombo is not null) _hotkey.SetHoldHotkey(holdCombo.Modifiers, holdCombo.TriggerKey);
         if (toggleCombo is not null) _hotkey.SetToggleHotkey(toggleCombo.Modifiers, toggleCombo.TriggerKey);
         if (cancelCombo is not null) _hotkey.SetCancelHotkey(cancelCombo.Modifiers, cancelCombo.TriggerKey);
+        if (pasteLastCombo is not null) _hotkey.SetPasteLastHotkey(pasteLastCombo.Modifiers, pasteLastCombo.TriggerKey);
 
         _hotkey.Register();
-        Serilog.Log.Information("Global hotkeys registered: {Toggle} (toggle), {Hold} (hold), {Cancel} (cancel)",
-            settings.ToggleHotkey, settings.HoldHotkey, settings.CancelHotkey);
+        Serilog.Log.Information("Global hotkeys registered: {Toggle} (toggle), {Hold} (hold), {Cancel} (cancel), {PasteLast} (paste-last)",
+            settings.ToggleHotkey, settings.HoldHotkey, settings.CancelHotkey, settings.PasteLastHotkey);
 
         _mainWindow.Activate();
 
