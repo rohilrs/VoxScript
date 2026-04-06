@@ -454,7 +454,7 @@
                                       VerticalAlignment="Center" />
                     </Grid>
 
-                    <Grid Opacity="0.5" ColumnSpacing="32">
+                    <Grid ColumnSpacing="32">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -468,7 +468,7 @@
                         <ToggleSwitch Grid.Column="1" MinWidth="0"
                                       OnContent="" OffContent=""
                                       IsOn="{x:Bind ViewModel.PauseMediaWhileDictating, Mode=TwoWay}"
-                                      IsEnabled="False"
+                                      IsEnabled="True"
                                       VerticalAlignment="Center" />
                     </Grid>
                 </StackPanel>
