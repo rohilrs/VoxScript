@@ -50,6 +50,10 @@ public sealed class GlobalHotkeyService : IDisposable
 
     // Cancel hotkey: abort recording without transcribing
     private HotkeyCombo? _cancelCombo;
+
+    // Paste-last hotkey: re-paste the most recent transcription
+    private HotkeyCombo? _pasteLastCombo;
+    public event Action? PasteLastRequested;
     private bool _holdActive;       // Ctrl+Win held, recording started via hold
     private bool _toggleLocked;     // Space converted hold to toggle mode
     private DateTime _holdStartTime;
@@ -116,6 +120,14 @@ public sealed class GlobalHotkeyService : IDisposable
     public void SetCancelHotkey(ModifierKeys modifiers, int? triggerKey)
     {
         _cancelCombo = new HotkeyCombo(modifiers, triggerKey);
+    }
+
+    /// <summary>
+    /// Configure the paste-last hotkey (re-paste most recent transcription).
+    /// </summary>
+    public void SetPasteLastHotkey(ModifierKeys modifiers, int? triggerKey)
+    {
+        _pasteLastCombo = new HotkeyCombo(modifiers, triggerKey);
     }
 
     public void Register()
@@ -277,6 +289,15 @@ public sealed class GlobalHotkeyService : IDisposable
                     ScheduleDeferredStop();
                 }
                 // If _toggleLocked and modifiers released → do nothing, recording continues
+            }
+
+            // 3. Check paste-last hotkey (e.g. Alt+Shift+Z)
+            if (!consumed && _pasteLastCombo is { TriggerKey: not null } plc
+                && isDown && vkCode == plc.TriggerKey
+                && currentMods == plc.Modifiers)
+            {
+                ThreadPool.QueueUserWorkItem(_ => PasteLastRequested?.Invoke());
+                consumed = true;
             }
         }
 
