@@ -36,6 +36,8 @@ public sealed partial class VoxScriptEngine : ObservableObject
     [ObservableProperty]
     private bool _isToggleMode;
 
+    public string? LastTranscription { get; private set; }
+
     public event EventHandler<string>? TranscriptionCompleted;
     public event EventHandler<string>? TranscriptionFailed;
 
@@ -182,6 +184,8 @@ public sealed partial class VoxScriptEngine : ObservableObject
             State = RecordingState.Idle;
             if (text is not null)
             {
+                LastTranscription = text;
+
                 if (_settings.AutoPasteEnabled)
                 {
                     try
