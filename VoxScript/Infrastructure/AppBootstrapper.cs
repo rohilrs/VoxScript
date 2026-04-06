@@ -8,6 +8,7 @@ using VoxScript.Core.History;
 using VoxScript.Core.Persistence;
 using VoxScript.Core.Platform;
 using VoxScript.Core.PowerMode;
+using VoxScript.Core.Notes;
 using VoxScript.Core.Settings;
 using VoxScript.Core.Transcription.Batch;
 using VoxScript.Core.Transcription.Core;
@@ -72,6 +73,7 @@ public static class AppBootstrapper
         services.AddSingleton<ICorrectionRepository, CorrectionRepository>();
         services.AddSingleton<WordReplacementService>();
         services.AddSingleton<ITranscriptionRepository, TranscriptionRepository>();
+        services.AddSingleton<INoteRepository, NoteRepository>();
         services.AddSingleton<TranscriptionPipeline>();
 
         // PowerMode
