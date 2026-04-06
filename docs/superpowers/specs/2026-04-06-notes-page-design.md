@@ -2,26 +2,20 @@
 
 ## Overview
 
-A master-detail Notes page that serves as both a scratchpad for user-created notes and a collection point for starred transcriptions from History. Left panel shows a searchable, sortable list of all notes; right panel provides a rich text editor.
+A Notes feature with two surfaces: a list view embedded in the main window's Notes tab, and a separate editor window with a master-detail layout. The list view acts as a launcher/overview; clicking a note or creating a new one opens the editor window where all editing happens.
 
-## Layout
+## Surface 1: Notes Tab (Main Window)
 
-Master-detail split view:
-
-- **Left panel** (~300px fixed width): note list with controls
-- **Right panel** (flex fill): rich text editor
-- Divider: 1px border between panels
-
-### Left Panel — Note List
+The Notes tab in the sidebar navigation shows a full-width list of all notes.
 
 **Header row:**
 - "Notes" title (Georgia serif, consistent with other pages)
-- "+ New" button (brand primary) — creates a new empty note and selects it
+- "+ New" button (brand primary) — creates a new note and opens the editor window with it selected
 
 **Search bar:**
 - Text input with search icon placeholder
 - 300ms debounce (same pattern as History)
-- Searches note titles and plain-text content (strip RTF for matching)
+- Searches note titles and plain-text content
 
 **Sort controls:**
 - Pill-style toggle buttons: Newest (default), Oldest, A-Z
@@ -29,18 +23,43 @@ Master-detail split view:
 
 **Note cards:**
 - Background: `BrandCardBrush`, corner radius 12
-- Selected state: highlighted background + left accent border (brand primary)
 - Content:
-  - Title (11px, semibold, single line truncated)
-  - Body preview (9px, muted, 2-line clamp)
+  - Title (semibold, single line truncated)
+  - Body preview (muted, 2-line clamp)
   - Footer row: timestamp + type badge + copy button
 - Type badges:
   - User-created note: muted text/icon badge
   - Starred transcription: gold star "Saved" badge
 - Copy button: small icon button (copy glyph), copies note's plain text to clipboard with checkmark feedback (1.5s, same pattern as History)
+- **Click card** → opens the editor window with that note selected
 
 **Empty state:**
-- Centered message when no notes exist: "No notes yet" + subtitle "Create a note or star a transcription from History"
+- Centered message: "No notes yet" + subtitle "Create a note or star a transcription from History"
+
+## Surface 2: Editor Window (Separate Window)
+
+A standalone window with master-detail layout. Opened when clicking a note card or "+ New" from the main window's Notes tab. Can navigate between notes independently without returning to the main window.
+
+### Window Properties
+- Separate `Window` instance (similar pattern to `RecordingIndicatorWindow`)
+- Title: "Notes — VoxScript"
+- Min size: ~800×500
+- Standard window chrome (min/max/close)
+- Mica backdrop (consistent with main window)
+- Singleton: if already open, bring to front and navigate to the requested note
+
+### Left Panel — Note List (~300px fixed width)
+
+Same data as the main window list but in a compact sidebar format:
+
+- **Search bar** (debounced)
+- **Sort controls** (Newest / Oldest / A-Z)
+- **"+ New" button**
+- **Note cards** (compact):
+  - Title (11px, semibold, single line truncated)
+  - Body preview (9px, muted, 2-line clamp)
+  - Footer: timestamp + type badge + copy button
+  - Selected state: highlighted background + left accent border (brand primary)
 
 ### Right Panel — Editor
 
@@ -109,36 +128,59 @@ Methods:
 
 Follows existing patterns:
 
-- **Core:** `INoteRepository` interface, `Note` entity
-- **Core/Persistence:** `Note` entity added to `AppDbContext`
-- **Native or Core:** `NoteRepository` (EF Core, same layer as other repositories)
-- **App/ViewModels:** `NotesViewModel` (CommunityToolkit.Mvvm) — manages list state, search, sort, selected note, editor content, auto-save timer
-- **App/Views:** `NotesPage.xaml` (master-detail XAML layout) + `NotesPage.xaml.cs` (toolbar wiring, RichEditBox interaction)
+- **Core:** `INoteRepository` interface, `NoteRecord` entity in `VoxScript.Core/Notes/`
+- **Core/Persistence:** `NoteRecord` added to `AppDbContext`
+- **Core:** `NoteRepository` (EF Core, same layer as other repositories)
+- **App/ViewModels:** `NotesViewModel` (CommunityToolkit.Mvvm) — shared between both surfaces, manages list state, search, sort, selected note, editor content, auto-save timer
+- **App/Views:** `NotesPage.xaml` / `.cs` — main window list view (replaces placeholder)
+- **App/Shell:** `NoteEditorWindow.xaml` / `.cs` — separate editor window with master-detail layout
 - **App/Views:** `HistoryPage` modified to add star button
+- **App/Infrastructure:** `AppBootstrapper` registers repository; window creation wired in `NotesPage` or `App.xaml.cs`
+
+### Window Lifecycle
+- `NoteEditorWindow` is created on first open, reused after that (singleton pattern)
+- If the window is already open and user clicks a different note, bring window to front and navigate to that note
+- Closing the editor window hides it (not destroyed), similar to how system tray works
+- Both surfaces share the same `NotesViewModel` instance so list state stays in sync
 
 ## Checklist Implementation
 
 RichEditBox does not natively support checklists. Implementation approach:
 
-- Use bullet list formatting as the base
-- Checklist items rendered as bullet points with a checkbox character prefix or custom inline UI
-- Simplest approach: toggle checklist inserts lines prefixed with `[ ]` or `[x]` in the text, with toolbar button toggling between states
-- Alternative: use `RichEditBox` paragraph formatting with a custom bullet character (checkbox unicode). This keeps it within RTF without needing custom rendering.
-
-Decision: use unicode checkbox characters (☐ / ☑) as bullet prefixes within standard RTF. Simple, searchable, no custom rendering needed.
+- Use unicode checkbox characters (☐ / ☑) as bullet prefixes within standard RTF
+- Toolbar checklist button inserts lines prefixed with ☐
+- Toggling a checklist item swaps ☐ ↔ ☑
+- Simple, searchable, no custom rendering needed
 
 ## Interactions
 
-- **Click note card** → selects it, loads content into editor
-- **"+ New" button** → creates note with "Untitled" title, empty body, selects it, focuses title field
+### Main Window Notes Tab
+- **Click note card** → opens editor window with that note selected
+- **"+ New" button** → creates note, opens editor window with it selected and title focused
+- **Copy button on card** → copies plain text to clipboard, checkmark feedback
+- **Search** → filters list in real-time (300ms debounce)
+- **Sort pills** → re-orders list immediately
+
+### Editor Window
+- **Click note in sidebar** → loads it in the editor
+- **"+ New" button** → creates note, selects it, focuses title
 - **Edit title** → auto-saves on change (debounced)
 - **Edit body** → auto-saves on change (debounced 1s)
 - **Toolbar buttons** → apply/remove formatting to selection in RichEditBox
-- **Copy button on card** → copies plain text to clipboard, checkmark feedback
+- **Copy button on sidebar card** → copies plain text to clipboard, checkmark feedback
 - **Delete button** → confirmation dialog, removes note, selects adjacent note or shows empty state
+- **Close window** → hides window (note already auto-saved)
+
+### History Page
 - **Star on History card** → creates Note, brief visual feedback on the star icon
-- **Search** → filters list in real-time (300ms debounce)
-- **Sort pills** → re-orders list immediately
+
+## Synchronization
+
+Both the main window Notes tab and the editor window sidebar show the same list. They share one `NotesViewModel` instance so:
+- Creating a note in either surface updates both lists
+- Deleting a note in the editor window removes it from the main window list
+- Editing a note updates the preview text in both lists
+- The main window list does NOT show a selected state (selection only matters in the editor window sidebar)
 
 ## What's NOT in Scope
 
