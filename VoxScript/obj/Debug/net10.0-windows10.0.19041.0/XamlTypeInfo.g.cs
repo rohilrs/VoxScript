@@ -226,7 +226,7 @@ namespace VoxScript.VoxScript_XamlTypeInfo
         
         private void InitTypeTables()
         {
-            _typeNameTable = new string[58];
+            _typeNameTable = new string[61];
             _typeNameTable[0] = "Microsoft.UI.Xaml.Controls.XamlControlsResources";
             _typeNameTable[1] = "Microsoft.UI.Xaml.ResourceDictionary";
             _typeNameTable[2] = "Object";
@@ -264,29 +264,32 @@ namespace VoxScript.VoxScript_XamlTypeInfo
             _typeNameTable[34] = "Microsoft.UI.Xaml.Controls.Control";
             _typeNameTable[35] = "VoxScript.Shell.MainWindow";
             _typeNameTable[36] = "Microsoft.UI.Xaml.Window";
-            _typeNameTable[37] = "Windows.UI.Color";
-            _typeNameTable[38] = "Byte";
-            _typeNameTable[39] = "VoxScript.Views.DictionaryPage";
-            _typeNameTable[40] = "Microsoft.UI.Xaml.Controls.Page";
-            _typeNameTable[41] = "Microsoft.UI.Xaml.Controls.UserControl";
-            _typeNameTable[42] = "VoxScript.ViewModels.DictionaryViewModel";
-            _typeNameTable[43] = "CommunityToolkit.Mvvm.ComponentModel.ObservableObject";
-            _typeNameTable[44] = "VoxScript.Views.ExpansionsPage";
-            _typeNameTable[45] = "VoxScript.ViewModels.ExpansionsViewModel";
-            _typeNameTable[46] = "VoxScript.Views.HistoryPage";
-            _typeNameTable[47] = "VoxScript.ViewModels.HistoryViewModel";
-            _typeNameTable[48] = "VoxScript.Views.NotesPage";
-            _typeNameTable[49] = "VoxScript.Views.PersonalizePage";
-            _typeNameTable[50] = "VoxScript.ViewModels.PersonalizeViewModel";
-            _typeNameTable[51] = "VoxScript.Views.SettingsPage";
-            _typeNameTable[52] = "VoxScript.ViewModels.SettingsViewModel";
-            _typeNameTable[53] = "VoxScript.Views.ShortcutsPage";
-            _typeNameTable[54] = "VoxScript.Views.TranscribePage";
-            _typeNameTable[55] = "Microsoft.UI.Xaml.Controls.TreeViewNode";
-            _typeNameTable[56] = "System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>";
-            _typeNameTable[57] = "Int32";
+            _typeNameTable[37] = "Microsoft.UI.Xaml.Controls.ProgressRing";
+            _typeNameTable[38] = "Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings";
+            _typeNameTable[39] = "VoxScript.Shell.RecordingIndicatorWindow";
+            _typeNameTable[40] = "Windows.UI.Color";
+            _typeNameTable[41] = "Byte";
+            _typeNameTable[42] = "VoxScript.Views.DictionaryPage";
+            _typeNameTable[43] = "Microsoft.UI.Xaml.Controls.Page";
+            _typeNameTable[44] = "Microsoft.UI.Xaml.Controls.UserControl";
+            _typeNameTable[45] = "VoxScript.ViewModels.DictionaryViewModel";
+            _typeNameTable[46] = "CommunityToolkit.Mvvm.ComponentModel.ObservableObject";
+            _typeNameTable[47] = "VoxScript.Views.ExpansionsPage";
+            _typeNameTable[48] = "VoxScript.ViewModels.ExpansionsViewModel";
+            _typeNameTable[49] = "VoxScript.Views.HistoryPage";
+            _typeNameTable[50] = "VoxScript.ViewModels.HistoryViewModel";
+            _typeNameTable[51] = "VoxScript.Views.NotesPage";
+            _typeNameTable[52] = "VoxScript.Views.PersonalizePage";
+            _typeNameTable[53] = "VoxScript.ViewModels.PersonalizeViewModel";
+            _typeNameTable[54] = "VoxScript.Views.SettingsPage";
+            _typeNameTable[55] = "VoxScript.ViewModels.SettingsViewModel";
+            _typeNameTable[56] = "VoxScript.Views.ShortcutsPage";
+            _typeNameTable[57] = "VoxScript.Views.TranscribePage";
+            _typeNameTable[58] = "Microsoft.UI.Xaml.Controls.TreeViewNode";
+            _typeNameTable[59] = "System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>";
+            _typeNameTable[60] = "Int32";
 
-            _typeTable = new global::System.Type[58];
+            _typeTable = new global::System.Type[61];
             _typeTable[0] = typeof(global::Microsoft.UI.Xaml.Controls.XamlControlsResources);
             _typeTable[1] = typeof(global::Microsoft.UI.Xaml.ResourceDictionary);
             _typeTable[2] = typeof(global::System.Object);
@@ -324,27 +327,30 @@ namespace VoxScript.VoxScript_XamlTypeInfo
             _typeTable[34] = typeof(global::Microsoft.UI.Xaml.Controls.Control);
             _typeTable[35] = typeof(global::VoxScript.Shell.MainWindow);
             _typeTable[36] = typeof(global::Microsoft.UI.Xaml.Window);
-            _typeTable[37] = typeof(global::Windows.UI.Color);
-            _typeTable[38] = typeof(global::System.Byte);
-            _typeTable[39] = typeof(global::VoxScript.Views.DictionaryPage);
-            _typeTable[40] = typeof(global::Microsoft.UI.Xaml.Controls.Page);
-            _typeTable[41] = typeof(global::Microsoft.UI.Xaml.Controls.UserControl);
-            _typeTable[42] = typeof(global::VoxScript.ViewModels.DictionaryViewModel);
-            _typeTable[43] = typeof(global::CommunityToolkit.Mvvm.ComponentModel.ObservableObject);
-            _typeTable[44] = typeof(global::VoxScript.Views.ExpansionsPage);
-            _typeTable[45] = typeof(global::VoxScript.ViewModels.ExpansionsViewModel);
-            _typeTable[46] = typeof(global::VoxScript.Views.HistoryPage);
-            _typeTable[47] = typeof(global::VoxScript.ViewModels.HistoryViewModel);
-            _typeTable[48] = typeof(global::VoxScript.Views.NotesPage);
-            _typeTable[49] = typeof(global::VoxScript.Views.PersonalizePage);
-            _typeTable[50] = typeof(global::VoxScript.ViewModels.PersonalizeViewModel);
-            _typeTable[51] = typeof(global::VoxScript.Views.SettingsPage);
-            _typeTable[52] = typeof(global::VoxScript.ViewModels.SettingsViewModel);
-            _typeTable[53] = typeof(global::VoxScript.Views.ShortcutsPage);
-            _typeTable[54] = typeof(global::VoxScript.Views.TranscribePage);
-            _typeTable[55] = typeof(global::Microsoft.UI.Xaml.Controls.TreeViewNode);
-            _typeTable[56] = typeof(global::System.Collections.Generic.IList<global::Microsoft.UI.Xaml.Controls.TreeViewNode>);
-            _typeTable[57] = typeof(global::System.Int32);
+            _typeTable[37] = typeof(global::Microsoft.UI.Xaml.Controls.ProgressRing);
+            _typeTable[38] = typeof(global::Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings);
+            _typeTable[39] = typeof(global::VoxScript.Shell.RecordingIndicatorWindow);
+            _typeTable[40] = typeof(global::Windows.UI.Color);
+            _typeTable[41] = typeof(global::System.Byte);
+            _typeTable[42] = typeof(global::VoxScript.Views.DictionaryPage);
+            _typeTable[43] = typeof(global::Microsoft.UI.Xaml.Controls.Page);
+            _typeTable[44] = typeof(global::Microsoft.UI.Xaml.Controls.UserControl);
+            _typeTable[45] = typeof(global::VoxScript.ViewModels.DictionaryViewModel);
+            _typeTable[46] = typeof(global::CommunityToolkit.Mvvm.ComponentModel.ObservableObject);
+            _typeTable[47] = typeof(global::VoxScript.Views.ExpansionsPage);
+            _typeTable[48] = typeof(global::VoxScript.ViewModels.ExpansionsViewModel);
+            _typeTable[49] = typeof(global::VoxScript.Views.HistoryPage);
+            _typeTable[50] = typeof(global::VoxScript.ViewModels.HistoryViewModel);
+            _typeTable[51] = typeof(global::VoxScript.Views.NotesPage);
+            _typeTable[52] = typeof(global::VoxScript.Views.PersonalizePage);
+            _typeTable[53] = typeof(global::VoxScript.ViewModels.PersonalizeViewModel);
+            _typeTable[54] = typeof(global::VoxScript.Views.SettingsPage);
+            _typeTable[55] = typeof(global::VoxScript.ViewModels.SettingsViewModel);
+            _typeTable[56] = typeof(global::VoxScript.Views.ShortcutsPage);
+            _typeTable[57] = typeof(global::VoxScript.Views.TranscribePage);
+            _typeTable[58] = typeof(global::Microsoft.UI.Xaml.Controls.TreeViewNode);
+            _typeTable[59] = typeof(global::System.Collections.Generic.IList<global::Microsoft.UI.Xaml.Controls.TreeViewNode>);
+            _typeTable[60] = typeof(global::System.Int32);
         }
 
         private int LookupTypeIndexByName(string typeName)
@@ -388,20 +394,22 @@ namespace VoxScript.VoxScript_XamlTypeInfo
         private object Activate_30_NavigationViewItem() { return new global::Microsoft.UI.Xaml.Controls.NavigationViewItem(); }
         private object Activate_33_InfoBadge() { return new global::Microsoft.UI.Xaml.Controls.InfoBadge(); }
         private object Activate_35_MainWindow() { return new global::VoxScript.Shell.MainWindow(); }
-        private object Activate_39_DictionaryPage() { return new global::VoxScript.Views.DictionaryPage(); }
-        private object Activate_42_DictionaryViewModel() { return new global::VoxScript.ViewModels.DictionaryViewModel(); }
-        private object Activate_44_ExpansionsPage() { return new global::VoxScript.Views.ExpansionsPage(); }
-        private object Activate_45_ExpansionsViewModel() { return new global::VoxScript.ViewModels.ExpansionsViewModel(); }
-        private object Activate_46_HistoryPage() { return new global::VoxScript.Views.HistoryPage(); }
-        private object Activate_47_HistoryViewModel() { return new global::VoxScript.ViewModels.HistoryViewModel(); }
-        private object Activate_48_NotesPage() { return new global::VoxScript.Views.NotesPage(); }
-        private object Activate_49_PersonalizePage() { return new global::VoxScript.Views.PersonalizePage(); }
-        private object Activate_50_PersonalizeViewModel() { return new global::VoxScript.ViewModels.PersonalizeViewModel(); }
-        private object Activate_51_SettingsPage() { return new global::VoxScript.Views.SettingsPage(); }
-        private object Activate_52_SettingsViewModel() { return new global::VoxScript.ViewModels.SettingsViewModel(); }
-        private object Activate_53_ShortcutsPage() { return new global::VoxScript.Views.ShortcutsPage(); }
-        private object Activate_54_TranscribePage() { return new global::VoxScript.Views.TranscribePage(); }
-        private object Activate_55_TreeViewNode() { return new global::Microsoft.UI.Xaml.Controls.TreeViewNode(); }
+        private object Activate_37_ProgressRing() { return new global::Microsoft.UI.Xaml.Controls.ProgressRing(); }
+        private object Activate_39_RecordingIndicatorWindow() { return new global::VoxScript.Shell.RecordingIndicatorWindow(); }
+        private object Activate_42_DictionaryPage() { return new global::VoxScript.Views.DictionaryPage(); }
+        private object Activate_45_DictionaryViewModel() { return new global::VoxScript.ViewModels.DictionaryViewModel(); }
+        private object Activate_47_ExpansionsPage() { return new global::VoxScript.Views.ExpansionsPage(); }
+        private object Activate_48_ExpansionsViewModel() { return new global::VoxScript.ViewModels.ExpansionsViewModel(); }
+        private object Activate_49_HistoryPage() { return new global::VoxScript.Views.HistoryPage(); }
+        private object Activate_50_HistoryViewModel() { return new global::VoxScript.ViewModels.HistoryViewModel(); }
+        private object Activate_51_NotesPage() { return new global::VoxScript.Views.NotesPage(); }
+        private object Activate_52_PersonalizePage() { return new global::VoxScript.Views.PersonalizePage(); }
+        private object Activate_53_PersonalizeViewModel() { return new global::VoxScript.ViewModels.PersonalizeViewModel(); }
+        private object Activate_54_SettingsPage() { return new global::VoxScript.Views.SettingsPage(); }
+        private object Activate_55_SettingsViewModel() { return new global::VoxScript.ViewModels.SettingsViewModel(); }
+        private object Activate_56_ShortcutsPage() { return new global::VoxScript.Views.ShortcutsPage(); }
+        private object Activate_57_TranscribePage() { return new global::VoxScript.Views.TranscribePage(); }
+        private object Activate_58_TreeViewNode() { return new global::Microsoft.UI.Xaml.Controls.TreeViewNode(); }
         private void StaticInitializer_0_XamlControlsResources() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Microsoft.UI.Xaml.Controls.XamlControlsResources).TypeHandle);
         private void StaticInitializer_4_NullToVisibilityConverter() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Converters.NullToVisibilityConverter).TypeHandle);
         private void StaticInitializer_5_InvertedBoolToVisibilityConverter() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Converters.InvertedBoolToVisibilityConverter).TypeHandle);
@@ -422,24 +430,27 @@ namespace VoxScript.VoxScript_XamlTypeInfo
         private void StaticInitializer_31_NavigationViewItemBase() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Microsoft.UI.Xaml.Controls.NavigationViewItemBase).TypeHandle);
         private void StaticInitializer_33_InfoBadge() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Microsoft.UI.Xaml.Controls.InfoBadge).TypeHandle);
         private void StaticInitializer_35_MainWindow() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Shell.MainWindow).TypeHandle);
-        private void StaticInitializer_37_Color() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Windows.UI.Color).TypeHandle);
-        private void StaticInitializer_38_Byte() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::System.Byte).TypeHandle);
-        private void StaticInitializer_39_DictionaryPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.DictionaryPage).TypeHandle);
-        private void StaticInitializer_42_DictionaryViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.DictionaryViewModel).TypeHandle);
-        private void StaticInitializer_43_ObservableObject() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::CommunityToolkit.Mvvm.ComponentModel.ObservableObject).TypeHandle);
-        private void StaticInitializer_44_ExpansionsPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.ExpansionsPage).TypeHandle);
-        private void StaticInitializer_45_ExpansionsViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.ExpansionsViewModel).TypeHandle);
-        private void StaticInitializer_46_HistoryPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.HistoryPage).TypeHandle);
-        private void StaticInitializer_47_HistoryViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.HistoryViewModel).TypeHandle);
-        private void StaticInitializer_48_NotesPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.NotesPage).TypeHandle);
-        private void StaticInitializer_49_PersonalizePage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.PersonalizePage).TypeHandle);
-        private void StaticInitializer_50_PersonalizeViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.PersonalizeViewModel).TypeHandle);
-        private void StaticInitializer_51_SettingsPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.SettingsPage).TypeHandle);
-        private void StaticInitializer_52_SettingsViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.SettingsViewModel).TypeHandle);
-        private void StaticInitializer_53_ShortcutsPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.ShortcutsPage).TypeHandle);
-        private void StaticInitializer_54_TranscribePage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.TranscribePage).TypeHandle);
-        private void StaticInitializer_55_TreeViewNode() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Microsoft.UI.Xaml.Controls.TreeViewNode).TypeHandle);
-        private void StaticInitializer_56_IList() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::System.Collections.Generic.IList<global::Microsoft.UI.Xaml.Controls.TreeViewNode>).TypeHandle);
+        private void StaticInitializer_37_ProgressRing() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Microsoft.UI.Xaml.Controls.ProgressRing).TypeHandle);
+        private void StaticInitializer_38_ProgressRingTemplateSettings() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings).TypeHandle);
+        private void StaticInitializer_39_RecordingIndicatorWindow() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Shell.RecordingIndicatorWindow).TypeHandle);
+        private void StaticInitializer_40_Color() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Windows.UI.Color).TypeHandle);
+        private void StaticInitializer_41_Byte() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::System.Byte).TypeHandle);
+        private void StaticInitializer_42_DictionaryPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.DictionaryPage).TypeHandle);
+        private void StaticInitializer_45_DictionaryViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.DictionaryViewModel).TypeHandle);
+        private void StaticInitializer_46_ObservableObject() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::CommunityToolkit.Mvvm.ComponentModel.ObservableObject).TypeHandle);
+        private void StaticInitializer_47_ExpansionsPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.ExpansionsPage).TypeHandle);
+        private void StaticInitializer_48_ExpansionsViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.ExpansionsViewModel).TypeHandle);
+        private void StaticInitializer_49_HistoryPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.HistoryPage).TypeHandle);
+        private void StaticInitializer_50_HistoryViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.HistoryViewModel).TypeHandle);
+        private void StaticInitializer_51_NotesPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.NotesPage).TypeHandle);
+        private void StaticInitializer_52_PersonalizePage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.PersonalizePage).TypeHandle);
+        private void StaticInitializer_53_PersonalizeViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.PersonalizeViewModel).TypeHandle);
+        private void StaticInitializer_54_SettingsPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.SettingsPage).TypeHandle);
+        private void StaticInitializer_55_SettingsViewModel() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.ViewModels.SettingsViewModel).TypeHandle);
+        private void StaticInitializer_56_ShortcutsPage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.ShortcutsPage).TypeHandle);
+        private void StaticInitializer_57_TranscribePage() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::VoxScript.Views.TranscribePage).TypeHandle);
+        private void StaticInitializer_58_TreeViewNode() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::Microsoft.UI.Xaml.Controls.TreeViewNode).TypeHandle);
+        private void StaticInitializer_59_IList() => global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::System.Collections.Generic.IList<global::Microsoft.UI.Xaml.Controls.TreeViewNode>).TypeHandle);
         private void MapAdd_0_XamlControlsResources(object instance, object key, object item)
         {
             var collection = (global::System.Collections.Generic.IDictionary<global::System.Object, global::System.Object>)instance;
@@ -453,7 +464,7 @@ namespace VoxScript.VoxScript_XamlTypeInfo
             var newItem = (global::System.Object)item;
             collection.Add(newItem);
         }
-        private void VectorAdd_56_IList(object instance, object item)
+        private void VectorAdd_59_IList(object instance, object item)
         {
             var collection = (global::System.Collections.Generic.ICollection<global::Microsoft.UI.Xaml.Controls.TreeViewNode>)instance;
             var newItem = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)item;
@@ -742,9 +753,37 @@ namespace VoxScript.VoxScript_XamlTypeInfo
                 xamlType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlSystemBaseType(typeName, type);
                 break;
 
-            case 37:   //  Windows.UI.Color
+            case 37:   //  Microsoft.UI.Xaml.Controls.ProgressRing
+                userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Control"));
+                userType.Activator = Activate_37_ProgressRing;
+                userType.StaticInitializer = StaticInitializer_37_ProgressRing;
+                userType.AddMemberName("IsActive");
+                userType.AddMemberName("IsIndeterminate");
+                userType.AddMemberName("Maximum");
+                userType.AddMemberName("Minimum");
+                userType.AddMemberName("TemplateSettings");
+                userType.AddMemberName("Value");
+                xamlType = userType;
+                break;
+
+            case 38:   //  Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings
+                userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.DependencyObject"));
+                userType.StaticInitializer = StaticInitializer_38_ProgressRingTemplateSettings;
+                userType.SetIsReturnTypeStub();
+                xamlType = userType;
+                break;
+
+            case 39:   //  VoxScript.Shell.RecordingIndicatorWindow
+                userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Window"));
+                userType.Activator = Activate_39_RecordingIndicatorWindow;
+                userType.StaticInitializer = StaticInitializer_39_RecordingIndicatorWindow;
+                userType.SetIsLocalType();
+                xamlType = userType;
+                break;
+
+            case 40:   //  Windows.UI.Color
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("System.ValueType"));
-                userType.StaticInitializer = StaticInitializer_37_Color;
+                userType.StaticInitializer = StaticInitializer_40_Color;
                 userType.AddMemberName("A");
                 userType.AddMemberName("R");
                 userType.AddMemberName("G");
@@ -752,140 +791,140 @@ namespace VoxScript.VoxScript_XamlTypeInfo
                 xamlType = userType;
                 break;
 
-            case 38:   //  Byte
+            case 41:   //  Byte
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("System.ValueType"));
-                userType.StaticInitializer = StaticInitializer_38_Byte;
+                userType.StaticInitializer = StaticInitializer_41_Byte;
                 userType.SetIsReturnTypeStub();
                 xamlType = userType;
                 break;
 
-            case 39:   //  VoxScript.Views.DictionaryPage
+            case 42:   //  VoxScript.Views.DictionaryPage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_39_DictionaryPage;
-                userType.StaticInitializer = StaticInitializer_39_DictionaryPage;
+                userType.Activator = Activate_42_DictionaryPage;
+                userType.StaticInitializer = StaticInitializer_42_DictionaryPage;
                 userType.AddMemberName("ViewModel");
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 40:   //  Microsoft.UI.Xaml.Controls.Page
+            case 43:   //  Microsoft.UI.Xaml.Controls.Page
                 xamlType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlSystemBaseType(typeName, type);
                 break;
 
-            case 41:   //  Microsoft.UI.Xaml.Controls.UserControl
+            case 44:   //  Microsoft.UI.Xaml.Controls.UserControl
                 xamlType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlSystemBaseType(typeName, type);
                 break;
 
-            case 42:   //  VoxScript.ViewModels.DictionaryViewModel
+            case 45:   //  VoxScript.ViewModels.DictionaryViewModel
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject"));
-                userType.StaticInitializer = StaticInitializer_42_DictionaryViewModel;
+                userType.StaticInitializer = StaticInitializer_45_DictionaryViewModel;
                 userType.SetIsReturnTypeStub();
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 43:   //  CommunityToolkit.Mvvm.ComponentModel.ObservableObject
+            case 46:   //  CommunityToolkit.Mvvm.ComponentModel.ObservableObject
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Object"));
-                userType.StaticInitializer = StaticInitializer_43_ObservableObject;
+                userType.StaticInitializer = StaticInitializer_46_ObservableObject;
                 xamlType = userType;
                 break;
 
-            case 44:   //  VoxScript.Views.ExpansionsPage
+            case 47:   //  VoxScript.Views.ExpansionsPage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_44_ExpansionsPage;
-                userType.StaticInitializer = StaticInitializer_44_ExpansionsPage;
+                userType.Activator = Activate_47_ExpansionsPage;
+                userType.StaticInitializer = StaticInitializer_47_ExpansionsPage;
                 userType.AddMemberName("ViewModel");
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 45:   //  VoxScript.ViewModels.ExpansionsViewModel
+            case 48:   //  VoxScript.ViewModels.ExpansionsViewModel
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject"));
-                userType.StaticInitializer = StaticInitializer_45_ExpansionsViewModel;
+                userType.StaticInitializer = StaticInitializer_48_ExpansionsViewModel;
                 userType.SetIsReturnTypeStub();
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 46:   //  VoxScript.Views.HistoryPage
+            case 49:   //  VoxScript.Views.HistoryPage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_46_HistoryPage;
-                userType.StaticInitializer = StaticInitializer_46_HistoryPage;
+                userType.Activator = Activate_49_HistoryPage;
+                userType.StaticInitializer = StaticInitializer_49_HistoryPage;
                 userType.AddMemberName("ViewModel");
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 47:   //  VoxScript.ViewModels.HistoryViewModel
+            case 50:   //  VoxScript.ViewModels.HistoryViewModel
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject"));
-                userType.StaticInitializer = StaticInitializer_47_HistoryViewModel;
+                userType.StaticInitializer = StaticInitializer_50_HistoryViewModel;
                 userType.SetIsReturnTypeStub();
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 48:   //  VoxScript.Views.NotesPage
+            case 51:   //  VoxScript.Views.NotesPage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_48_NotesPage;
-                userType.StaticInitializer = StaticInitializer_48_NotesPage;
+                userType.Activator = Activate_51_NotesPage;
+                userType.StaticInitializer = StaticInitializer_51_NotesPage;
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 49:   //  VoxScript.Views.PersonalizePage
+            case 52:   //  VoxScript.Views.PersonalizePage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_49_PersonalizePage;
-                userType.StaticInitializer = StaticInitializer_49_PersonalizePage;
+                userType.Activator = Activate_52_PersonalizePage;
+                userType.StaticInitializer = StaticInitializer_52_PersonalizePage;
                 userType.AddMemberName("ViewModel");
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 50:   //  VoxScript.ViewModels.PersonalizeViewModel
+            case 53:   //  VoxScript.ViewModels.PersonalizeViewModel
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject"));
-                userType.StaticInitializer = StaticInitializer_50_PersonalizeViewModel;
+                userType.StaticInitializer = StaticInitializer_53_PersonalizeViewModel;
                 userType.SetIsReturnTypeStub();
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 51:   //  VoxScript.Views.SettingsPage
+            case 54:   //  VoxScript.Views.SettingsPage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_51_SettingsPage;
-                userType.StaticInitializer = StaticInitializer_51_SettingsPage;
+                userType.Activator = Activate_54_SettingsPage;
+                userType.StaticInitializer = StaticInitializer_54_SettingsPage;
                 userType.AddMemberName("ViewModel");
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 52:   //  VoxScript.ViewModels.SettingsViewModel
+            case 55:   //  VoxScript.ViewModels.SettingsViewModel
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("CommunityToolkit.Mvvm.ComponentModel.ObservableObject"));
-                userType.StaticInitializer = StaticInitializer_52_SettingsViewModel;
+                userType.StaticInitializer = StaticInitializer_55_SettingsViewModel;
                 userType.SetIsReturnTypeStub();
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 53:   //  VoxScript.Views.ShortcutsPage
+            case 56:   //  VoxScript.Views.ShortcutsPage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_53_ShortcutsPage;
-                userType.StaticInitializer = StaticInitializer_53_ShortcutsPage;
+                userType.Activator = Activate_56_ShortcutsPage;
+                userType.StaticInitializer = StaticInitializer_56_ShortcutsPage;
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 54:   //  VoxScript.Views.TranscribePage
+            case 57:   //  VoxScript.Views.TranscribePage
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.Controls.Page"));
-                userType.Activator = Activate_54_TranscribePage;
-                userType.StaticInitializer = StaticInitializer_54_TranscribePage;
+                userType.Activator = Activate_57_TranscribePage;
+                userType.StaticInitializer = StaticInitializer_57_TranscribePage;
                 userType.SetIsLocalType();
                 xamlType = userType;
                 break;
 
-            case 55:   //  Microsoft.UI.Xaml.Controls.TreeViewNode
+            case 58:   //  Microsoft.UI.Xaml.Controls.TreeViewNode
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, GetXamlTypeByName("Microsoft.UI.Xaml.DependencyObject"));
-                userType.Activator = Activate_55_TreeViewNode;
-                userType.StaticInitializer = StaticInitializer_55_TreeViewNode;
+                userType.Activator = Activate_58_TreeViewNode;
+                userType.StaticInitializer = StaticInitializer_58_TreeViewNode;
                 userType.AddMemberName("Children");
                 userType.AddMemberName("Content");
                 userType.AddMemberName("Depth");
@@ -897,15 +936,15 @@ namespace VoxScript.VoxScript_XamlTypeInfo
                 xamlType = userType;
                 break;
 
-            case 56:   //  System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>
+            case 59:   //  System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>
                 userType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType(this, typeName, type, null);
-                userType.StaticInitializer = StaticInitializer_56_IList;
-                userType.CollectionAdd = VectorAdd_56_IList;
+                userType.StaticInitializer = StaticInitializer_59_IList;
+                userType.CollectionAdd = VectorAdd_59_IList;
                 userType.SetIsReturnTypeStub();
                 xamlType = userType;
                 break;
 
-            case 57:   //  Int32
+            case 60:   //  Int32
                 xamlType = new global::VoxScript.VoxScript_XamlTypeInfo.XamlSystemBaseType(typeName, type);
                 break;
             }
@@ -1424,117 +1463,172 @@ namespace VoxScript.VoxScript_XamlTypeInfo
             var that = (global::Microsoft.UI.Xaml.Controls.NavigationViewItemBase)instance;
             that.IsSelected = (global::System.Boolean)Value;
         }
-        private object get_49_Color_A(object instance)
+        private object get_49_ProgressRing_IsActive(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            return that.IsActive;
+        }
+        private void set_49_ProgressRing_IsActive(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            that.IsActive = (global::System.Boolean)Value;
+        }
+        private object get_50_ProgressRing_IsIndeterminate(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            return that.IsIndeterminate;
+        }
+        private void set_50_ProgressRing_IsIndeterminate(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            that.IsIndeterminate = (global::System.Boolean)Value;
+        }
+        private object get_51_ProgressRing_Maximum(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            return that.Maximum;
+        }
+        private void set_51_ProgressRing_Maximum(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            that.Maximum = (global::System.Double)Value;
+        }
+        private object get_52_ProgressRing_Minimum(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            return that.Minimum;
+        }
+        private void set_52_ProgressRing_Minimum(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            that.Minimum = (global::System.Double)Value;
+        }
+        private object get_53_ProgressRing_TemplateSettings(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            return that.TemplateSettings;
+        }
+        private object get_54_ProgressRing_Value(object instance)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            return that.Value;
+        }
+        private void set_54_ProgressRing_Value(object instance, object Value)
+        {
+            var that = (global::Microsoft.UI.Xaml.Controls.ProgressRing)instance;
+            that.Value = (global::System.Double)Value;
+        }
+        private object get_55_Color_A(object instance)
         {
             var that = (global::Windows.UI.Color)instance;
             return that.A;
         }
-        private void set_49_Color_A(object instance, object Value)
+        private void set_55_Color_A(object instance, object Value)
         {
             var that = (global::Windows.UI.Color)instance;
             that.A = (global::System.Byte)Value;
         }
-        private object get_50_Color_R(object instance)
+        private object get_56_Color_R(object instance)
         {
             var that = (global::Windows.UI.Color)instance;
             return that.R;
         }
-        private void set_50_Color_R(object instance, object Value)
+        private void set_56_Color_R(object instance, object Value)
         {
             var that = (global::Windows.UI.Color)instance;
             that.R = (global::System.Byte)Value;
         }
-        private object get_51_Color_G(object instance)
+        private object get_57_Color_G(object instance)
         {
             var that = (global::Windows.UI.Color)instance;
             return that.G;
         }
-        private void set_51_Color_G(object instance, object Value)
+        private void set_57_Color_G(object instance, object Value)
         {
             var that = (global::Windows.UI.Color)instance;
             that.G = (global::System.Byte)Value;
         }
-        private object get_52_Color_B(object instance)
+        private object get_58_Color_B(object instance)
         {
             var that = (global::Windows.UI.Color)instance;
             return that.B;
         }
-        private void set_52_Color_B(object instance, object Value)
+        private void set_58_Color_B(object instance, object Value)
         {
             var that = (global::Windows.UI.Color)instance;
             that.B = (global::System.Byte)Value;
         }
-        private object get_53_DictionaryPage_ViewModel(object instance)
+        private object get_59_DictionaryPage_ViewModel(object instance)
         {
             var that = (global::VoxScript.Views.DictionaryPage)instance;
             return that.ViewModel;
         }
-        private object get_54_ExpansionsPage_ViewModel(object instance)
+        private object get_60_ExpansionsPage_ViewModel(object instance)
         {
             var that = (global::VoxScript.Views.ExpansionsPage)instance;
             return that.ViewModel;
         }
-        private object get_55_HistoryPage_ViewModel(object instance)
+        private object get_61_HistoryPage_ViewModel(object instance)
         {
             var that = (global::VoxScript.Views.HistoryPage)instance;
             return that.ViewModel;
         }
-        private object get_56_PersonalizePage_ViewModel(object instance)
+        private object get_62_PersonalizePage_ViewModel(object instance)
         {
             var that = (global::VoxScript.Views.PersonalizePage)instance;
             return that.ViewModel;
         }
-        private object get_57_SettingsPage_ViewModel(object instance)
+        private object get_63_SettingsPage_ViewModel(object instance)
         {
             var that = (global::VoxScript.Views.SettingsPage)instance;
             return that.ViewModel;
         }
-        private object get_58_TreeViewNode_Children(object instance)
+        private object get_64_TreeViewNode_Children(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Children;
         }
-        private object get_59_TreeViewNode_Content(object instance)
+        private object get_65_TreeViewNode_Content(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Content;
         }
-        private void set_59_TreeViewNode_Content(object instance, object Value)
+        private void set_65_TreeViewNode_Content(object instance, object Value)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             that.Content = (global::System.Object)Value;
         }
-        private object get_60_TreeViewNode_Depth(object instance)
+        private object get_66_TreeViewNode_Depth(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Depth;
         }
-        private object get_61_TreeViewNode_HasChildren(object instance)
+        private object get_67_TreeViewNode_HasChildren(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.HasChildren;
         }
-        private object get_62_TreeViewNode_HasUnrealizedChildren(object instance)
+        private object get_68_TreeViewNode_HasUnrealizedChildren(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.HasUnrealizedChildren;
         }
-        private void set_62_TreeViewNode_HasUnrealizedChildren(object instance, object Value)
+        private void set_68_TreeViewNode_HasUnrealizedChildren(object instance, object Value)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             that.HasUnrealizedChildren = (global::System.Boolean)Value;
         }
-        private object get_63_TreeViewNode_IsExpanded(object instance)
+        private object get_69_TreeViewNode_IsExpanded(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.IsExpanded;
         }
-        private void set_63_TreeViewNode_IsExpanded(object instance, object Value)
+        private void set_69_TreeViewNode_IsExpanded(object instance, object Value)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             that.IsExpanded = (global::System.Boolean)Value;
         }
-        private object get_64_TreeViewNode_Parent(object instance)
+        private object get_70_TreeViewNode_Parent(object instance)
         {
             var that = (global::Microsoft.UI.Xaml.Controls.TreeViewNode)instance;
             return that.Parent;
@@ -1890,104 +1984,145 @@ namespace VoxScript.VoxScript_XamlTypeInfo
                 xamlMember.Getter = get_48_NavigationViewItemBase_IsSelected;
                 xamlMember.Setter = set_48_NavigationViewItemBase_IsSelected;
                 break;
+            case "Microsoft.UI.Xaml.Controls.ProgressRing.IsActive":
+                userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.ProgressRing");
+                xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "IsActive", "Boolean");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_49_ProgressRing_IsActive;
+                xamlMember.Setter = set_49_ProgressRing_IsActive;
+                break;
+            case "Microsoft.UI.Xaml.Controls.ProgressRing.IsIndeterminate":
+                userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.ProgressRing");
+                xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "IsIndeterminate", "Boolean");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_50_ProgressRing_IsIndeterminate;
+                xamlMember.Setter = set_50_ProgressRing_IsIndeterminate;
+                break;
+            case "Microsoft.UI.Xaml.Controls.ProgressRing.Maximum":
+                userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.ProgressRing");
+                xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "Maximum", "Double");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_51_ProgressRing_Maximum;
+                xamlMember.Setter = set_51_ProgressRing_Maximum;
+                break;
+            case "Microsoft.UI.Xaml.Controls.ProgressRing.Minimum":
+                userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.ProgressRing");
+                xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "Minimum", "Double");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_52_ProgressRing_Minimum;
+                xamlMember.Setter = set_52_ProgressRing_Minimum;
+                break;
+            case "Microsoft.UI.Xaml.Controls.ProgressRing.TemplateSettings":
+                userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.ProgressRing");
+                xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "TemplateSettings", "Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings");
+                xamlMember.Getter = get_53_ProgressRing_TemplateSettings;
+                xamlMember.SetIsReadOnly();
+                break;
+            case "Microsoft.UI.Xaml.Controls.ProgressRing.Value":
+                userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.ProgressRing");
+                xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "Value", "Double");
+                xamlMember.SetIsDependencyProperty();
+                xamlMember.Getter = get_54_ProgressRing_Value;
+                xamlMember.Setter = set_54_ProgressRing_Value;
+                break;
             case "Windows.UI.Color.A":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Windows.UI.Color");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "A", "Byte");
-                xamlMember.Getter = get_49_Color_A;
-                xamlMember.Setter = set_49_Color_A;
+                xamlMember.Getter = get_55_Color_A;
+                xamlMember.Setter = set_55_Color_A;
                 break;
             case "Windows.UI.Color.R":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Windows.UI.Color");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "R", "Byte");
-                xamlMember.Getter = get_50_Color_R;
-                xamlMember.Setter = set_50_Color_R;
+                xamlMember.Getter = get_56_Color_R;
+                xamlMember.Setter = set_56_Color_R;
                 break;
             case "Windows.UI.Color.G":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Windows.UI.Color");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "G", "Byte");
-                xamlMember.Getter = get_51_Color_G;
-                xamlMember.Setter = set_51_Color_G;
+                xamlMember.Getter = get_57_Color_G;
+                xamlMember.Setter = set_57_Color_G;
                 break;
             case "Windows.UI.Color.B":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Windows.UI.Color");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "B", "Byte");
-                xamlMember.Getter = get_52_Color_B;
-                xamlMember.Setter = set_52_Color_B;
+                xamlMember.Getter = get_58_Color_B;
+                xamlMember.Setter = set_58_Color_B;
                 break;
             case "VoxScript.Views.DictionaryPage.ViewModel":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("VoxScript.Views.DictionaryPage");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "ViewModel", "VoxScript.ViewModels.DictionaryViewModel");
-                xamlMember.Getter = get_53_DictionaryPage_ViewModel;
+                xamlMember.Getter = get_59_DictionaryPage_ViewModel;
                 xamlMember.SetIsReadOnly();
                 break;
             case "VoxScript.Views.ExpansionsPage.ViewModel":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("VoxScript.Views.ExpansionsPage");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "ViewModel", "VoxScript.ViewModels.ExpansionsViewModel");
-                xamlMember.Getter = get_54_ExpansionsPage_ViewModel;
+                xamlMember.Getter = get_60_ExpansionsPage_ViewModel;
                 xamlMember.SetIsReadOnly();
                 break;
             case "VoxScript.Views.HistoryPage.ViewModel":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("VoxScript.Views.HistoryPage");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "ViewModel", "VoxScript.ViewModels.HistoryViewModel");
-                xamlMember.Getter = get_55_HistoryPage_ViewModel;
+                xamlMember.Getter = get_61_HistoryPage_ViewModel;
                 xamlMember.SetIsReadOnly();
                 break;
             case "VoxScript.Views.PersonalizePage.ViewModel":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("VoxScript.Views.PersonalizePage");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "ViewModel", "VoxScript.ViewModels.PersonalizeViewModel");
-                xamlMember.Getter = get_56_PersonalizePage_ViewModel;
+                xamlMember.Getter = get_62_PersonalizePage_ViewModel;
                 xamlMember.SetIsReadOnly();
                 break;
             case "VoxScript.Views.SettingsPage.ViewModel":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("VoxScript.Views.SettingsPage");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "ViewModel", "VoxScript.ViewModels.SettingsViewModel");
-                xamlMember.Getter = get_57_SettingsPage_ViewModel;
+                xamlMember.Getter = get_63_SettingsPage_ViewModel;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Children":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "Children", "System.Collections.Generic.IList`1<Microsoft.UI.Xaml.Controls.TreeViewNode>");
-                xamlMember.Getter = get_58_TreeViewNode_Children;
+                xamlMember.Getter = get_64_TreeViewNode_Children;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Content":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "Content", "Object");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_59_TreeViewNode_Content;
-                xamlMember.Setter = set_59_TreeViewNode_Content;
+                xamlMember.Getter = get_65_TreeViewNode_Content;
+                xamlMember.Setter = set_65_TreeViewNode_Content;
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Depth":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "Depth", "Int32");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_60_TreeViewNode_Depth;
+                xamlMember.Getter = get_66_TreeViewNode_Depth;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.HasChildren":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "HasChildren", "Boolean");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_61_TreeViewNode_HasChildren;
+                xamlMember.Getter = get_67_TreeViewNode_HasChildren;
                 xamlMember.SetIsReadOnly();
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.HasUnrealizedChildren":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "HasUnrealizedChildren", "Boolean");
-                xamlMember.Getter = get_62_TreeViewNode_HasUnrealizedChildren;
-                xamlMember.Setter = set_62_TreeViewNode_HasUnrealizedChildren;
+                xamlMember.Getter = get_68_TreeViewNode_HasUnrealizedChildren;
+                xamlMember.Setter = set_68_TreeViewNode_HasUnrealizedChildren;
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.IsExpanded":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "IsExpanded", "Boolean");
                 xamlMember.SetIsDependencyProperty();
-                xamlMember.Getter = get_63_TreeViewNode_IsExpanded;
-                xamlMember.Setter = set_63_TreeViewNode_IsExpanded;
+                xamlMember.Getter = get_69_TreeViewNode_IsExpanded;
+                xamlMember.Setter = set_69_TreeViewNode_IsExpanded;
                 break;
             case "Microsoft.UI.Xaml.Controls.TreeViewNode.Parent":
                 userType = (global::VoxScript.VoxScript_XamlTypeInfo.XamlUserType)GetXamlTypeByName("Microsoft.UI.Xaml.Controls.TreeViewNode");
                 xamlMember = new global::VoxScript.VoxScript_XamlTypeInfo.XamlMember(this, "Parent", "Microsoft.UI.Xaml.Controls.TreeViewNode");
-                xamlMember.Getter = get_64_TreeViewNode_Parent;
+                xamlMember.Getter = get_70_TreeViewNode_Parent;
                 xamlMember.SetIsReadOnly();
                 break;
             }

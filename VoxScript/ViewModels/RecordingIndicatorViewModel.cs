@@ -28,6 +28,12 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
     [ObservableProperty]
     public partial string ElapsedTime { get; set; } = "0:00";
 
+    // True when we expect a TranscriptionCompleted event to follow the Idle transition.
+    // The engine sets State=Idle BEFORE firing TranscriptionCompleted, so we use a
+    // short timer to check whether the event arrives. If it doesn't, we hide ourselves.
+    private bool _awaitingTranscriptionResult;
+    private CancellationTokenSource? _idleHideCts;
+
     public bool IsAlwaysVisible =>
         _settings.RecordingIndicatorMode == RecordingIndicatorMode.AlwaysVisible;
 
@@ -134,6 +140,8 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
         switch (newState)
         {
             case RecordingState.Recording:
+                _awaitingTranscriptionResult = false;
+                CancelDeferredIdleHide();
                 _recordingStartTime = DateTime.UtcNow;
                 ElapsedTime = "0:00";
                 _elapsedTimer.Start();
@@ -146,11 +154,20 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
             case RecordingState.Enhancing:
                 // Stop the clock but keep the bar visible while work completes.
                 _elapsedTimer.Stop();
+                _awaitingTranscriptionResult = true;
                 break;
 
             case RecordingState.Idle:
-                // Timer cleanup — hide is driven by TranscriptionCompleted or CancelAsync.
                 _elapsedTimer.Stop();
+
+                // The engine sets State=Idle BEFORE firing TranscriptionCompleted.
+                // We schedule a short deferred hide; if TranscriptionCompleted arrives
+                // it cancels the deferred hide and runs the dismiss animation instead.
+                if (_awaitingTranscriptionResult)
+                {
+                    _awaitingTranscriptionResult = false;
+                    ScheduleDeferredIdleHide();
+                }
                 break;
         }
     }
@@ -159,10 +176,52 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
 
     private void OnTranscriptionCompleted(object? sender, string text)
     {
+        _awaitingTranscriptionResult = false;
+        CancelDeferredIdleHide();
+
         DismissWithPastedRequested?.Invoke();
 
         if (IsAlwaysVisible)
             ReturnToIdleRequested?.Invoke();
+    }
+
+    /// <summary>
+    /// After the engine transitions to Idle, wait briefly for TranscriptionCompleted.
+    /// If it doesn't arrive (null transcription / hallucination / error), hide the window.
+    /// </summary>
+    private async void ScheduleDeferredIdleHide()
+    {
+        CancelDeferredIdleHide();
+        var cts = new CancellationTokenSource();
+        _idleHideCts = cts;
+
+        try
+        {
+            // Short delay — TranscriptionCompleted fires synchronously right after
+            // State=Idle in the same method, so it will arrive before this fires.
+            // 100ms is more than enough margin.
+            await Task.Delay(100, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return; // TranscriptionCompleted arrived and cancelled us
+        }
+
+        if (IsAlwaysVisible)
+        {
+            // Stay visible in idle state (UpdateVisualState already ran)
+        }
+        else if (_settings.RecordingIndicatorMode == RecordingIndicatorMode.DuringRecording)
+        {
+            HideRequested?.Invoke();
+        }
+    }
+
+    private void CancelDeferredIdleHide()
+    {
+        _idleHideCts?.Cancel();
+        _idleHideCts?.Dispose();
+        _idleHideCts = null;
     }
 
     // ── Elapsed time helper ──────────────────────────────────
@@ -184,5 +243,6 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
         _engine.TranscriptionCompleted -= OnTranscriptionCompleted;
         _settings.RecordingIndicatorModeChanged -= OnIndicatorModeChanged;
         _elapsedTimer.Stop();
+        CancelDeferredIdleHide();
     }
 }

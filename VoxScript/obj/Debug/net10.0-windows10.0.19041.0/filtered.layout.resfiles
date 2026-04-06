@@ -1,5 +1,6 @@
 App.xbf
 MainWindow.xbf
+Shell\RecordingIndicatorWindow.xbf
 Styles\AppColors.xbf
 Views\DictionaryPage.xbf
 Views\ExpansionsPage.xbf

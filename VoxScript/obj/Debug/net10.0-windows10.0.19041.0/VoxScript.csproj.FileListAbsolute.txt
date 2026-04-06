@@ -202,3 +202,8 @@ E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\pr
 E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\qualifiers.txt
 E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\qualifiers.txt.intermediate
 E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\MultipleQualifiersPerDimensionFound.txt
+E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.g.i.cs
+E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.g.cs
+E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.xaml
+E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.xbf
+E:\Documents\VoiceInk-Windows\VoxScript\bin\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.xbf

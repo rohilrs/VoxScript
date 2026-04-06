@@ -147,16 +147,17 @@ public partial class App : Application
         {
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
-                if (engine.State == VoxScript.Core.Transcription.Core.RecordingState.Recording)
-                    await engine.StopAndTranscribeAsync();
+                // StopAndTranscribeAsync handles its own state guards, including
+                // deferred stop if the audio pipeline is still starting up.
+                await engine.StopAndTranscribeAsync();
             });
         };
         _hotkey.RecordingCancelRequested += (_, _) =>
         {
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
-                if (engine.State != VoxScript.Core.Transcription.Core.RecordingState.Idle)
-                    await engine.CancelRecordingAsync();
+                // CancelRecordingAsync handles startup-in-progress internally.
+                await engine.CancelRecordingAsync();
             });
         };
         // Apply saved hotkey bindings from settings

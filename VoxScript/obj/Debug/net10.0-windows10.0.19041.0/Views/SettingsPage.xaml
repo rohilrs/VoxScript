@@ -385,7 +385,7 @@
                                       VerticalAlignment="Center" />
                     </Grid>
 
-                    <Grid Opacity="0.5" ColumnSpacing="32">
+                    <Grid ColumnSpacing="32">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -396,11 +396,11 @@
                             <TextBlock Text="Show floating bar when dictating"
                                        FontSize="13" Foreground="{StaticResource BrandMutedBrush}" />
                         </StackPanel>
-                        <ToggleSwitch x:ConnectionId='7' Grid.Column="1" MinWidth="0"
-                                      OnContent="" OffContent=""
-                                                                                                      
-                                      IsEnabled="False"
-                                      VerticalAlignment="Center" />
+                        <ComboBox x:ConnectionId='7' Grid.Column="1"
+                                                                                          
+                                                                                                             
+                                  Width="200"
+                                  VerticalAlignment="Center" />
                     </Grid>
 
                     <Grid ColumnSpacing="32">

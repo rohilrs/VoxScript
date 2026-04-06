@@ -15,6 +15,13 @@
 					<Value>MainWindow.xbf</Value>
 				</Candidate>
 			</NamedResource>
+			<ResourceMapSubtree name="Shell">
+				<NamedResource name="RecordingIndicatorWindow.xbf" uri="ms-resource://VoxScript/Files/Shell/RecordingIndicatorWindow.xbf">
+					<Candidate type="Path">
+						<Value>Shell\RecordingIndicatorWindow.xbf</Value>
+					</Candidate>
+				</NamedResource>
+			</ResourceMapSubtree>
 			<ResourceMapSubtree name="Styles">
 				<NamedResource name="AppColors.xbf" uri="ms-resource://VoxScript/Files/Styles/AppColors.xbf">
 					<Candidate type="Path">

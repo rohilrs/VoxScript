@@ -24,6 +24,8 @@ public sealed partial class VoxScriptEngine : ObservableObject
     // Buffered chunks captured before streaming provider connects
     private readonly List<(byte[] data, int count)> _preConnectBuffer = new();
     private FileStream? _wavStream;
+    private bool _startingUp; // true while StartRecordingAsync is setting up the pipeline
+    private bool _stopRequestedDuringStartup; // set if StopAndTranscribeAsync called during startup
 
     [ObservableProperty]
     private RecordingState _state = RecordingState.Idle;
@@ -55,74 +57,113 @@ public sealed partial class VoxScriptEngine : ObservableObject
     {
         if (State == RecordingState.Recording)
             await StopAndTranscribeAsync();
-        else if (State == RecordingState.Idle)
+        else if (State == RecordingState.Idle && !_startingUp)
             await StartRecordingAsync(model);
     }
 
     public async Task StartRecordingAsync(ITranscriptionModel model)
     {
-        if (State != RecordingState.Idle) return;
+        if (State != RecordingState.Idle || _startingUp) return;
+        _startingUp = true;
+        _stopRequestedDuringStartup = false;
 
-        _cts = new CancellationTokenSource();
-        var ct = _cts.Token;
-
-        State = RecordingState.Recording;
-        _recordingStartTime = DateTime.UtcNow;
-
-        // Prepare audio file path
-        var recordingsDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "VoxScript", "Recordings");
-        Directory.CreateDirectory(recordingsDir);
-        _currentAudioPath = Path.Combine(recordingsDir,
-            $"rec_{DateTime.UtcNow:yyyyMMdd_HHmmss}.wav");
-
-        _activeSession = _registry.CreateSession(model);
-        _preConnectBuffer.Clear();
-
-        // Phase 1: buffer-accumulating callback (used until streaming provider connects)
-        Action<byte[], int> bufferChunk = (data, count) =>
+        try
         {
-            var copy = new byte[count];
-            Array.Copy(data, copy, count);
-            _preConnectBuffer.Add((copy, count));
-            AudioLevel = ComputeRms(data, count);
-        };
+            _cts = new CancellationTokenSource();
+            var ct = _cts.Token;
 
-        await _audio.StartAsync(_settings.AudioDeviceId, bufferChunk, ct);
+            // Prepare audio file path
+            var recordingsDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "VoxScript", "Recordings");
+            Directory.CreateDirectory(recordingsDir);
+            _currentAudioPath = Path.Combine(recordingsDir,
+                $"rec_{DateTime.UtcNow:yyyyMMdd_HHmmss}.wav");
 
-        // Phase 2: prepare session (streaming providers connect here), then swap callback
-        var chunkCallback = await _activeSession.PrepareAsync(ct);
-        if (chunkCallback is not null)
-        {
-            // Flush buffer then switch to live streaming
-            foreach (var (data, count) in _preConnectBuffer)
-                chunkCallback(data, count);
+            _activeSession = _registry.CreateSession(model);
             _preConnectBuffer.Clear();
-            // Restart capture with the real callback
-            await _audio.StopAsync();
-            await _audio.StartAsync(_settings.AudioDeviceId, chunkCallback, ct);
-        }
-        else
-        {
-            // File-based: restart capture writing to WAV file
-            await _audio.StopAsync();
-            _wavStream = new FileStream(_currentAudioPath, FileMode.Create, FileAccess.Write);
-            WriteWavHeader(_wavStream); // placeholder header, finalized on stop
-            // Write pre-buffered chunks
-            foreach (var (data, count) in _preConnectBuffer)
-                _wavStream.Write(data, 0, count);
-            _preConnectBuffer.Clear();
-            await _audio.StartAsync(_settings.AudioDeviceId, (data, count) =>
+
+            // Phase 1: buffer-accumulating callback (used until streaming provider connects)
+            Action<byte[], int> bufferChunk = (data, count) =>
             {
-                _wavStream?.Write(data, 0, count);
+                var copy = new byte[count];
+                Array.Copy(data, copy, count);
+                _preConnectBuffer.Add((copy, count));
                 AudioLevel = ComputeRms(data, count);
-            }, ct);
+            };
+
+            await _audio.StartAsync(_settings.AudioDeviceId, bufferChunk, ct);
+
+            // Phase 2: prepare session (streaming providers connect here), then swap callback
+            var chunkCallback = await _activeSession.PrepareAsync(ct);
+            if (chunkCallback is not null)
+            {
+                // Flush buffer then switch to live streaming
+                foreach (var (data, count) in _preConnectBuffer)
+                    chunkCallback(data, count);
+                _preConnectBuffer.Clear();
+                // Restart capture with the real callback
+                await _audio.StopAsync();
+                await _audio.StartAsync(_settings.AudioDeviceId, chunkCallback, ct);
+            }
+            else
+            {
+                // File-based: restart capture writing to WAV file
+                await _audio.StopAsync();
+                _wavStream = new FileStream(_currentAudioPath, FileMode.Create, FileAccess.Write);
+                WriteWavHeader(_wavStream); // placeholder header, finalized on stop
+                // Write pre-buffered chunks
+                foreach (var (data, count) in _preConnectBuffer)
+                    _wavStream.Write(data, 0, count);
+                _preConnectBuffer.Clear();
+                await _audio.StartAsync(_settings.AudioDeviceId, (data, count) =>
+                {
+                    _wavStream?.Write(data, 0, count);
+                    AudioLevel = ComputeRms(data, count);
+                }, ct);
+            }
+
+            // Only transition to Recording after audio pipeline is fully set up.
+            // This ensures the indicator/timer start at the right moment, and prevents
+            // StopAndTranscribeAsync from running against a half-initialized pipeline
+            // if the user releases the hotkey during setup.
+            _recordingStartTime = DateTime.UtcNow;
+            State = RecordingState.Recording;
+
+            // If the user released the hotkey during startup, immediately stop.
+            if (_stopRequestedDuringStartup)
+            {
+                _stopRequestedDuringStartup = false;
+                await StopAndTranscribeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to start recording");
+            await _audio.StopAsync();
+            _wavStream?.Dispose();
+            _wavStream = null;
+            _activeSession = null;
+            _cts?.Dispose();
+            _cts = null;
+            State = RecordingState.Idle;
+        }
+        finally
+        {
+            _startingUp = false;
         }
     }
 
     public async Task StopAndTranscribeAsync()
     {
+        // If startup is still in progress, flag the deferred stop so
+        // StartRecordingAsync handles it once the pipeline is ready.
+        if (_startingUp)
+        {
+            _stopRequestedDuringStartup = true;
+            return;
+        }
+
         if (State != RecordingState.Recording || _activeSession is null) return;
 
         await _audio.StopAsync();
@@ -209,6 +250,16 @@ public sealed partial class VoxScriptEngine : ObservableObject
 
     public async Task CancelRecordingAsync()
     {
+        // If startup is in progress, cancel the CTS so the pipeline setup
+        // aborts and the catch block in StartRecordingAsync handles cleanup.
+        if (_startingUp)
+        {
+            _cts?.Cancel();
+            return;
+        }
+
+        if (State == RecordingState.Idle) return;
+
         _cts?.Cancel();
         await _audio.StopAsync();
         await (_activeSession?.CancelAsync() ?? Task.CompletedTask);

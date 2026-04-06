@@ -10,8 +10,7 @@ using Microsoft.UI.Xaml.Media.Animation;
 using VoxScript.Core.Transcription.Core;
 using VoxScript.ViewModels;
 using WinRT.Interop;
-using Microsoft.UI.Composition;
-using Microsoft.UI.Composition.SystemBackdrops;
+using WinUIEx;
 using Windows.Graphics;
 
 namespace VoxScript.Shell;
@@ -19,12 +18,18 @@ namespace VoxScript.Shell;
 public sealed partial class RecordingIndicatorWindow : Window
 {
     // ── Win32 constants ──────────────────────────────────────
+    private const int GWL_STYLE = -16;
     private const int GWL_EXSTYLE = -20;
+    private const int WS_POPUP = unchecked((int)0x80000000);
+    private const int WS_THICKFRAME = 0x00040000;
+    private const int WS_BORDER = 0x00800000;
+    private const int WS_CAPTION = 0x00C00000; // WS_BORDER | WS_DLGFRAME
     private const int WS_EX_TOOLWINDOW = 0x80;
     private const int WS_EX_NOACTIVATE = 0x08000000;
     private const uint SWP_NOMOVE = 0x0002;
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOACTIVATE = 0x0010;
+    private const uint SWP_FRAMECHANGED = 0x0020;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
     private const int PillHeight = 48;
     private const int BottomMargin = 40;
@@ -34,6 +39,8 @@ public sealed partial class RecordingIndicatorWindow : Window
     private readonly DispatcherTimer _pulseTimer;
     private readonly Random _random = new();
     private bool _pulsingHigh = true;
+    private Storyboard? _activeDismissStoryboard;
+    private CancellationTokenSource? _dismissDelayCts;
 
     public RecordingIndicatorWindow()
     {
@@ -42,20 +49,31 @@ public sealed partial class RecordingIndicatorWindow : Window
         _bars = [Bar0, Bar1, Bar2, Bar3, Bar4, Bar5, Bar6];
 
         // Fully transparent window — only the pill Border is visible
-        SystemBackdrop = new TransparentBackdrop();
+        SystemBackdrop = new TransparentTintBackdrop();
 
         // Force dark theme for consistent element styling
         if (Content is FrameworkElement fe)
             fe.RequestedTheme = ElementTheme.Dark;
 
-        // Strip all window chrome — no border, no title bar, no resize handles
+        // Strip all window chrome — no border, no title bar, no resize handles.
+        // Use the default OverlappedPresenter (not CreateForToolWindow) because
+        // tool-window presenters don't support system backdrops on all builds,
+        // which causes TransparentTintBackdrop to fall back to an opaque surface.
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Collapsed;
 
-        var presenter = OverlappedPresenter.CreateForToolWindow();
-        presenter.SetBorderAndTitleBar(false, false);
-        presenter.IsResizable = false;
-        AppWindow.SetPresenter(presenter);
+        if (AppWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.SetBorderAndTitleBar(false, false);
+            presenter.IsResizable = false;
+            presenter.IsMinimizable = false;
+            presenter.IsMaximizable = false;
+        }
+
+        // Apply Win32 transparency styles immediately after presenter setup.
+        // DwmExtendFrameIntoClientArea must run before the first paint to avoid
+        // a flash of opaque grey/white background beneath the XAML content.
+        ApplyWindowStyles();
 
         _pulseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
         _pulseTimer.Tick += (_, _) =>
@@ -200,11 +218,20 @@ public sealed partial class RecordingIndicatorWindow : Window
     {
         DispatcherQueue.TryEnqueue(() =>
         {
+            // Cancel any in-flight dismiss animation from a previous cycle.
+            // Without this, a quick release followed by a new recording will have
+            // the old fade-out animation overwrite Opacity back to 0 and hide the window.
+            CancelDismissAnimation();
+
             RootGrid.Opacity = 1;
             UpdateVisualState();
-            AppWindow.Show();
+
+            // Apply Win32 styles BEFORE showing the window. DwmExtendFrameIntoClientArea
+            // must be in effect before the first paint to prevent the opaque grey/white
+            // rectangle from flashing beneath the transparent XAML content.
             ApplyWindowStyles();
             PositionBottomCenter();
+            AppWindow.Show();
         });
     }
 
@@ -212,6 +239,7 @@ public sealed partial class RecordingIndicatorWindow : Window
     {
         DispatcherQueue.TryEnqueue(() =>
         {
+            CancelDismissAnimation();
             StopPulsingDot();
             AppWindow.Hide();
         });
@@ -219,6 +247,12 @@ public sealed partial class RecordingIndicatorWindow : Window
 
     private async void OnDismissWithPasted()
     {
+        // Cancel any previous dismiss that may still be in-flight
+        CancelDismissAnimation();
+
+        var cts = new CancellationTokenSource();
+        _dismissDelayCts = cts;
+
         await DispatcherQueue.EnqueueAsync(() =>
         {
             // Show green "Pasted" state
@@ -243,10 +277,20 @@ public sealed partial class RecordingIndicatorWindow : Window
             ResizeWindowForWidth(160);
         });
 
-        await Task.Delay(1000);
+        try
+        {
+            await Task.Delay(1000, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return; // A new show/dismiss cycle superseded this one
+        }
 
         DispatcherQueue.TryEnqueue(() =>
         {
+            // Double-check we haven't been cancelled between the delay and this dispatch
+            if (cts.IsCancellationRequested) return;
+
             var fadeOut = new Storyboard();
             var animation = new DoubleAnimation
             {
@@ -259,14 +303,32 @@ public sealed partial class RecordingIndicatorWindow : Window
             Storyboard.SetTargetProperty(animation, "Opacity");
             fadeOut.Children.Add(animation);
 
+            _activeDismissStoryboard = fadeOut;
+
             fadeOut.Completed += (_, _) =>
             {
+                _activeDismissStoryboard = null;
                 if (_viewModel is not null && !_viewModel.IsAlwaysVisible)
                     AppWindow.Hide();
             };
 
             fadeOut.Begin();
         });
+    }
+
+    private void CancelDismissAnimation()
+    {
+        // Cancel the 1-second "Pasted" linger delay
+        _dismissDelayCts?.Cancel();
+        _dismissDelayCts?.Dispose();
+        _dismissDelayCts = null;
+
+        // Stop any in-flight fade-out storyboard
+        if (_activeDismissStoryboard is not null)
+        {
+            _activeDismissStoryboard.Stop();
+            _activeDismissStoryboard = null;
+        }
     }
 
     private async void OnReturnToIdle()
@@ -293,9 +355,37 @@ public sealed partial class RecordingIndicatorWindow : Window
     private void ApplyWindowStyles()
     {
         var hwnd = WindowNative.GetWindowHandle(this);
+
+        // Convert to a popup window and strip the frame. Popup windows don't get
+        // DWM drop shadows, eliminating the rectangular shadow behind the pill.
+        var style = GetWindowLongPtr(hwnd, GWL_STYLE);
+        style = (style & ~(nint)(WS_THICKFRAME | WS_CAPTION)) | WS_POPUP;
+        SetWindowLongPtr(hwnd, GWL_STYLE, style);
+
         var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
-        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+
+        // Extend DWM frame into entire client area to achieve per-pixel alpha
+        // transparency. Without this, the Win32 window surface paints an opaque
+        // background (grey/white rectangle) beneath the XAML content.
+        var margins = new MARGINS { cxLeftWidth = -1, cxRightWidth = -1, cyTopHeight = -1, cyBottomHeight = -1 };
+        DwmExtendFrameIntoClientArea(hwnd, ref margins);
+
+        // Suppress the Windows 11 automatic 1px DWM border around the window.
+        // Even after stripping WS_THICKFRAME/WS_CAPTION, DWM still draws a thin
+        // border on all top-level windows. Setting DWMWA_BORDER_COLOR to
+        // DWMWA_COLOR_NONE (0xFFFFFFFE) removes it entirely.
+        const int DWMWA_BORDER_COLOR = 34;
+        uint colorNone = 0xFFFFFFFE; // DWMWA_COLOR_NONE
+        DwmSetWindowAttribute(hwnd, DWMWA_BORDER_COLOR, ref colorNone, sizeof(uint));
+
+        // Disable DWM non-client rendering so the compositor does not draw a
+        // rectangular window shadow around the transparent surface. Without this,
+        // a faint shadow rectangle is visible on light-colored backgrounds.
+        const int DWMWA_NCRENDERING_POLICY = 2;
+        uint ncRenderingDisabled = 1; // DWMNCRP_DISABLED
+        DwmSetWindowAttribute(hwnd, DWMWA_NCRENDERING_POLICY, ref ncRenderingDisabled, sizeof(uint));
     }
 
     // ── Positioning ──────────────────────────────────────────
@@ -376,39 +466,22 @@ public sealed partial class RecordingIndicatorWindow : Window
         public RECT rcWork;
         public uint dwFlags;
     }
-}
 
-// ── Transparent backdrop (polyfill for TransparentTintBackdrop) ──
-// Uses DesktopAcrylicController with zero opacity to achieve full transparency.
-
-internal sealed class TransparentBackdrop : SystemBackdrop
-{
-    private DesktopAcrylicController? _controller;
-
-    protected override void OnTargetConnected(
-        ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MARGINS
     {
-        base.OnTargetConnected(connectedTarget, xamlRoot);
-        _controller = new DesktopAcrylicController
-        {
-            TintColor = Windows.UI.Color.FromArgb(0, 0, 0, 0),
-            TintOpacity = 0f,
-            LuminosityOpacity = 0f,
-            FallbackColor = Windows.UI.Color.FromArgb(0, 0, 0, 0)
-        };
-        _controller.AddSystemBackdropTarget(connectedTarget);
-        _controller.SetSystemBackdropConfiguration(
-            GetDefaultSystemBackdropConfiguration(connectedTarget, xamlRoot));
+        public int cxLeftWidth;
+        public int cxRightWidth;
+        public int cyTopHeight;
+        public int cyBottomHeight;
     }
 
-    protected override void OnTargetDisconnected(
-        ICompositionSupportsSystemBackdrop disconnectedTarget)
-    {
-        base.OnTargetDisconnected(disconnectedTarget);
-        _controller?.RemoveSystemBackdropTarget(disconnectedTarget);
-        _controller?.Dispose();
-        _controller = null;
-    }
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS pMarInset);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref uint pvAttribute, int cbAttribute);
+
 }
 
 // ── DispatcherQueue helper ───────────────────────────────────
