@@ -13,6 +13,7 @@ using VoxScript.Infrastructure;
 using VoxScript.Native.Platform;
 using VoxScript.Native.Whisper;
 using VoxScript.Shell;
+using VoxScript.ViewModels;
 
 namespace VoxScript;
 
@@ -21,6 +22,8 @@ public partial class App : Application
     private MainWindow? _mainWindow;
     private SystemTrayManager? _trayManager;
     private GlobalHotkeyService? _hotkey;
+    private RecordingIndicatorWindow? _indicatorWindow;
+    private RecordingIndicatorViewModel? _indicatorViewModel;
 
     public static Window? MainWindow { get; private set; }
 
@@ -91,6 +94,14 @@ public partial class App : Application
             ServiceLocator.Get<VoxScriptEngine>(), _mainWindow);
         _trayManager.Initialize();
 
+        // Recording indicator overlay
+        var indicatorEngine = ServiceLocator.Get<VoxScriptEngine>();
+        var indicatorSettings = ServiceLocator.Get<AppSettings>();
+        _indicatorViewModel = new RecordingIndicatorViewModel(indicatorEngine, indicatorSettings);
+        _indicatorWindow = new RecordingIndicatorWindow();
+        _indicatorWindow.Initialize(_indicatorViewModel);
+        _indicatorViewModel.ApplyInitialVisibility();
+
         // Register global hotkeys
         // Default: Ctrl+Win+Space to toggle, Ctrl+Win held for push-to-talk
         _hotkey = ServiceLocator.Get<GlobalHotkeyService>();
@@ -102,6 +113,8 @@ public partial class App : Application
             {
                 var model = ResolveModel();
                 await engine.ToggleRecordAsync(model);
+                if (engine.State == VoxScript.Core.Transcription.Core.RecordingState.Recording)
+                    engine.IsToggleMode = true;
             });
         };
         _hotkey.RecordingStartRequested += (_, _) =>
@@ -112,6 +125,21 @@ public partial class App : Application
                 {
                     var model = ResolveModel();
                     await engine.StartRecordingAsync(model);
+                    engine.IsToggleMode = false; // hold mode
+
+                    // Poll for hold→toggle conversion (Space key during hold)
+                    _ = Task.Run(async () =>
+                    {
+                        while (engine.State == VoxScript.Core.Transcription.Core.RecordingState.Recording)
+                        {
+                            await Task.Delay(100);
+                            if (_hotkey!.IsToggleMode && !engine.IsToggleMode)
+                            {
+                                _mainWindow!.DispatcherQueue.TryEnqueue(() =>
+                                    engine.IsToggleMode = true);
+                            }
+                        }
+                    });
                 }
             });
         };
