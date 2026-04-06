@@ -37,6 +37,7 @@ public static class AppBootstrapper
 
         // Native singletons
         services.AddSingleton<IAudioCaptureService, WasapiCaptureService>();
+        services.AddSingleton<ISoundEffectsService, VoxScript.Native.Audio.SoundEffectsService>();
         services.AddSingleton<ISettingsStore, LocalSettingsStore>();
         services.AddSingleton<IActiveWindowService, ActiveWindowService>();
         services.AddSingleton<IApiKeyStore, WindowsCredentialService>();
