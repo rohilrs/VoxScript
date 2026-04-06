@@ -87,7 +87,7 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
         {
             case nameof(VoxScriptEngine.State):
                 State = _engine.State;
-                OnStateChanged(_engine.State);
+                HandleStateTransition(_engine.State);
                 break;
 
             case nameof(VoxScriptEngine.AudioLevel):
@@ -100,7 +100,7 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
         }
     }
 
-    private void OnStateChanged(RecordingState newState)
+    private void HandleStateTransition(RecordingState newState)
     {
         switch (newState)
         {
