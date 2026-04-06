@@ -198,9 +198,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     public partial bool SoundEffectsEnabled { get; set; }
     partial void OnSoundEffectsEnabledChanged(bool value) => _settings.SoundEffectsEnabled = value;
 
-    // Disabled features (stored but UI is non-interactive)
     [ObservableProperty]
-    public partial bool RecordingIndicatorEnabled { get; set; }
+    public partial int RecordingIndicatorModeIndex { get; set; }
+    partial void OnRecordingIndicatorModeIndexChanged(int value)
+    {
+        _settings.RecordingIndicatorMode = (RecordingIndicatorMode)value;
+    }
+
+    public List<string> RecordingIndicatorModes { get; } = ["Off", "Always visible", "Only during recording"];
 
     [ObservableProperty]
     public partial bool PauseMediaWhileDictating { get; set; }
@@ -498,7 +503,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         MinimizeToTray = _settings.MinimizeToTray;
         SmartFormattingEnabled = _settings.SmartFormattingEnabled;
         SoundEffectsEnabled = _settings.SoundEffectsEnabled;
-        RecordingIndicatorEnabled = _settings.RecordingIndicatorEnabled;
+        RecordingIndicatorModeIndex = (int)_settings.RecordingIndicatorMode;
         PauseMediaWhileDictating = _settings.PauseMediaWhileDictating;
         AutoAddToDictionary = _settings.AutoAddToDictionary;
 

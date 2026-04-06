@@ -385,7 +385,7 @@
                                       VerticalAlignment="Center" />
                     </Grid>
 
-                    <Grid Opacity="0.5" ColumnSpacing="32">
+                    <Grid ColumnSpacing="32">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -396,11 +396,11 @@
                             <TextBlock Text="Show floating bar when dictating"
                                        FontSize="13" Foreground="{StaticResource BrandMutedBrush}" />
                         </StackPanel>
-                        <ToggleSwitch Grid.Column="1" MinWidth="0"
-                                      OnContent="" OffContent=""
-                                      IsOn="{x:Bind ViewModel.RecordingIndicatorEnabled, Mode=TwoWay}"
-                                      IsEnabled="False"
-                                      VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{x:Bind ViewModel.RecordingIndicatorModes}"
+                                  SelectedIndex="{x:Bind ViewModel.RecordingIndicatorModeIndex, Mode=TwoWay}"
+                                  Width="200"
+                                  VerticalAlignment="Center" />
                     </Grid>
 
                     <Grid ColumnSpacing="32">
