@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="VoxScript.Shell.NoteEditorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Notes — VoxScript">
+
+    <Grid Background="{StaticResource BrandBackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="1" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Panel: Note List Sidebar -->
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header + New -->
+            <Grid Grid.Row="0" Padding="16,16,16,8">
+                <TextBlock Text="Notes"
+                           FontFamily="Georgia" FontSize="18"
+                           Foreground="{StaticResource BrandForegroundBrush}"
+                           VerticalAlignment="Center" />
+                <Button Content="＋ New"
+                        HorizontalAlignment="Right"
+                        Click="SidebarNewButton_Click"
+                        Background="{StaticResource BrandPrimaryBrush}"
+                        Foreground="White"
+                        FontSize="11" FontWeight="Medium"
+                        CornerRadius="6" Padding="12,4" />
+            </Grid>
+
+            <!-- Search -->
+            <Border Grid.Row="1" Margin="16,0,16,8"
+                    Background="{StaticResource BrandCardBrush}"
+                    CornerRadius="8" Padding="2"
+                    BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                    BorderThickness="1">
+                <TextBox x:Name="SidebarSearchBox"
+                         PlaceholderText="Search..."
+                         FontSize="12"
+                         BorderThickness="0" Background="Transparent"
+                         TextChanged="SidebarSearchBox_TextChanged" />
+            </Border>
+
+            <!-- Sort pills -->
+            <StackPanel x:Name="SidebarSortPanel" Grid.Row="2"
+                        Orientation="Horizontal" Spacing="4"
+                        Padding="16,0,16,8" />
+
+            <!-- Note card list -->
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="SidebarNotesList" Spacing="4"
+                            Padding="12,0,12,12" />
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Divider -->
+        <Border Grid.Column="1" Background="{StaticResource BrandPrimaryLightBrush}" />
+
+        <!-- Right Panel: Editor -->
+        <Grid Grid.Column="2" x:Name="EditorPanel">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Grid Grid.Row="0" Padding="20,16,20,4">
+                <TextBox x:Name="TitleBox"
+                         FontFamily="Georgia" FontSize="20"
+                         Foreground="{StaticResource BrandForegroundBrush}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         PlaceholderText="Note title..."
+                         TextChanged="TitleBox_TextChanged" />
+                <Button x:Name="DeleteButton"
+                        HorizontalAlignment="Right"
+                        Click="DeleteButton_Click"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="8,4"
+                        CornerRadius="6"
+                        ToolTipService.ToolTip="Delete note">
+                    <FontIcon Glyph="&#xE74D;" FontSize="14"
+                              Foreground="#CC4444" />
+                </Button>
+            </Grid>
+
+            <!-- Metadata -->
+            <TextBlock x:Name="MetadataText" Grid.Row="1"
+                       Padding="20,0,20,8"
+                       FontSize="11"
+                       Foreground="{StaticResource BrandMutedBrush}"
+                       Opacity="0.7" />
+
+            <!-- Formatting toolbar -->
+            <Border Grid.Row="2"
+                    BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                    BorderThickness="0,1,0,1"
+                    Padding="20,4">
+                <StackPanel x:Name="ToolbarPanel" Orientation="Horizontal" Spacing="2" />
+            </Border>
+
+            <!-- RichEditBox -->
+            <RichEditBox x:Name="Editor" Grid.Row="3"
+                         Padding="20,12"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         TextChanged="Editor_TextChanged"
+                         SelectionChanged="Editor_SelectionChanged" />
+
+            <!-- Empty state (shown when no note selected) -->
+            <StackPanel x:Name="EditorEmptyState" Grid.Row="0" Grid.RowSpan="5"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="Visible">
+                <TextBlock Text="Select a note or create a new one"
+                           FontSize="15"
+                           Foreground="{StaticResource BrandMutedBrush}" />
+            </StackPanel>
+
+            <!-- Save status -->
+            <TextBlock x:Name="SaveStatusText" Grid.Row="4"
+                       Padding="20,6"
+                       FontSize="10"
+                       Foreground="{StaticResource BrandMutedBrush}"
+                       HorizontalAlignment="Right"
+                       Opacity="0.7" />
+        </Grid>
+    </Grid>
+</Window>

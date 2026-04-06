@@ -148,8 +148,27 @@ public sealed partial class HistoryPage : Page
         Grid.SetColumn(metaPanel, 0);
         header.Children.Add(metaPanel);
 
-        // Right: copy + delete
+        // Right: star + copy + delete
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+
+        // Star button — save to Notes
+        var starIcon = new FontIcon { Glyph = "\uE734", FontSize = 14, Foreground = (SolidColorBrush)Application.Current.Resources["BrandMutedBrush"] };
+        var starBtn = new Button
+        {
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            Padding = new Thickness(8, 4, 8, 4),
+            CornerRadius = new CornerRadius(6),
+            Content = starIcon,
+        };
+        ToolTipService.SetToolTip(starBtn, "Save to Notes");
+        starBtn.Click += async (_, _) =>
+        {
+            await NotesPage.SharedViewModel.CreateFromTranscriptionAsync(item.Id, item.DisplayText);
+            starIcon.Glyph = "\uE735"; // Filled star
+            starIcon.Foreground = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 212, 168, 83));
+            ToolTipService.SetToolTip(starBtn, "Saved to Notes!");
+        };
+        actions.Children.Add(starBtn);
 
         var copyIcon = new FontIcon { Glyph = "\uE8C8", FontSize = 14, Foreground = (SolidColorBrush)Application.Current.Resources["BrandMutedBrush"] };
         var copyBtn = new Button
