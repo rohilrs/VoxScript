@@ -40,15 +40,18 @@ public sealed partial class NotesPage : Page
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         SharedViewModel.SearchQuery = SearchBox.Text;
-        _searchDebounce?.Stop();
-        _searchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
-        _searchDebounce.Tick += async (_, _) =>
+        if (_searchDebounce is null)
         {
-            _searchDebounce?.Stop();
-            await SharedViewModel.SearchAsync();
-            RebuildList();
-            UpdateVisibility();
-        };
+            _searchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            _searchDebounce.Tick += async (_, _) =>
+            {
+                _searchDebounce!.Stop();
+                await SharedViewModel.SearchAsync();
+                RebuildList();
+                UpdateVisibility();
+            };
+        }
+        _searchDebounce.Stop();
         _searchDebounce.Start();
     }
 
@@ -207,8 +210,8 @@ public sealed partial class NotesPage : Page
 
         card.Child = outer;
 
-        // Click card → open editor
-        card.PointerPressed += (_, _) => NoteEditorManager.OpenEditor(item.Id);
+        // Click card → open editor (Tapped doesn't propagate from Button clicks)
+        card.Tapped += (_, _) => NoteEditorManager.OpenEditor(item.Id);
 
         return card;
     }

@@ -32,7 +32,13 @@ public sealed class NoteRepository : INoteRepository
 
     public async Task UpdateAsync(NoteRecord note, CancellationToken ct)
     {
-        _db.Notes.Update(note);
+        var existing = await _db.Notes.FindAsync(new object[] { note.Id }, ct);
+        if (existing is null) return;
+        existing.Title = note.Title;
+        existing.ContentRtf = note.ContentRtf;
+        existing.ContentPlainText = note.ContentPlainText;
+        existing.IsStarred = note.IsStarred;
+        existing.ModifiedAt = note.ModifiedAt;
         await _db.SaveChangesAsync(ct);
     }
 

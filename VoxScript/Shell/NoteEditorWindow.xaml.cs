@@ -15,6 +15,8 @@ public sealed partial class NoteEditorWindow : Window
     private DispatcherTimer? _searchDebounce;
     private DispatcherTimer? _autoSaveTimer;
     private bool _isLoadingNote;
+    private readonly System.Collections.Specialized.NotifyCollectionChangedEventHandler _collectionHandler;
+    private readonly System.ComponentModel.PropertyChangedEventHandler _propertyHandler;
 
     public NoteEditorWindow()
     {
@@ -26,12 +28,19 @@ public sealed partial class NoteEditorWindow : Window
         SystemBackdrop = new MicaBackdrop();
         ExtendsContentIntoTitleBar = true;
 
-        ViewModel.Notes.CollectionChanged += (_, _) =>
-            DispatcherQueue.TryEnqueue(RebuildSidebar);
-        ViewModel.PropertyChanged += (_, e) =>
+        _collectionHandler = (_, _) => DispatcherQueue.TryEnqueue(RebuildSidebar);
+        _propertyHandler = (_, e) =>
         {
             if (e.PropertyName == nameof(ViewModel.SelectedNote))
                 DispatcherQueue.TryEnqueue(LoadSelectedNote);
+        };
+        ViewModel.Notes.CollectionChanged += _collectionHandler;
+        ViewModel.PropertyChanged += _propertyHandler;
+
+        Closed += (_, _) =>
+        {
+            ViewModel.Notes.CollectionChanged -= _collectionHandler;
+            ViewModel.PropertyChanged -= _propertyHandler;
         };
 
         BuildToolbar();
@@ -50,24 +59,34 @@ public sealed partial class NoteEditorWindow : Window
 
     private async void SidebarNewButton_Click(object sender, RoutedEventArgs e)
     {
-        var item = await ViewModel.CreateAsync();
-        RebuildSidebar();
-        LoadSelectedNote();
-        TitleBox.Focus(FocusState.Programmatic);
-        TitleBox.SelectAll();
+        try
+        {
+            var item = await ViewModel.CreateAsync();
+            RebuildSidebar();
+            LoadSelectedNote();
+            TitleBox.Focus(FocusState.Programmatic);
+            TitleBox.SelectAll();
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Failed to create note");
+        }
     }
 
     private void SidebarSearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         ViewModel.SearchQuery = SidebarSearchBox.Text;
-        _searchDebounce?.Stop();
-        _searchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
-        _searchDebounce.Tick += async (_, _) =>
+        if (_searchDebounce is null)
         {
-            _searchDebounce?.Stop();
-            await ViewModel.SearchAsync();
-            RebuildSidebar();
-        };
+            _searchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            _searchDebounce.Tick += async (_, _) =>
+            {
+                _searchDebounce!.Stop();
+                await ViewModel.SearchAsync();
+                RebuildSidebar();
+            };
+        }
+        _searchDebounce.Stop();
         _searchDebounce.Start();
     }
 
@@ -209,8 +228,8 @@ public sealed partial class NoteEditorWindow : Window
 
         card.Child = outer;
 
-        // Click to select
-        card.PointerPressed += (_, _) =>
+        // Click to select (Tapped doesn't propagate from Button clicks)
+        card.Tapped += (_, _) =>
         {
             ViewModel.SelectedNote = item;
             RebuildSidebar();
@@ -283,13 +302,16 @@ public sealed partial class NoteEditorWindow : Window
     private void ScheduleAutoSave()
     {
         SaveStatusText.Text = "";
-        _autoSaveTimer?.Stop();
-        _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _autoSaveTimer.Tick += async (_, _) =>
+        if (_autoSaveTimer is null)
         {
-            _autoSaveTimer?.Stop();
-            await SaveCurrentNote();
-        };
+            _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _autoSaveTimer.Tick += async (_, _) =>
+            {
+                _autoSaveTimer!.Stop();
+                await SaveCurrentNote();
+            };
+        }
+        _autoSaveTimer.Stop();
         _autoSaveTimer.Start();
     }
 
@@ -298,15 +320,23 @@ public sealed partial class NoteEditorWindow : Window
         var note = ViewModel.SelectedNote;
         if (note is null) return;
 
-        Editor.Document.GetText(TextGetOptions.FormatRtf, out var rtf);
-        Editor.Document.GetText(TextGetOptions.None, out var plain);
+        try
+        {
+            Editor.Document.GetText(TextGetOptions.FormatRtf, out var rtf);
+            Editor.Document.GetText(TextGetOptions.None, out var plain);
 
-        await ViewModel.SaveNoteAsync(note, TitleBox.Text, rtf, plain.TrimEnd('\r', '\n'));
-        SaveStatusText.Text = ViewModel.SaveStatus;
+            await ViewModel.SaveNoteAsync(note, TitleBox.Text, rtf, plain.TrimEnd('\r', '\n'));
+            SaveStatusText.Text = ViewModel.SaveStatus;
 
-        var modified = note.ModifiedAt.ToLocalTime();
-        var created = note.CreatedAt.ToLocalTime();
-        MetadataText.Text = $"Created: {FormatDate(created)}  \u00b7  Modified: {FormatDate(modified)}";
+            var modified = note.ModifiedAt.ToLocalTime();
+            var created = note.CreatedAt.ToLocalTime();
+            MetadataText.Text = $"Created: {FormatDate(created)}  \u00b7  Modified: {FormatDate(modified)}";
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Failed to save note");
+            SaveStatusText.Text = "Save failed";
+        }
     }
 
     // ── Delete ──────────────────────────────────────────────────
@@ -316,11 +346,18 @@ public sealed partial class NoteEditorWindow : Window
         var note = ViewModel.SelectedNote;
         if (note is null) return;
 
-        if (await DialogHelper.ConfirmDeleteAsync(Content.XamlRoot, "this note"))
+        try
         {
-            await ViewModel.DeleteAsync(note);
-            RebuildSidebar();
-            LoadSelectedNote();
+            if (await DialogHelper.ConfirmDeleteAsync(Content.XamlRoot, "this note"))
+            {
+                await ViewModel.DeleteAsync(note);
+                RebuildSidebar();
+                LoadSelectedNote();
+            }
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Failed to delete note");
         }
     }
 
