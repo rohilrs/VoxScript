@@ -134,7 +134,7 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Deepgram/ElevenLabs provider code remains if ever needed
 
 13. **Custom sounds** — DONE
-    - Three woodblock/click WAVs: start (~800Hz), toggle (~650Hz), stop (~500Hz double-tap)
+    - Four woodblock/click WAVs: start (560Hz), toggle (450Hz), stop (350Hz double-tap), cancel (280Hz short tap)
     - `SoundEffectsService` pre-loads WAVs, plays on state transitions in VoxScriptEngine
     - Toggle sound fires via `ToggleLockActivated` event from GlobalHotkeyService
     - Respects `SoundEffectsEnabled` setting toggle
@@ -163,10 +163,10 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Files: `RecordingIndicatorWindow.xaml/.cs`, `RecordingIndicatorViewModel.cs`, `RecordingIndicatorMode.cs`
 
 17. **Pause media while dictating** — DONE
-    - Sends VK_MEDIA_PLAY_PAUSE via keybd_event on recording start/stop
-    - Works with any app that responds to media keys (Spotify, browser, VLC)
+    - Sends WM_APPCOMMAND(APPCOMMAND_MEDIA_PLAY_PAUSE) to shell window on recording start/stop
+    - Routes through system media transport pipeline (same as physical media keys); works with Spotify, browser, VLC
     - `MediaControlService` tracks paused state to avoid double-toggle
-    - Respects `PauseMediaWhileDictating` setting; toggle now enabled in Settings
+    - Respects `PauseMediaWhileDictating` setting; toggle enabled in Settings
     - Files: `IMediaControlService.cs`, `MediaControlService.cs`, `VoiceInkEngine.cs`
 
 18. **Auto-add to dictionary** — toggle in Settings, not yet implemented
