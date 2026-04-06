@@ -153,7 +153,7 @@ public sealed partial class RecordingIndicatorWindow : Window
                 StatusText.Visibility = Visibility.Visible;
                 StatusText.Text = "Ready";
                 StatusText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(0xFF, 0x88, 0x88, 0x88));
-                PillBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(0x1A, 0xFF, 0xFF, 0xFF));
+
                 StopPulsingDot();
                 break;
 
@@ -167,7 +167,7 @@ public sealed partial class RecordingIndicatorWindow : Window
                 if (_viewModel.IsToggleMode)
                     FinishButton.Visibility = Visibility.Visible;
 
-                PillBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(0x66, 0xCC, 0x44, 0x44));
+
                 StartPulsingDot();
                 break;
 
@@ -178,7 +178,7 @@ public sealed partial class RecordingIndicatorWindow : Window
                 StatusText.Visibility = Visibility.Visible;
                 StatusText.Text = "Transcribing...";
                 StatusText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(0xFF, 0xE0, 0xE0, 0xE0));
-                PillBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(0x66, 0x7D, 0x84, 0xB2));
+
                 StopPulsingDot();
                 break;
         }
@@ -271,7 +271,7 @@ public sealed partial class RecordingIndicatorWindow : Window
             StatusText.Visibility = Visibility.Visible;
             StatusText.Text = "Pasted";
             StatusText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(0xFF, 0x33, 0x99, 0x66));
-            PillBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(0x66, 0x33, 0x99, 0x66));
+
 
             // Shrink window to fit the compact "Pasted" content
             ResizeWindowForWidth(160);
@@ -386,6 +386,15 @@ public sealed partial class RecordingIndicatorWindow : Window
         const int DWMWA_NCRENDERING_POLICY = 2;
         uint ncRenderingDisabled = 1; // DWMNCRP_DISABLED
         DwmSetWindowAttribute(hwnd, DWMWA_NCRENDERING_POLICY, ref ncRenderingDisabled, sizeof(uint));
+
+        // Disable DWM rounded-corner compositing for this window. On Windows 11,
+        // the compositor draws a subtle shadow as part of its rounded-corner pass
+        // on all top-level windows — even WS_POPUP windows with NC rendering
+        // disabled. Setting DWMWCP_DONOTROUND removes this shadow path entirely.
+        // The pill's visual rounded corners come from XAML CornerRadius, unaffected.
+        const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        uint doNotRound = 1; // DWMWCP_DONOTROUND
+        DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref doNotRound, sizeof(uint));
     }
 
     // ── Positioning ──────────────────────────────────────────
