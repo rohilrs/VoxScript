@@ -193,6 +193,15 @@ public sealed partial class RecordingIndicatorWindow : Window
 
     private void UpdateWaveform(float level)
     {
+        // Noise gate: ignore low-level mic noise so bars stay flat during silence.
+        const float noiseFloor = 0.01f;
+        if (level < noiseFloor)
+        {
+            foreach (var bar in _bars)
+                bar.Height = 3.0;
+            return;
+        }
+
         // Amplify the signal so quiet speech still drives visible bar movement.
         // sqrt gives a perceptual loudness curve; the 3x multiplier boosts range.
         var boosted = (float)Math.Min(Math.Sqrt(level) * 3.0, 1.0);
