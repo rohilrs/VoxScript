@@ -82,8 +82,10 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
     [RelayCommand]
     private async Task CancelAsync()
     {
-        await _engine.CancelRecordingAsync();
+        // Hide first so the window disappears instantly — don't wait for
+        // the engine's State→Idle transition which would flash an empty pill.
         HideRequested?.Invoke();
+        await _engine.CancelRecordingAsync();
     }
 
     // ── Setting change handling ────────────────────────────
