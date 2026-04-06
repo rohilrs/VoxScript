@@ -28,6 +28,12 @@ public sealed partial class VoxScriptEngine : ObservableObject
     [ObservableProperty]
     private RecordingState _state = RecordingState.Idle;
 
+    [ObservableProperty]
+    private float _audioLevel; // 0.0 to 1.0, RMS of current audio chunk
+
+    [ObservableProperty]
+    private bool _isToggleMode;
+
     public event EventHandler<string>? TranscriptionCompleted;
     public event EventHandler<string>? TranscriptionFailed;
 
@@ -80,6 +86,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             var copy = new byte[count];
             Array.Copy(data, copy, count);
             _preConnectBuffer.Add((copy, count));
+            AudioLevel = ComputeRms(data, count);
         };
 
         await _audio.StartAsync(_settings.AudioDeviceId, bufferChunk, ct);
@@ -109,6 +116,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             await _audio.StartAsync(_settings.AudioDeviceId, (data, count) =>
             {
                 _wavStream?.Write(data, 0, count);
+                AudioLevel = ComputeRms(data, count);
             }, ct);
         }
     }
@@ -122,6 +130,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
         var duration = (DateTime.UtcNow - _recordingStartTime).TotalSeconds;
 
         State = RecordingState.Transcribing;
+        AudioLevel = 0f;
 
         try
         {
@@ -205,5 +214,25 @@ public sealed partial class VoxScriptEngine : ObservableObject
         await (_activeSession?.CancelAsync() ?? Task.CompletedTask);
         _activeSession = null;
         State = RecordingState.Idle;
+        AudioLevel = 0f;
+    }
+
+    /// <summary>
+    /// Compute RMS of 16-bit PCM samples, normalized to 0.0–1.0.
+    /// </summary>
+    private static float ComputeRms(byte[] data, int count)
+    {
+        int sampleCount = count / 2; // 16-bit = 2 bytes per sample
+        if (sampleCount == 0) return 0f;
+
+        double sumSquares = 0;
+        for (int i = 0; i < count - 1; i += 2)
+        {
+            short sample = (short)(data[i] | (data[i + 1] << 8));
+            sumSquares += sample * (double)sample;
+        }
+
+        double rms = Math.Sqrt(sumSquares / sampleCount);
+        return (float)Math.Min(rms / short.MaxValue, 1.0);
     }
 }

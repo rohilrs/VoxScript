@@ -26,6 +26,11 @@ public sealed class GlobalHotkeyService : IDisposable
     public event EventHandler? RecordingToggleRequested;
     public event EventHandler? RecordingCancelRequested;
 
+    /// <summary>
+    /// True when recording is in toggle-locked mode (Space converted hold to toggle).
+    /// </summary>
+    public bool IsToggleMode => _toggleLocked;
+
     private IntPtr _hookHandle = IntPtr.Zero;
     private Win32NativeMethods.LowLevelKeyboardProc? _hookProc;
     private bool _disposed;
