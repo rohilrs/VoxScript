@@ -15,6 +15,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
     private readonly TranscriptionPipeline _pipeline;
     private readonly AppSettings _settings;
     private readonly IPasteService _paste;
+    private readonly ISoundEffectsService _sounds;
 
     private ITranscriptionSession? _activeSession;
     private string? _currentAudioPath;
@@ -44,13 +45,15 @@ public sealed partial class VoxScriptEngine : ObservableObject
         TranscriptionServiceRegistry registry,
         TranscriptionPipeline pipeline,
         AppSettings settings,
-        IPasteService paste)
+        IPasteService paste,
+        ISoundEffectsService sounds)
     {
         _audio = audio;
         _registry = registry;
         _pipeline = pipeline;
         _settings = settings;
         _paste = paste;
+        _sounds = sounds;
     }
 
     public async Task ToggleRecordAsync(ITranscriptionModel model)
@@ -129,6 +132,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             // if the user releases the hotkey during setup.
             _recordingStartTime = DateTime.UtcNow;
             State = RecordingState.Recording;
+            _sounds.PlayStart();
 
             // If the user released the hotkey during startup, immediately stop.
             if (_stopRequestedDuringStartup)
@@ -171,6 +175,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
         var duration = (DateTime.UtcNow - _recordingStartTime).TotalSeconds;
 
         State = RecordingState.Transcribing;
+        _sounds.PlayStop();
         AudioLevel = 0f;
 
         try
@@ -265,6 +270,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
         await (_activeSession?.CancelAsync() ?? Task.CompletedTask);
         _activeSession = null;
         State = RecordingState.Idle;
+        _sounds.PlayStop();
         AudioLevel = 0f;
     }
 
