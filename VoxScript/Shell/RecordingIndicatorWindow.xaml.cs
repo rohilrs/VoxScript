@@ -10,6 +10,8 @@ using Microsoft.UI.Xaml.Media.Animation;
 using VoxScript.Core.Transcription.Core;
 using VoxScript.ViewModels;
 using WinRT.Interop;
+using Microsoft.UI.Composition;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Windows.Graphics;
 
 namespace VoxScript.Shell;
@@ -24,7 +26,6 @@ public sealed partial class RecordingIndicatorWindow : Window
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOACTIVATE = 0x0010;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
-    private const int PillWidth = 360;
     private const int PillHeight = 48;
     private const int BottomMargin = 40;
 
@@ -40,7 +41,10 @@ public sealed partial class RecordingIndicatorWindow : Window
 
         _bars = [Bar0, Bar1, Bar2, Bar3, Bar4, Bar5, Bar6];
 
-        // Force dark theme so the window background is dark, not white
+        // Fully transparent window — only the pill Border is visible
+        SystemBackdrop = new TransparentBackdrop();
+
+        // Force dark theme for consistent element styling
         if (Content is FrameworkElement fe)
             fe.RequestedTheme = ElementTheme.Dark;
 
@@ -119,6 +123,10 @@ public sealed partial class RecordingIndicatorWindow : Window
         ButtonSeparator.Visibility = Visibility.Collapsed;
         FinishButton.Visibility = Visibility.Collapsed;
         CancelButton.Visibility = Visibility.Collapsed;
+
+        // Resize and reposition the window to fit the current state's content
+        if (AppWindow.IsVisible)
+            PositionBottomCenter();
 
         switch (_viewModel.State)
         {
@@ -230,6 +238,9 @@ public sealed partial class RecordingIndicatorWindow : Window
             StatusText.Text = "Pasted";
             StatusText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(0xFF, 0x33, 0x99, 0x66));
             PillBorder.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(0x66, 0x33, 0x99, 0x66));
+
+            // Shrink window to fit the compact "Pasted" content
+            ResizeWindowForWidth(160);
         });
 
         await Task.Delay(1000);
@@ -285,29 +296,34 @@ public sealed partial class RecordingIndicatorWindow : Window
         var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
         SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-        // Disable Windows 11 DWM rounded corners — eliminates the white frame
-        int cornerPref = 1; // DWMWCP_DONOTROUND
-        DwmSetWindowAttribute(hwnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */,
-            ref cornerPref, sizeof(int));
-
-        // Set DWM border and caption color to match our dark background
-        int darkColor = 0x001E1E1E; // COLORREF: 0x00BBGGRR
-        DwmSetWindowAttribute(hwnd, 34 /* DWMWA_BORDER_COLOR */,
-            ref darkColor, sizeof(int));
-        DwmSetWindowAttribute(hwnd, 35 /* DWMWA_CAPTION_COLOR */,
-            ref darkColor, sizeof(int));
     }
 
     // ── Positioning ──────────────────────────────────────────
 
-    private void PositionBottomCenter()
+    private int GetPillWidthForState()
+    {
+        if (_viewModel is null) return 160;
+
+        return _viewModel.State switch
+        {
+            RecordingState.Idle => 160,
+            RecordingState.Recording => _viewModel.IsToggleMode ? 320 : 280,
+            RecordingState.Transcribing or RecordingState.Enhancing => 200,
+            _ => 200,
+        };
+    }
+
+    private void ResizeWindowForWidth(int logicalWidth) => PositionBottomCenter(logicalWidth);
+
+    private void PositionBottomCenter() => PositionBottomCenter(GetPillWidthForState());
+
+    private void PositionBottomCenter(int pillWidth)
     {
         var hwnd = WindowNative.GetWindowHandle(this);
         var dpi = GetDpiForWindow(hwnd);
         var scale = dpi / 96.0;
 
-        var physicalWidth = (int)(PillWidth * scale);
+        var physicalWidth = (int)(pillWidth * scale);
         var physicalHeight = (int)(PillHeight * scale);
 
         var monitor = MonitorFromWindow(hwnd, 0x00000002); // MONITOR_DEFAULTTONEAREST
@@ -343,9 +359,6 @@ public sealed partial class RecordingIndicatorWindow : Window
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
 
-    [DllImport("dwmapi.dll", PreserveSig = true)]
-    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
-
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT
     {
@@ -362,6 +375,39 @@ public sealed partial class RecordingIndicatorWindow : Window
         public RECT rcMonitor;
         public RECT rcWork;
         public uint dwFlags;
+    }
+}
+
+// ── Transparent backdrop (polyfill for TransparentTintBackdrop) ──
+// Uses DesktopAcrylicController with zero opacity to achieve full transparency.
+
+internal sealed class TransparentBackdrop : SystemBackdrop
+{
+    private DesktopAcrylicController? _controller;
+
+    protected override void OnTargetConnected(
+        ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
+    {
+        base.OnTargetConnected(connectedTarget, xamlRoot);
+        _controller = new DesktopAcrylicController
+        {
+            TintColor = Windows.UI.Color.FromArgb(0, 0, 0, 0),
+            TintOpacity = 0f,
+            LuminosityOpacity = 0f,
+            FallbackColor = Windows.UI.Color.FromArgb(0, 0, 0, 0)
+        };
+        _controller.AddSystemBackdropTarget(connectedTarget);
+        _controller.SetSystemBackdropConfiguration(
+            GetDefaultSystemBackdropConfiguration(connectedTarget, xamlRoot));
+    }
+
+    protected override void OnTargetDisconnected(
+        ICompositionSupportsSystemBackdrop disconnectedTarget)
+    {
+        base.OnTargetDisconnected(disconnectedTarget);
+        _controller?.RemoveSystemBackdropTarget(disconnectedTarget);
+        _controller?.Dispose();
+        _controller = null;
     }
 }
 
