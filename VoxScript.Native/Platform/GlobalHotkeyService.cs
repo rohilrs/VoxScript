@@ -70,6 +70,7 @@ public sealed class GlobalHotkeyService : IDisposable
 
     // Track trigger key state to suppress key-repeat floods
     private bool _triggerKeyHeld;
+    private bool _pasteLastKeyHeld;
 
     // Deferred stop: when hold modifiers release, delay stop briefly so Space
     // can still arrive and convert to toggle (Win+Space OS interception workaround)
@@ -294,12 +295,16 @@ public sealed class GlobalHotkeyService : IDisposable
             }
 
             // 3. Check paste-last hotkey (e.g. Alt+Shift+Z)
-            if (!consumed && _pasteLastCombo is { TriggerKey: not null } plc
-                && isDown && vkCode == plc.TriggerKey
-                && currentMods == plc.Modifiers)
+            if (_pasteLastCombo is { TriggerKey: not null } plc && vkCode == plc.TriggerKey)
             {
-                ThreadPool.QueueUserWorkItem(_ => PasteLastRequested?.Invoke());
-                consumed = true;
+                if (isUp) _pasteLastKeyHeld = false;
+                else if (isDown && _pasteLastKeyHeld) { /* repeat — ignore */ }
+                else if (isDown && !consumed && currentMods == plc.Modifiers)
+                {
+                    _pasteLastKeyHeld = true;
+                    ThreadPool.QueueUserWorkItem(_ => PasteLastRequested?.Invoke());
+                    consumed = true;
+                }
             }
         }
 
