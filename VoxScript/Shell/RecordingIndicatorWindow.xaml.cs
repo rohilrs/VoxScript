@@ -149,12 +149,17 @@ public sealed partial class RecordingIndicatorWindow : Window
         switch (_viewModel.State)
         {
             case RecordingState.Idle:
-                IdleMicIcon.Visibility = Visibility.Visible;
-                StatusText.Visibility = Visibility.Visible;
-                StatusText.Text = "Ready";
-                StatusText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(0xFF, 0x88, 0x88, 0x88));
-
                 StopPulsingDot();
+                // Only show Ready state in AlwaysVisible mode.
+                // In DuringRecording mode, the window is about to be hidden
+                // (via cancel or dismiss-with-pasted), so don't flash Ready.
+                if (_viewModel.IsAlwaysVisible)
+                {
+                    IdleMicIcon.Visibility = Visibility.Visible;
+                    StatusText.Visibility = Visibility.Visible;
+                    StatusText.Text = "Ready";
+                    StatusText.Foreground = new SolidColorBrush(ColorHelper.FromArgb(0xFF, 0x88, 0x88, 0x88));
+                }
                 break;
 
             case RecordingState.Recording:
