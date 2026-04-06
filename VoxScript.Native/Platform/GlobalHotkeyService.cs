@@ -25,6 +25,7 @@ public sealed class GlobalHotkeyService : IDisposable
     public event EventHandler? RecordingStopRequested;
     public event EventHandler? RecordingToggleRequested;
     public event EventHandler? RecordingCancelRequested;
+    public event Action? ToggleLockActivated;
 
     /// <summary>
     /// True when recording is in toggle-locked mode (Space converted hold to toggle).
@@ -217,6 +218,7 @@ public sealed class GlobalHotkeyService : IDisposable
                     _awaitModRelease = true; // must release mods before hold can stop toggle
                     CancelDeferredStop();
                     Log.Debug("Hold converted to toggle-locked mode");
+                    ThreadPool.QueueUserWorkItem(_ => ToggleLockActivated?.Invoke());
                     consumed = true;
                 }
                 else if (_toggleLocked)

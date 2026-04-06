@@ -9,6 +9,7 @@ using VoxScript.Core.Settings;
 using VoxScript.Core.Transcription.Core;
 using VoxScript.Core.Transcription.Models;
 using ITranscriptionModel = VoxScript.Core.Transcription.Models.ITranscriptionModel;
+using VoxScript.Core.Audio;
 using VoxScript.Infrastructure;
 using VoxScript.Native.Platform;
 using VoxScript.Native.Whisper;
@@ -160,6 +161,12 @@ public partial class App : Application
                 await engine.CancelRecordingAsync();
             });
         };
+        var soundService = ServiceLocator.Get<ISoundEffectsService>();
+        _hotkey.ToggleLockActivated += () =>
+        {
+            soundService.PlayToggle();
+        };
+
         // Apply saved hotkey bindings from settings
         var settings = ServiceLocator.Get<AppSettings>();
         var holdCombo = VoxScript.Helpers.HotkeySerializer.Parse(settings.HoldHotkey);
