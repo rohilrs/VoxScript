@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VoxScript.Views.DictionaryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BrandBackgroundBrush}"
+    Loaded="Page_Loaded">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel HorizontalAlignment="Stretch"
+                    Padding="60,40" Spacing="24">
+
+            <!-- Page Title -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Dictionary"
+                           FontFamily="Georgia" FontSize="40"
+                           Foreground="{StaticResource BrandForegroundBrush}" />
+                <TextBlock Text="Custom words and correction rules to improve transcription accuracy"
+                           FontSize="14"
+                           Foreground="{StaticResource BrandMutedBrush}" />
+            </StackPanel>
+
+            <!-- Card 1: Words -->
+            <Border Background="{StaticResource BrandCardBrush}"
+                    CornerRadius="16" Padding="28"
+                    BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                    BorderThickness="1">
+                <StackPanel Spacing="20">
+                    <!-- Header -->
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE82D;" FontSize="18"
+                                      Foreground="{StaticResource BrandPrimaryBrush}" />
+                            <TextBlock Text="VOCABULARY" FontSize="12" FontWeight="Medium"
+                                       CharacterSpacing="120"
+                                       Foreground="{StaticResource BrandMutedBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ComboBox x:Name="WordSortCombo"
+                                  HorizontalAlignment="Right"
+                                  SelectedIndex="0"
+                                  SelectionChanged="WordSortCombo_SelectionChanged"
+                                  MinWidth="140">
+                            <ComboBoxItem Content="Newest first" />
+                            <ComboBoxItem Content="Oldest first" />
+                            <ComboBoxItem Content="Alphabetical" />
+                        </ComboBox>
+                    </Grid>
+
+                    <!-- Add form -->
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="NewWordBox"
+                                 PlaceholderText="Add a word or phrase..."
+                                 FontSize="14" />
+                        <Button Grid.Column="1"
+                                Content="Add"
+                                Click="AddWordButton_Click"
+                                Background="{StaticResource BrandPrimaryBrush}"
+                                Foreground="White"
+                                FontSize="14" FontWeight="Medium"
+                                CornerRadius="8" Padding="24,8"
+                                VerticalAlignment="Bottom" />
+                    </Grid>
+
+                    <Border Height="1" Background="{StaticResource BrandPrimaryLightBrush}" />
+
+                    <StackPanel x:Name="WordList" Spacing="0" />
+
+                    <StackPanel x:Name="WordEmptyState" HorizontalAlignment="Center" Spacing="6"
+                                Padding="0,24" Visibility="Collapsed">
+                        <TextBlock Text="No custom words yet"
+                                   FontSize="14" Foreground="{StaticResource BrandMutedBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <TextBlock x:Name="WordCountText" FontSize="13"
+                               Foreground="{StaticResource BrandMutedBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Card 2: Corrections -->
+            <Border Background="{StaticResource BrandCardBrush}"
+                    CornerRadius="16" Padding="28"
+                    BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                    BorderThickness="1">
+                <StackPanel Spacing="20">
+                    <!-- Header -->
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8AC;" FontSize="18"
+                                      Foreground="{StaticResource BrandPrimaryBrush}" />
+                            <TextBlock Text="CORRECTIONS" FontSize="12" FontWeight="Medium"
+                                       CharacterSpacing="120"
+                                       Foreground="{StaticResource BrandMutedBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                            <Button Content="＋ Add correction"
+                                    Click="AddCorrectionButton_Click"
+                                    Background="{StaticResource BrandPrimaryBrush}"
+                                    Foreground="White"
+                                    FontSize="13" FontWeight="Medium"
+                                    CornerRadius="8" Padding="16,6" />
+                            <ComboBox x:Name="CorrectionSortCombo"
+                                      SelectedIndex="0"
+                                      SelectionChanged="CorrectionSortCombo_SelectionChanged"
+                                      MinWidth="140">
+                                <ComboBoxItem Content="Newest first" />
+                                <ComboBoxItem Content="Oldest first" />
+                                <ComboBoxItem Content="Alphabetical" />
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Fix common transcription errors — when VoxScript writes the wrong word, add a rule to correct it"
+                               FontSize="13" Foreground="{StaticResource BrandMutedBrush}" />
+
+                    <Border Height="1" Background="{StaticResource BrandPrimaryLightBrush}" />
+
+                    <StackPanel x:Name="CorrectionList" Spacing="0" />
+
+                    <StackPanel x:Name="CorrectionEmptyState" HorizontalAlignment="Center" Spacing="6"
+                                Padding="0,24" Visibility="Collapsed">
+                        <TextBlock Text="No correction rules yet"
+                                   FontSize="14" Foreground="{StaticResource BrandMutedBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <TextBlock x:Name="CorrectionCountText" FontSize="13"
+                               Foreground="{StaticResource BrandMutedBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <Border Height="20" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

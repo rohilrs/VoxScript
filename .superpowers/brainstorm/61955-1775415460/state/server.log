@@ -1,0 +1,2 @@
+{"type":"server-started","port":60960,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:60960","screen_dir":"/mnt/e/Documents/VoiceInk-Windows/.superpowers/brainstorm/61955-1775415460/content","state_dir":"/mnt/e/Documents/VoiceInk-Windows/.superpowers/brainstorm/61955-1775415460/state"}
+{"type":"server-stopped","reason":"idle timeout"}

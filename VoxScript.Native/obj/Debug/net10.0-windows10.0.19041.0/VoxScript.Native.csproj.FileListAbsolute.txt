@@ -1,0 +1,15 @@
+E:\Documents\VoiceInk-Windows\VoxScript.Native\bin\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.deps.json
+E:\Documents\VoiceInk-Windows\VoxScript.Native\bin\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.dll
+E:\Documents\VoiceInk-Windows\VoxScript.Native\bin\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.pdb
+E:\Documents\VoiceInk-Windows\VoxScript.Native\bin\Debug\net10.0-windows10.0.19041.0\VoxScript.Core.dll
+E:\Documents\VoiceInk-Windows\VoxScript.Native\bin\Debug\net10.0-windows10.0.19041.0\VoxScript.Core.pdb
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.csproj.AssemblyReference.cache
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.GeneratedMSBuildEditorConfig.editorconfig
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.AssemblyInfoInputs.cache
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.AssemblyInfo.cs
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.csproj.CoreCompileInputs.cache
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScrip.13C2A50F.Up2Date
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.dll
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\refint\VoxScript.Native.dll
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\VoxScript.Native.pdb
+E:\Documents\VoiceInk-Windows\VoxScript.Native\obj\Debug\net10.0-windows10.0.19041.0\ref\VoxScript.Native.dll

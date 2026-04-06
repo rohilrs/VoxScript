@@ -1,0 +1,232 @@
+# VoxScript — Development Status
+
+Last updated: 2026-04-05
+
+## Overview
+
+Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from VoiceInk (macOS Swift/SwiftUI). ~120 C# files, 14 XAML files, 57+ passing tests.
+
+**Solution structure:** VoxScript.Core (business logic) → VoxScript.Native (Win32/interop) → VoxScript (WinUI 3 app)
+
+---
+
+## What's Working
+
+### Core Transcription
+- [x] Record audio from default microphone (WASAPI via NAudio)
+- [x] Local transcription via whisper.cpp (pre-built v1.8.4 DLL, CPU-only)
+- [x] Silero VAD integration (strips silence before transcription)
+- [x] Auto-download whisper model on first run (default: ggml-base.en)
+- [x] Transcript displayed in UI after recording stops
+- [x] Copy transcript to clipboard button
+- [x] Auto-paste transcription to focused window (Win32 clipboard + keybd_event)
+- [x] Transcription pipeline error handling (graceful degradation per step)
+
+### Global Hotkeys
+- [x] Low-level keyboard hook (WH_KEYBOARD_LL) with GetModuleHandle
+- [x] Ctrl+Win held = push-to-talk (immediate start, release to stop)
+- [x] Space during hold = toggle mode (lock recording on, release keys freely)
+- [x] Ctrl+Win or Ctrl+Win+Space while toggle-locked = stop
+- [x] Deferred stop (200ms) to handle Win+Space OS interception
+- [x] Key repeat suppression for Space
+- [x] Configurable keybinds via Settings page (recorder-style capture using GetAsyncKeyState)
+
+### UI (WinUI 3 + Mica)
+- [x] Custom brand theme (warm palette, Georgia serif headings, Mica backdrop)
+- [x] Waveform logo in nav sidebar
+- [x] Home/TranscribePage — record button, transcript card, status indicators
+- [x] Navigation sidebar: Home, Dictionary, Expansions, History, Personalize, Notes, Settings
+- [x] Light theme with visible caption buttons (min/max/close)
+- [x] System tray (minimize to tray on close, tray icon with tooltip)
+- [x] Minimum window size enforced (900×600)
+
+### Settings Page
+- [x] Grouped cards layout (Keybinds, Input, App, Sound, Extras)
+- [x] Keybind configuration with inline recorder (GetAsyncKeyState polling for Win key)
+- [x] Reset keybinds to defaults
+- [x] Microphone selection (auto-detect + enumerated devices)
+- [x] Language selection (whisper supported languages)
+- [x] Toggle settings: launch at login, minimize to tray, dictation sounds, smart formatting
+- [x] Disabled toggles for unimplemented features (recording indicator, pause media, auto-dictionary)
+- [x] Auto-save all changes immediately via AppSettings → LocalSettingsStore
+- [x] Model management dialog (download/delete/import/use models, accessible from Input card)
+- [x] GPU system info logged on model load (Vulkan/AVX2 detection via whisper_print_system_info)
+
+### Expansions Page (formerly Shortcuts)
+- [x] Add/edit via centered popup dialog with multi-line "Replace with" field
+- [x] Case-sensitive option per expansion
+- [x] Sort: newest, oldest, alphabetical
+- [x] Edit and delete with confirmation dialogs
+- [x] Backed by WordReplacementRepository → SQLite
+
+### Dictionary Page
+- [x] Two sections: Vocabulary (custom words) and Corrections (misspelling → fix)
+- [x] Add, edit (popup dialog), delete with confirmation
+- [x] Sort: newest, oldest, alphabetical (both sections)
+- [x] Vocabulary backed by VocabularyRepository, Corrections by CorrectionRepository
+
+### History Page
+- [x] Transcriptions grouped by date (Today, Yesterday, or full date)
+- [x] Sorted by time within each group (newest first)
+- [x] Full text always displayed (no truncation)
+- [x] Metadata badges: model name, "✨ Enhanced" for AI-enhanced
+- [x] Copy to clipboard with visual feedback (checkmark for 1.5s)
+- [x] Delete with confirmation dialog
+- [x] Search with 300ms debounce (filters text and enhanced text)
+- [x] Pagination: loads past 30 days, "Load more" for older
+
+### Infrastructure
+- [x] EF Core + SQLite database (auto-created on startup)
+- [x] Settings persistence (JSON file at %LOCALAPPDATA%\VoxScript\settings.json)
+- [x] Serilog logging (rolling daily to %LOCALAPPDATA%\VoxScript\Logs\)
+- [x] DI container (all services wired in AppBootstrapper)
+- [x] 57 unit tests passing (settings, hotkey serialization, transcription filters, word replacements, etc.)
+
+### AI Enhancement + Context Modes
+- [x] AI Enhancement service (OpenAI, Anthropic, Ollama backends) with UI config
+- [x] Provider selection and API key management in Settings
+- [x] Tabbed Personalize page — one tab per context mode (Personal Messages, Work Messages, Email, + custom)
+- [x] Each mode: style preset cards, editable app chips (add/remove), URL chips (add/remove), custom prompt
+- [x] Enhancement only fires when a context mode matches the active app (no default fallback)
+- [x] Auto-detects active app via process name + browser URL matching
+- [x] Context badge on TranscribePage showing matched mode + app
+- [x] SQLite persistence with first-run seeding of 3 built-in modes
+- [x] User can add/delete custom modes, edit all built-in modes
+
+### Backend Services (code exists, not yet exposed in UI)
+- [x] Cloud transcription (OpenAI Whisper API, OpenAI-compatible endpoints)
+- [x] WebSocket streaming providers (Deepgram, ElevenLabs)
+- [x] Transcription output filter (hallucination stripping)
+- [x] Text formatter + filler word removal
+- [x] Power Mode manager (process name, URL, window title matching)
+- [x] Active window detection + browser URL extraction
+- [x] Parakeet ONNX Runtime backend (mel spectrogram, CTC decoder)
+- [x] Windows Credential Manager for API keys
+- [x] Launch at startup (registry-based)
+- [x] Model download manager (HuggingFace URLs, progress reporting)
+
+---
+
+## What's Not Working / Outstanding
+
+### High Priority — Core Experience
+
+3. **GPU acceleration (Vulkan)** — DONE
+   - Vulkan-enabled whisper.cpp DLLs built and deployed to NativeBinaries/x64/
+   - ggml-vulkan.dll auto-discovered at runtime by whisper.cpp backend system
+   - `whisper_print_system_info` logged after model load (check Serilog for "Whisper system info: ... VULKAN = 1")
+   - Files: `native/whisper/build.ps1`, `WhisperNativeMethods.cs`, `WhisperBackend.cs`
+
+### Medium Priority — Feature Parity with VoiceInk
+
+9. **AI Enhancement + Context Modes** — DONE
+   - Settings page: AI Enhancement card (enable toggle, provider dropdown, model name, API keys, Ollama endpoint)
+   - Personalize page: tabbed context modes (Personal Messages, Work Messages, Email, + custom)
+   - Each mode tab: style preset cards, editable app chips, URL chips, custom prompt (Custom preset only)
+   - Enhancement only fires when a context mode matches the active app (no default fallback)
+   - AIService refactored to explicit provider routing with configurable model/endpoint
+   - TranscriptionPipeline resolves Power Mode before enhancement, context badge on TranscribePage
+   - SQLite persistence with first-run seeding of 3 built-in modes
+
+10. ~~**Streaming transcription UI**~~ — DROPPED
+    - Local Whisper + Vulkan GPU is fast enough; streaming adds cloud cost/dependency for marginal UX gain
+    - Post-processing pipeline (hallucination filter, word replacement, AI enhancement) requires complete transcript
+    - Deepgram/ElevenLabs provider code remains if ever needed
+
+13. **Custom sounds**
+    - Toggle exists in Settings but no audio files are bundled yet
+    - Need start/stop recording audio cues
+
+### Low Priority — Polish
+
+14. **Models management page** — DONE (dialog-based)
+    - Model management dialog accessible from Settings > Input > "Manage models" button
+    - Lists predefined models (download/use/delete), shows active model badge
+    - Import local .bin files via file picker, download from arbitrary URL
+    - Hot-swaps model into WhisperBackend without app restart
+    - Files: `ModelManagementDialog.cs`, `ModelManagementViewModel.cs`, `SettingsPage.xaml`, `SettingsViewModel.cs`
+
+15. **Parakeet models** — backend exists but untested
+    - ONNX Runtime + DirectML, mel spectrogram, tokenizer stub
+    - Need to verify model export from NeMo and end-to-end inference
+
+16. **Recording indicator bar** — toggle in Settings, not yet implemented
+    - Floating always-on-top compact widget at bottom of screen during recording
+    - Should appear when app is minimized to tray and hotkey activates recording
+
+17. **Pause media while dictating** — toggle in Settings, not yet implemented
+    - Need COM interop with Windows audio sessions to mute/pause other apps
+
+18. **Auto-add to dictionary** — toggle in Settings, not yet implemented
+    - Automatically add frequently used words to vocabulary
+
+19. **Paste last transcript** — keybind exists (Alt+Shift+Z), backend not wired
+    - Need to track last transcription result and paste on hotkey
+
+20. **Notes page** — placeholder, purpose TBD
+
+21. **Onboarding flow** — no first-run wizard
+
+22. **Import/export** — dictionary, expansions, corrections, and history
+
+23. **Screen/clipboard context capture** for AI enhancement
+
+---
+
+## File Layout
+
+```
+VoxScript.slnx
+├── VoxScript.Core/          (business logic, no platform refs)
+│   ├── Audio/               IAudioCaptureService, AudioFormat, AudioDeviceInfo
+│   ├── Transcription/
+│   │   ├── Core/            VoxScriptEngine, TranscriptionPipeline, sessions, registry
+│   │   ├── Models/          ITranscriptionModel, PredefinedModels, ModelProvider
+│   │   ├── Batch/           LocalTranscriptionService, CloudTranscriptionService
+│   │   ├── Streaming/       Deepgram, ElevenLabs providers, StreamingTranscriptionService
+│   │   └── Processing/      OutputFilter, TextFormatter, WordReplacement, FillerWords
+│   ├── AI/                  AIEnhancementService, AIService, PromptDetection
+│   ├── PowerMode/           PowerModeConfig, Manager, SessionManager
+│   ├── Settings/            ISettingsStore, AppSettings, ApiKeyManager
+│   ��── Dictionary/          Vocabulary, WordReplacement, Correction repositories
+│   ├─�� History/             ITranscriptionRepository, TranscriptionRepository
+│   ├── Persistence/         EF Core entities, AppDbContext
+│   ├── Platform/            IPasteService
+��   └── Common/              Result<T>
+├── VoxScript.Native/        (Win32 interop, P/Invoke)
+│   ├── Whisper/             WhisperBackend, NativeMethods, ModelManager, SileroVAD
+│   ├── Parakeet/            ParakeetBackend, MelSpectrogram, WordAgreementEngine
+│   ├── Audio/               WasapiCaptureService, AudioFormatConverter
+│   ├── Platform/            GlobalHotkeyService, CursorPasterService, ActiveWindowService
+│   └── Storage/             LocalSettingsStore
+├��─ VoxScript/               (WinUI 3 app)
+│   ├��─ Views/               TranscribePage, SettingsPage, ExpansionsPage, DictionaryPage, HistoryPage + placeholders
+│   ├── ViewModels/          SettingsViewModel, ExpansionsViewModel, DictionaryViewModel, HistoryViewModel
+│   ├── Helpers/             HotkeySerializer, DialogHelper
+│   ├── Styles/              AppColors.xaml (brand theme)
+│   ├── Shell/               MainWindow, SystemTrayManager
+│   ├── Infrastructure/      AppBootstrapper, ServiceLocator, AppLogger, StartupRegistration
+│   └── Converters/          NullToVisibility, InvertedBoolToVisibility
+├── VoxScript.Tests/         57 tests (xUnit + FluentAssertions + NSubstitute)
+└── native/whisper/          build.ps1 + whisper.cpp source
+```
+
+## How to Run
+
+```powershell
+# From the solution root (E:\Documents\VoiceInk-Windows):
+dotnet run --project VoxScript
+```
+
+First launch downloads ggml-base.en (~142MB) automatically. whisper.dll (pre-built v1.8.4) is included in NativeBinaries/x64/.
+
+## Key Technical Decisions
+
+- **whisper.cpp via pointer-based API** — uses `whisper_full_default_params_by_ref` to avoid struct marshaling ABI issues
+- **Silero VAD** — ONNX Runtime inference strips silence before whisper, reducing hallucinations
+- **JSON settings** — `LocalSettingsStore` uses a JSON file instead of `ApplicationData` (app runs unpackaged)
+- **ILocalTranscriptionBackend** — Core-level interface that WhisperBackend implements, avoiding Core→Native dependency
+- **Default model: ggml-base.en** — fast enough for CPU; switch to large-v3-turbo once Vulkan build is enabled
+- **Win32 clipboard + keybd_event** — WinRT Clipboard requires foreground; keybd_event avoids UIPI blocks that SendInput hits
+- **GetAsyncKeyState for keybind recording** — WinUI KeyDown doesn't see Win key (OS intercepts Win+Space for input switching)
+- **Deferred hold-stop (200ms)** — Windows sends Win keyup before Space keydown due to Win+Space interception; timer allows Space to still convert hold to toggle

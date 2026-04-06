@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VoxScript.Views.ExpansionsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BrandBackgroundBrush}"
+    Loaded="Page_Loaded">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel HorizontalAlignment="Stretch"
+                    Padding="60,40" Spacing="24">
+
+            <!-- Page Title -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Expansions"
+                           FontFamily="Georgia" FontSize="40"
+                           Foreground="{StaticResource BrandForegroundBrush}" />
+                <TextBlock Text="Shorthand phrases that auto-expand when you speak"
+                           FontSize="14"
+                           Foreground="{StaticResource BrandMutedBrush}" />
+            </StackPanel>
+
+            <!-- Main card -->
+            <Border Background="{StaticResource BrandCardBrush}"
+                    CornerRadius="16" Padding="28"
+                    BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                    BorderThickness="1">
+                <StackPanel Spacing="20">
+
+                    <!-- Header row: Add button + sort -->
+                    <Grid>
+                        <Button Content="＋ Add expansion"
+                                HorizontalAlignment="Left"
+                                Click="AddButton_Click"
+                                Background="{StaticResource BrandPrimaryBrush}"
+                                Foreground="White"
+                                FontSize="14" FontWeight="Medium"
+                                CornerRadius="8" Padding="20,8" />
+
+                        <ComboBox x:Name="SortCombo"
+                                  HorizontalAlignment="Right"
+                                  SelectedIndex="0"
+                                  SelectionChanged="SortCombo_SelectionChanged"
+                                  MinWidth="140">
+                            <ComboBoxItem Content="Newest first" />
+                            <ComboBoxItem Content="Oldest first" />
+                            <ComboBoxItem Content="Alphabetical" />
+                        </ComboBox>
+                    </Grid>
+
+                    <!-- Divider -->
+                    <Border Height="1" Background="{StaticResource BrandPrimaryLightBrush}" />
+
+                    <!-- Expansion list -->
+                    <StackPanel x:Name="ExpansionsList" Spacing="0" />
+
+                    <!-- Empty state -->
+                    <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" Spacing="6"
+                                Padding="0,32" Visibility="Collapsed">
+                        <FontIcon Glyph="&#xE92E;" FontSize="36"
+                                  Foreground="{StaticResource BrandMutedBrush}"
+                                  HorizontalAlignment="Center" Opacity="0.3" />
+                        <TextBlock Text="No expansions yet"
+                                   FontSize="16"
+                                   Foreground="{StaticResource BrandMutedBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock Text="Click 'Add expansion' to create your first shorthand"
+                                   FontSize="13"
+                                   Foreground="{StaticResource BrandMutedBrush}"
+                                   HorizontalAlignment="Center" Opacity="0.6" />
+                    </StackPanel>
+
+                    <!-- Count -->
+                    <TextBlock x:Name="CountText"
+                               FontSize="13"
+                               Foreground="{StaticResource BrandMutedBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <Border Height="20" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

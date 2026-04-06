@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="VoxScript.Core/VoxScript.Core.csproj" />
+  <Project Path="VoxScript.Native/VoxScript.Native.csproj" />
+  <Project Path="VoxScript.Tests/VoxScript.Tests.csproj" />
+  <Project Path="VoxScript/VoxScript.csproj" />
+</Solution>

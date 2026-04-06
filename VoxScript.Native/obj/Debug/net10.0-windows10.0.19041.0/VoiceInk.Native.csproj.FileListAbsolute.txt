@@ -1,0 +1,15 @@
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\bin\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.deps.json
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\bin\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.dll
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\bin\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.pdb
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\bin\Debug\net10.0-windows10.0.19041.0\VoiceInk.Core.dll
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\bin\Debug\net10.0-windows10.0.19041.0\VoiceInk.Core.pdb
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.csproj.AssemblyReference.cache
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.GeneratedMSBuildEditorConfig.editorconfig
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.AssemblyInfoInputs.cache
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.AssemblyInfo.cs
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.csproj.CoreCompileInputs.cache
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.10289A58.Up2Date
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.dll
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\refint\VoiceInk.Native.dll
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\VoiceInk.Native.pdb
+E:\Documents\VoiceInk-Windows\VoiceInk.Native\obj\Debug\net10.0-windows10.0.19041.0\ref\VoiceInk.Native.dll
