@@ -24,8 +24,8 @@ public sealed partial class RecordingIndicatorWindow : Window
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOACTIVATE = 0x0010;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
-    private const int PillWidth = 420;
-    private const int PillHeight = 52;
+    private const int PillWidth = 360;
+    private const int PillHeight = 48;
     private const int BottomMargin = 40;
 
     private RecordingIndicatorViewModel? _viewModel;
@@ -39,6 +39,10 @@ public sealed partial class RecordingIndicatorWindow : Window
         InitializeComponent();
 
         _bars = [Bar0, Bar1, Bar2, Bar3, Bar4, Bar5, Bar6];
+
+        // Force dark theme so the window background is dark, not white
+        if (Content is FrameworkElement fe)
+            fe.RequestedTheme = ElementTheme.Dark;
 
         // Strip all window chrome — no border, no title bar, no resize handles
         ExtendsContentIntoTitleBar = true;
