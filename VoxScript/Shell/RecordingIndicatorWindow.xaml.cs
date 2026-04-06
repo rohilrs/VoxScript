@@ -24,8 +24,8 @@ public sealed partial class RecordingIndicatorWindow : Window
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOACTIVATE = 0x0010;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
-    private const int PillWidth = 400;
-    private const int PillHeight = 60;
+    private const int PillWidth = 340;
+    private const int PillHeight = 44;
     private const int BottomMargin = 40;
 
     private RecordingIndicatorViewModel? _viewModel;
@@ -40,8 +40,14 @@ public sealed partial class RecordingIndicatorWindow : Window
 
         _bars = [Bar0, Bar1, Bar2, Bar3, Bar4, Bar5, Bar6];
 
+        // Strip all window chrome — no border, no title bar, no resize handles
         ExtendsContentIntoTitleBar = true;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Collapsed;
+
+        var presenter = OverlappedPresenter.CreateForToolWindow();
+        presenter.SetBorderAndTitleBar(false, false);
+        presenter.IsResizable = false;
+        AppWindow.SetPresenter(presenter);
 
         _pulseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
         _pulseTimer.Tick += (_, _) =>
@@ -297,12 +303,6 @@ public sealed partial class RecordingIndicatorWindow : Window
         var y = workArea.bottom - physicalHeight - (int)(BottomMargin * scale);
 
         AppWindow.MoveAndResize(new RectInt32(x, y, physicalWidth, physicalHeight));
-
-        // Clip the window to a rounded rectangle so no background shows around the pill
-        var cornerDiameter = (int)(48 * scale); // 24px radius * 2
-        var rgn = CreateRoundRectRgn(0, 0, physicalWidth + 1, physicalHeight + 1,
-            cornerDiameter, cornerDiameter);
-        SetWindowRgn(hwnd, rgn, true);
     }
 
     // ── P/Invoke ─────────────────────────────────────────────
@@ -326,12 +326,6 @@ public sealed partial class RecordingIndicatorWindow : Window
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
-
-    [DllImport("gdi32.dll")]
-    private static extern IntPtr CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
-
-    [DllImport("user32.dll")]
-    private static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT
