@@ -193,12 +193,14 @@ public sealed partial class RecordingIndicatorWindow : Window
 
     private void UpdateWaveform(float level)
     {
-        var clamped = Math.Clamp(level, 0f, 1f);
+        // Amplify the signal so quiet speech still drives visible bar movement.
+        // sqrt gives a perceptual loudness curve; the 3x multiplier boosts range.
+        var boosted = (float)Math.Min(Math.Sqrt(level) * 3.0, 1.0);
         foreach (var bar in _bars)
         {
-            var variation = 0.6 + (_random.NextDouble() * 0.8); // 0.6 to 1.4
-            var height = 4.0 + (clamped * 18.0 * variation);
-            bar.Height = Math.Clamp(height, 4.0, 22.0);
+            var variation = 0.3 + (_random.NextDouble() * 1.4); // 0.3 to 1.7 — wider spread
+            var height = 3.0 + (boosted * 21.0 * variation);
+            bar.Height = Math.Clamp(height, 3.0, 24.0);
         }
     }
 
