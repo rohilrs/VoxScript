@@ -179,7 +179,14 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Works regardless of auto-paste setting; silently no-ops if no transcription yet
     - Files: `VoiceInkEngine.cs`, `GlobalHotkeyService.cs`, `App.xaml.cs`
 
-20. **Notes page** — placeholder, purpose TBD
+20. **Notes page** — DONE
+    - Two surfaces: list view in main window Notes tab + separate editor window (NoteEditorWindow)
+    - Master-detail layout in editor: sidebar note list + RichEditBox with formatting toolbar (B/I/U/bullet/number/checklist)
+    - Auto-save with 1s debounce, search with 300ms debounce, sort (newest/oldest/A-Z)
+    - Star button on History cards saves transcriptions to Notes as "Saved" items
+    - Singleton editor window pattern (reused on subsequent opens)
+    - NoteRecord entity in SQLite via EF Core, INoteRepository with full CRUD
+    - Files: `NoteRecord.cs`, `INoteRepository.cs`, `NoteRepository.cs`, `NotesViewModel.cs`, `NotesPage.xaml/.cs`, `NoteEditorWindow.xaml/.cs`
 
 21. **Onboarding flow** — no first-run wizard
 
