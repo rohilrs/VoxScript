@@ -8,10 +8,10 @@
     <Grid x:Name="RootGrid" Background="Transparent">
         <Border
             x:Name="PillBorder"
-            Background="#1E1E1E"
+            Background="#0A0A0A"
             CornerRadius="24"
             Padding="16,8,16,8"
-            BorderThickness="2"
+            BorderThickness="1"
             BorderBrush="#40FFFFFF">
 
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
