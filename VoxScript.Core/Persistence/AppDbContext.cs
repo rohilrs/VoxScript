@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VoxScript.Core.Notes;
 
 namespace VoxScript.Core.Persistence;
 
@@ -9,6 +10,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<WordReplacementRecord> WordReplacements => Set<WordReplacementRecord>();
     public DbSet<CorrectionRecord> Corrections => Set<CorrectionRecord>();
     public DbSet<PowerModeConfigRecord> PowerModeConfigs => Set<PowerModeConfigRecord>();
+    public DbSet<NoteRecord> Notes => Set<NoteRecord>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

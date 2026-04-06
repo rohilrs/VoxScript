@@ -79,6 +79,19 @@ public partial class App : Application
                 )
                 """);
 
+            db.Database.ExecuteSqlRaw("""
+                CREATE TABLE IF NOT EXISTS Notes (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Title TEXT NOT NULL DEFAULT '',
+                    ContentRtf TEXT NOT NULL DEFAULT '',
+                    ContentPlainText TEXT NOT NULL DEFAULT '',
+                    IsStarred INTEGER NOT NULL DEFAULT 0,
+                    SourceTranscriptionId INTEGER,
+                    CreatedAt TEXT NOT NULL DEFAULT '0001-01-01T00:00:00',
+                    ModifiedAt TEXT NOT NULL DEFAULT '0001-01-01T00:00:00'
+                )
+                """);
+
             Serilog.Log.Information("Database initialized");
         }
         catch (Exception ex)
