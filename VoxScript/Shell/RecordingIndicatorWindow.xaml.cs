@@ -24,8 +24,8 @@ public sealed partial class RecordingIndicatorWindow : Window
     private const uint SWP_NOSIZE = 0x0001;
     private const uint SWP_NOACTIVATE = 0x0010;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
-    private const int PillWidth = 340;
-    private const int PillHeight = 44;
+    private const int PillWidth = 420;
+    private const int PillHeight = 52;
     private const int BottomMargin = 40;
 
     private RecordingIndicatorViewModel? _viewModel;
@@ -281,6 +281,18 @@ public sealed partial class RecordingIndicatorWindow : Window
         var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
         SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+        // Disable Windows 11 DWM rounded corners — eliminates the white frame
+        int cornerPref = 1; // DWMWCP_DONOTROUND
+        DwmSetWindowAttribute(hwnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */,
+            ref cornerPref, sizeof(int));
+
+        // Set DWM border and caption color to match our dark background
+        int darkColor = 0x001E1E1E; // COLORREF: 0x00BBGGRR
+        DwmSetWindowAttribute(hwnd, 34 /* DWMWA_BORDER_COLOR */,
+            ref darkColor, sizeof(int));
+        DwmSetWindowAttribute(hwnd, 35 /* DWMWA_CAPTION_COLOR */,
+            ref darkColor, sizeof(int));
     }
 
     // ── Positioning ──────────────────────────────────────────
@@ -326,6 +338,9 @@ public sealed partial class RecordingIndicatorWindow : Window
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+    [DllImport("dwmapi.dll", PreserveSig = true)]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct RECT
