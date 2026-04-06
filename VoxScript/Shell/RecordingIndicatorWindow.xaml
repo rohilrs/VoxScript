@@ -10,7 +10,7 @@
             x:Name="PillBorder"
             Background="#0A0A0A"
             CornerRadius="24"
-            Padding="16,8,16,8"
+            Padding="14,6,14,6"
             BorderThickness="1"
             BorderBrush="#40FFFFFF">
 

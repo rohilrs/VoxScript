@@ -31,7 +31,7 @@ public sealed partial class RecordingIndicatorWindow : Window
     private const uint SWP_NOACTIVATE = 0x0010;
     private const uint SWP_FRAMECHANGED = 0x0020;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
-    private const int PillHeight = 48;
+    private const int PillHeight = 40;
     private const int BottomMargin = 40;
 
     private RecordingIndicatorViewModel? _viewModel;
@@ -405,10 +405,10 @@ public sealed partial class RecordingIndicatorWindow : Window
 
         return _viewModel.State switch
         {
-            RecordingState.Idle => 160,
-            RecordingState.Recording => _viewModel.IsToggleMode ? 320 : 280,
-            RecordingState.Transcribing or RecordingState.Enhancing => 200,
-            _ => 200,
+            RecordingState.Idle => 140,
+            RecordingState.Recording => _viewModel.IsToggleMode ? 290 : 250,
+            RecordingState.Transcribing or RecordingState.Enhancing => 180,
+            _ => 180,
         };
     }
 
