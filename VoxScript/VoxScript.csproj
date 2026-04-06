@@ -36,4 +36,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Assets\Sounds\*.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
