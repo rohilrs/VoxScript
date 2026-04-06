@@ -150,9 +150,14 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - ONNX Runtime + DirectML, mel spectrogram, tokenizer stub
     - Need to verify model export from NeMo and end-to-end inference
 
-16. **Recording indicator bar** — toggle in Settings, not yet implemented
-    - Floating always-on-top compact widget at bottom of screen during recording
-    - Should appear when app is minimized to tray and hotkey activates recording
+16. **Recording indicator bar** — DONE
+    - Floating dark pill at bottom center of screen, fully transparent background (no window chrome)
+    - Settings dropdown: Off / Always visible / Only during recording (default)
+    - Recording state: pulsing red dot, animated waveform (noise-gated, sqrt loudness curve), elapsed timer
+    - Hold mode: Cancel (X) button; Toggle mode: adds Finish button
+    - Transcribing state: purple spinner; Pasted state: green checkmark → 1s linger → fade out
+    - Win32: WS_POPUP + DwmExtendFrameIntoClientArea + TransparentTintBackdrop for true transparency
+    - Files: `RecordingIndicatorWindow.xaml/.cs`, `RecordingIndicatorViewModel.cs`, `RecordingIndicatorMode.cs`
 
 17. **Pause media while dictating** — toggle in Settings, not yet implemented
     - Need COM interop with Windows audio sessions to mute/pause other apps
