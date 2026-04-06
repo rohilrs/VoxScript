@@ -133,9 +133,12 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Post-processing pipeline (hallucination filter, word replacement, AI enhancement) requires complete transcript
     - Deepgram/ElevenLabs provider code remains if ever needed
 
-13. **Custom sounds**
-    - Toggle exists in Settings but no audio files are bundled yet
-    - Need start/stop recording audio cues
+13. **Custom sounds** — DONE
+    - Three woodblock/click WAVs: start (~800Hz), toggle (~650Hz), stop (~500Hz double-tap)
+    - `SoundEffectsService` pre-loads WAVs, plays on state transitions in VoxScriptEngine
+    - Toggle sound fires via `ToggleLockActivated` event from GlobalHotkeyService
+    - Respects `SoundEffectsEnabled` setting toggle
+    - Files: `scripts/generate_sounds.py`, `Assets/Sounds/`, `SoundEffectsService.cs`, `ISoundEffectsService.cs`
 
 ### Low Priority — Polish
 
@@ -159,14 +162,22 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Win32: WS_POPUP + DwmExtendFrameIntoClientArea + TransparentTintBackdrop for true transparency
     - Files: `RecordingIndicatorWindow.xaml/.cs`, `RecordingIndicatorViewModel.cs`, `RecordingIndicatorMode.cs`
 
-17. **Pause media while dictating** — toggle in Settings, not yet implemented
-    - Need COM interop with Windows audio sessions to mute/pause other apps
+17. **Pause media while dictating** — DONE
+    - Sends VK_MEDIA_PLAY_PAUSE via keybd_event on recording start/stop
+    - Works with any app that responds to media keys (Spotify, browser, VLC)
+    - `MediaControlService` tracks paused state to avoid double-toggle
+    - Respects `PauseMediaWhileDictating` setting; toggle now enabled in Settings
+    - Files: `IMediaControlService.cs`, `MediaControlService.cs`, `VoiceInkEngine.cs`
 
 18. **Auto-add to dictionary** — toggle in Settings, not yet implemented
     - Automatically add frequently used words to vocabulary
 
-19. **Paste last transcript** — keybind exists (Alt+Shift+Z), backend not wired
-    - Need to track last transcription result and paste on hotkey
+19. **Paste last transcript** — DONE
+    - `VoxScriptEngine.LastTranscription` stores post-pipeline result
+    - `GlobalHotkeyService.PasteLastRequested` fires on Alt+Shift+Z (configurable)
+    - Wired in App.xaml.cs to call `IPasteService.PasteAtCursorAsync`
+    - Works regardless of auto-paste setting; silently no-ops if no transcription yet
+    - Files: `VoiceInkEngine.cs`, `GlobalHotkeyService.cs`, `App.xaml.cs`
 
 20. **Notes page** — placeholder, purpose TBD
 
