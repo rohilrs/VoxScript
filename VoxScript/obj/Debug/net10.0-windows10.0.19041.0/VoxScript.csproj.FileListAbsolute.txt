@@ -207,3 +207,6 @@ E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\Sh
 E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.xaml
 E:\Documents\VoiceInk-Windows\VoxScript\obj\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.xbf
 E:\Documents\VoiceInk-Windows\VoxScript\bin\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.xbf
+E:\Documents\VoiceInk-Windows\VoxScript\bin\Debug\net10.0-windows10.0.19041.0\Assets\Sounds\start.wav
+E:\Documents\VoiceInk-Windows\VoxScript\bin\Debug\net10.0-windows10.0.19041.0\Assets\Sounds\stop.wav
+E:\Documents\VoiceInk-Windows\VoxScript\bin\Debug\net10.0-windows10.0.19041.0\Assets\Sounds\toggle.wav

@@ -170,6 +170,14 @@ public sealed partial class RecordingIndicatorViewModel : ObservableObject, IDis
                     _awaitingTranscriptionResult = false;
                     ScheduleDeferredIdleHide();
                 }
+                else if (_settings.RecordingIndicatorMode == RecordingIndicatorMode.DuringRecording)
+                {
+                    // Direct Recording→Idle transition (cancel via global hotkey, or
+                    // any path that skips Transcribing). Hide immediately since we're
+                    // in "only during recording" mode and there's no transcription
+                    // result to show.
+                    HideRequested?.Invoke();
+                }
                 break;
         }
     }

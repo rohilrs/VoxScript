@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VoxScript")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+462f1a386c44b29a97bde4951e7dc5491aed431f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+47afef1379409f633fc1d6c40ce1dc3a27633469")]
 [assembly: System.Reflection.AssemblyProductAttribute("VoxScript")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VoxScript")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

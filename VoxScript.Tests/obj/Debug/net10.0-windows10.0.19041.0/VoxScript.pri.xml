@@ -15,6 +15,25 @@
 					<Value>MainWindow.xbf</Value>
 				</Candidate>
 			</NamedResource>
+			<ResourceMapSubtree name="Assets">
+				<ResourceMapSubtree name="Sounds">
+					<NamedResource name="start.wav" uri="ms-resource://VoxScript/Files/Assets/Sounds/start.wav">
+						<Candidate type="Path">
+							<Value>Assets\Sounds\start.wav</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="stop.wav" uri="ms-resource://VoxScript/Files/Assets/Sounds/stop.wav">
+						<Candidate type="Path">
+							<Value>Assets\Sounds\stop.wav</Value>
+						</Candidate>
+					</NamedResource>
+					<NamedResource name="toggle.wav" uri="ms-resource://VoxScript/Files/Assets/Sounds/toggle.wav">
+						<Candidate type="Path">
+							<Value>Assets\Sounds\toggle.wav</Value>
+						</Candidate>
+					</NamedResource>
+				</ResourceMapSubtree>
+			</ResourceMapSubtree>
 			<ResourceMapSubtree name="Shell">
 				<NamedResource name="RecordingIndicatorWindow.xbf" uri="ms-resource://VoxScript/Files/Shell/RecordingIndicatorWindow.xbf">
 					<Candidate type="Path">

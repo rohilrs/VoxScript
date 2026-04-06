@@ -1,3 +1,9 @@
+Assets\Sounds\start.wav
+Assets\Sounds\start.wav
+Assets\Sounds\stop.wav
+Assets\Sounds\stop.wav
+Assets\Sounds\toggle.wav
+Assets\Sounds\toggle.wav
 App.xbf
 MainWindow.xbf
 Shell\RecordingIndicatorWindow.xbf

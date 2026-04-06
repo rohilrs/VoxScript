@@ -253,3 +253,6 @@ E:\Documents\VoiceInk-Windows\VoxScript.Tests\bin\Debug\net10.0-windows10.0.1904
 E:\Documents\VoiceInk-Windows\VoxScript.Tests\bin\Debug\net10.0-windows10.0.19041.0\ggml.dll
 E:\Documents\VoiceInk-Windows\VoxScript.Tests\bin\Debug\net10.0-windows10.0.19041.0\whisper.dll
 E:\Documents\VoiceInk-Windows\VoxScript.Tests\bin\Debug\net10.0-windows10.0.19041.0\Shell\RecordingIndicatorWindow.xbf
+E:\Documents\VoiceInk-Windows\VoxScript.Tests\bin\Debug\net10.0-windows10.0.19041.0\Assets\Sounds\start.wav
+E:\Documents\VoiceInk-Windows\VoxScript.Tests\bin\Debug\net10.0-windows10.0.19041.0\Assets\Sounds\stop.wav
+E:\Documents\VoiceInk-Windows\VoxScript.Tests\bin\Debug\net10.0-windows10.0.19041.0\Assets\Sounds\toggle.wav
