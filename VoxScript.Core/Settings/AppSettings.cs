@@ -115,10 +115,10 @@ public sealed class AppSettings
         set => _store.Set(nameof(SmartFormattingEnabled), value);
     }
 
-    public bool RecordingIndicatorEnabled
+    public RecordingIndicatorMode RecordingIndicatorMode
     {
-        get => _store.Get<bool?>(nameof(RecordingIndicatorEnabled)) ?? false;
-        set => _store.Set(nameof(RecordingIndicatorEnabled), value);
+        get => _store.Get<RecordingIndicatorMode?>(nameof(RecordingIndicatorMode)) ?? RecordingIndicatorMode.Off;
+        set => _store.Set(nameof(RecordingIndicatorMode), value);
     }
 
     public bool PauseMediaWhileDictating
