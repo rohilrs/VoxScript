@@ -18,9 +18,8 @@ public class StreamingTranscriptionSessionTests
         var provider = Substitute.For<IStreamingProvider>();
         provider.ConnectAsync(default!, default, default).ReturnsForAnyArgs(Task.CompletedTask);
 
-        Action<byte[], int>? capturedCallback = null;
         provider.When(p => p.SendChunkAsync(Arg.Any<byte[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>()))
-            .Do(ci => { /* capture calls */ });
+            .Do(_ => { /* capture calls */ });
 
         var session = new StreamingTranscriptionSession(model, provider);
         var callback = await session.PrepareAsync(default);

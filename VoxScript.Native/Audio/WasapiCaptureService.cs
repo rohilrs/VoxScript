@@ -17,7 +17,9 @@ public sealed class WasapiCaptureService : IAudioCaptureService, IDisposable
 
     public AudioDeviceInfo? DefaultDevice => AudioDeviceEnumerator.GetDefault();
 
+#pragma warning disable CS0067 // Required by IAudioCaptureService, raised when device detection is implemented
     public event EventHandler<AudioDeviceInfo>? DeviceChanged;
+#pragma warning restore CS0067
 
     public Task StartAsync(string? deviceId, Action<byte[], int> onChunk, CancellationToken ct)
     {
