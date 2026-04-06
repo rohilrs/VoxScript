@@ -11,6 +11,7 @@ public sealed class SoundEffectsService : ISoundEffectsService
     private readonly SoundPlayer? _startPlayer;
     private readonly SoundPlayer? _togglePlayer;
     private readonly SoundPlayer? _stopPlayer;
+    private readonly SoundPlayer? _cancelPlayer;
 
     public SoundEffectsService(AppSettings settings)
     {
@@ -20,6 +21,7 @@ public sealed class SoundEffectsService : ISoundEffectsService
         _startPlayer = LoadPlayer(Path.Combine(baseDir, "Assets", "Sounds", "start.wav"));
         _togglePlayer = LoadPlayer(Path.Combine(baseDir, "Assets", "Sounds", "toggle.wav"));
         _stopPlayer = LoadPlayer(Path.Combine(baseDir, "Assets", "Sounds", "stop.wav"));
+        _cancelPlayer = LoadPlayer(Path.Combine(baseDir, "Assets", "Sounds", "cancel.wav"));
     }
 
     public void PlayStart()
@@ -38,6 +40,12 @@ public sealed class SoundEffectsService : ISoundEffectsService
     {
         if (_settings.SoundEffectsEnabled)
             _stopPlayer?.Play();
+    }
+
+    public void PlayCancel()
+    {
+        if (_settings.SoundEffectsEnabled)
+            _cancelPlayer?.Play();
     }
 
     private static SoundPlayer? LoadPlayer(string path)

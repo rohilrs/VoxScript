@@ -69,20 +69,24 @@ def main() -> None:
     out_dir = os.path.join(os.path.dirname(__file__), "..", "VoxScript", "Assets", "Sounds")
     os.makedirs(out_dir, exist_ok=True)
 
-    # Start: ~800Hz single click
-    start_samples = generate_click(800, duration_ms=120)
+    # Start: ~560Hz single click
+    start_samples = generate_click(560, duration_ms=120)
     write_wav(os.path.join(out_dir, "start.wav"), start_samples)
 
-    # Toggle: ~650Hz single click
-    toggle_samples = generate_click(650, duration_ms=120)
+    # Toggle: ~450Hz single click
+    toggle_samples = generate_click(450, duration_ms=120)
     write_wav(os.path.join(out_dir, "toggle.wav"), toggle_samples)
 
-    # Stop: ~500Hz double click (two taps with 80ms gap)
-    tap1 = generate_click(500, duration_ms=100)
+    # Stop: ~350Hz double click (two taps with 80ms gap)
+    tap1 = generate_click(350, duration_ms=100)
     gap = [0] * int(SAMPLE_RATE * 0.08)  # 80ms silence
-    tap2 = generate_click(500, duration_ms=100)
+    tap2 = generate_click(350, duration_ms=100)
     stop_samples = tap1 + gap + tap2
     write_wav(os.path.join(out_dir, "stop.wav"), stop_samples)
+
+    # Cancel: ~280Hz single click with faster decay (abrupt feel)
+    cancel_samples = generate_click(280, duration_ms=90, decay_ms=40)
+    write_wav(os.path.join(out_dir, "cancel.wav"), cancel_samples)
 
     print(f"Generated WAVs in {out_dir}")
 

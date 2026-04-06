@@ -281,7 +281,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
         await (_activeSession?.CancelAsync() ?? Task.CompletedTask);
         _activeSession = null;
         State = RecordingState.Idle;
-        _sounds.PlayStop();
+        _sounds.PlayCancel();
         if (_settings.PauseMediaWhileDictating)
             _media.ResumeMedia();
         AudioLevel = 0f;
