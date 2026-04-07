@@ -42,49 +42,44 @@ public static class ModelManagementDialog
         // Custom model section
         var customSection = BuildCustomSection(vm, xamlRoot, RebuildList, progressBar, progressText);
 
-        // Scrollable model list only
+        // Layout: scrollable model list on top, fixed custom section on bottom
         var scrollableList = new ScrollViewer
         {
             Content = modelList,
-            MaxHeight = 300,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         };
 
-        var content = new StackPanel { Spacing = 16, MinWidth = 500 };
+        var bottomSection = new StackPanel { Spacing = 12 };
+        bottomSection.Children.Add(progressBar);
+        bottomSection.Children.Add(progressText);
+        bottomSection.Children.Add(BuildSeparator());
+        bottomSection.Children.Add(customSection);
+
+        var content = new Grid { MinWidth = 500, MinHeight = 300, MaxHeight = 500 };
+        content.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Grid.SetRow(scrollableList, 0);
+        Grid.SetRow(bottomSection, 1);
         content.Children.Add(scrollableList);
-        content.Children.Add(progressBar);
-        content.Children.Add(progressText);
-        content.Children.Add(BuildSeparator());
-        content.Children.Add(customSection);
+        content.Children.Add(bottomSection);
+
+        // Center the Done button via style (visual tree hack breaks on re-open)
+        var doneStyle = new Style(typeof(Button));
+        doneStyle.Setters.Add(new Setter(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center));
+        doneStyle.Setters.Add(new Setter(FrameworkElement.MinWidthProperty, 120.0));
 
         var dialog = new ContentDialog
         {
             Title = "Manage Models",
             Content = content,
             CloseButtonText = "Done",
+            CloseButtonStyle = doneStyle,
             XamlRoot = xamlRoot,
             CornerRadius = new CornerRadius(12),
         };
 
         dialog.Resources["ContentDialogCommandSpaceBackground"] =
             new SolidColorBrush(Microsoft.UI.Colors.White);
-
-        // Center the Done button by walking the visual tree after it opens
-        dialog.Opened += (_, _) =>
-        {
-            // The command space is a Grid at the bottom of the ContentDialog template.
-            // Find the close button and center it by making its column span the full width.
-            var closeButton = FindDescendant<Button>(dialog, b => b.Content?.ToString() == "Done");
-            if (closeButton?.Parent is Grid commandGrid)
-            {
-                // Collapse other columns, let the close button span all and center
-                Grid.SetColumn(closeButton, 0);
-                Grid.SetColumnSpan(closeButton, commandGrid.ColumnDefinitions.Count > 0
-                    ? commandGrid.ColumnDefinitions.Count : 1);
-                closeButton.HorizontalAlignment = HorizontalAlignment.Center;
-                closeButton.MinWidth = 120;
-            }
-        };
 
         await dialog.ShowAsync();
     }
@@ -370,18 +365,4 @@ public static class ModelManagementDialog
     private static SolidColorBrush GetBrush(string key) =>
         (SolidColorBrush)Application.Current.Resources[key];
 
-    private static T? FindDescendant<T>(DependencyObject parent, Func<T, bool> predicate) where T : DependencyObject
-    {
-        var count = VisualTreeHelper.GetChildrenCount(parent);
-        for (int i = 0; i < count; i++)
-        {
-            var child = VisualTreeHelper.GetChild(parent, i);
-            if (child is T match && predicate(match))
-                return match;
-            var result = FindDescendant(child, predicate);
-            if (result is not null)
-                return result;
-        }
-        return null;
-    }
 }
