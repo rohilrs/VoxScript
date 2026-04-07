@@ -1,4 +1,5 @@
 // VoxScript.Core/Transcription/Batch/LocalTranscriptionService.cs
+using VoxScript.Core.Dictionary;
 using VoxScript.Core.Transcription.Core;
 using VoxScript.Core.Transcription.Models;
 
@@ -7,23 +8,40 @@ namespace VoxScript.Core.Transcription.Batch;
 /// <summary>
 /// Bridges a local whisper backend to the ITranscriptionService interface.
 /// Reads the WAV file, converts Int16 PCM to float[], and delegates to the backend.
+/// Vocabulary words are passed as Whisper's initial prompt to bias spelling.
 /// </summary>
 public sealed class LocalTranscriptionService : ITranscriptionService
 {
     private readonly ILocalTranscriptionBackend _backend;
+    private readonly IVocabularyRepository _vocabulary;
 
     public ModelProvider Provider => ModelProvider.Local;
 
-    public LocalTranscriptionService(ILocalTranscriptionBackend backend)
+    public LocalTranscriptionService(ILocalTranscriptionBackend backend, IVocabularyRepository vocabulary)
     {
         _backend = backend;
+        _vocabulary = vocabulary;
     }
 
     public async Task<string> TranscribeAsync(string audioPath, ITranscriptionModel model,
         string? language, CancellationToken ct)
     {
         var samples = await Task.Run(() => ReadWavAsFloat(audioPath), ct);
-        return await _backend.TranscribeAsync(samples, language, initialPrompt: null, ct);
+
+        // Build initial prompt from vocabulary words to bias Whisper toward correct spellings
+        string? initialPrompt = null;
+        try
+        {
+            var words = await _vocabulary.GetWordsAsync(ct);
+            if (words.Count > 0)
+                initialPrompt = string.Join(", ", words);
+        }
+        catch
+        {
+            // Non-critical — transcription works fine without the prompt
+        }
+
+        return await _backend.TranscribeAsync(samples, language, initialPrompt, ct);
     }
 
     /// <summary>
