@@ -14,6 +14,8 @@ public sealed partial class SmartTextFormatter
     {
         if (string.IsNullOrWhiteSpace(text)) return string.Empty;
 
+        List<string>? protectedTokens = null;
+
         if (smartFormattingEnabled)
         {
             text = ApplySpokenPunctuation(text);
@@ -23,11 +25,43 @@ public sealed partial class SmartTextFormatter
             text = FormatPercentages(text);
             text = FormatDates(text);
             text = FormatTimes(text);
+            text = AssembleEmails(text);
+            text = AssembleUrls(text);
+            text = FormatPhoneNumbers(text);
+
+            // Protect assembled emails and URLs from basic cleanup mangling
+            // (cleanup inserts spaces after dots and capitalizes, breaking emails/URLs)
+            protectedTokens = [];
+            text = ProtectedTokenRegex().Replace(text, m =>
+            {
+                int index = protectedTokens.Count;
+                protectedTokens.Add(m.Value);
+                return $"\x00PH{index}\x00";
+            });
         }
 
         text = ApplyBasicCleanup(text);
+
+        // Restore protected tokens
+        if (protectedTokens is { Count: > 0 })
+        {
+            text = PlaceholderRegex().Replace(text, m =>
+            {
+                int index = int.Parse(m.Groups[1].Value);
+                return protectedTokens[index];
+            });
+        }
+
         return text;
     }
+
+    // Matches email addresses and URLs that should be protected from cleanup
+    [GeneratedRegex(@"\S+@\S+\.\S+|https?://\S+|www\.\S+|\S+\.\S+/\S+", RegexOptions.IgnoreCase)]
+    private static partial Regex ProtectedTokenRegex();
+
+    // Matches placeholders inserted for protection
+    [GeneratedRegex(@"\x00PH(\d+)\x00")]
+    private static partial Regex PlaceholderRegex();
 
     // ── Spoken Punctuation ─────────────────────────────────────────────
 
@@ -849,6 +883,126 @@ public sealed partial class SmartTextFormatter
     // "midnight" as whole word
     [GeneratedRegex(@"\bmidnight\b", RegexOptions.IgnoreCase)]
     private static partial Regex MidnightRegex();
+
+    // ── Email Assembly ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Assembles spoken email addresses: "user at domain dot com" → "user@domain.com".
+    /// Must run before URL assembly since "at" could be confused with URL patterns.
+    /// </summary>
+    private static string AssembleEmails(string text)
+    {
+        return EmailRegex().Replace(text, m =>
+        {
+            string user = m.Groups[1].Value;
+            string domainPart = m.Groups[2].Value;
+
+            // Replace "dot" with "." in domain, collapse spaces around it
+            string domain = DotWordRegex().Replace(domainPart, ".");
+
+            // Remove any remaining spaces (between domain segments)
+            domain = domain.Replace(" ", "");
+
+            string email = $"{user}@{domain}";
+
+            // Validate: exactly one "@" and domain has at least one "."
+            if (email.Count(c => c == '@') == 1 && domain.Contains('.'))
+                return email;
+
+            return m.Value; // Don't transform if invalid
+        });
+    }
+
+    // Matches "word at word dot word" with optional additional "dot word" segments
+    [GeneratedRegex(@"(\S+)\s+at\s+(\S+(?:\s+dot\s+\S+)+)", RegexOptions.IgnoreCase)]
+    private static partial Regex EmailRegex();
+
+    // Matches " dot " as a word separator in domain parts
+    [GeneratedRegex(@"\s+dot\s+", RegexOptions.IgnoreCase)]
+    private static partial Regex DotWordRegex();
+
+    // ── URL Assembly ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Assembles spoken URLs: protocol prefixes, www, TLDs, and path slashes.
+    /// Note: spoken punctuation may have already converted "colon" to ":" before this runs,
+    /// so we match both the spoken and already-converted forms.
+    /// </summary>
+    private static string AssembleUrls(string text)
+    {
+        // 1. Replace URL prefixes
+        text = WwwSpacedDotRegex().Replace(text, "www.");
+        text = WwwDotRegex().Replace(text, "www.");
+        text = HttpsColonSlashRegex().Replace(text, "https://");
+        text = HttpColonSlashRegex().Replace(text, "http://");
+
+        // 2. Replace common TLD patterns: "dot com", "dot org", etc.
+        text = DotTldRegex().Replace(text, m => "." + m.Groups[1].Value.ToLowerInvariant());
+
+        // 3. Replace "slash" with "/" when it follows a domain-like pattern (word.tld)
+        text = UrlSlashRegex().Replace(text, m => m.Groups[1].Value + "/" + m.Groups[2].Value);
+
+        return text;
+    }
+
+    // "w w w dot" — literal spaced-out letters
+    [GeneratedRegex(@"\bw\s+w\s+w\s+dot\s+", RegexOptions.IgnoreCase)]
+    private static partial Regex WwwSpacedDotRegex();
+
+    // "www dot"
+    [GeneratedRegex(@"\bwww\s+dot\s+", RegexOptions.IgnoreCase)]
+    private static partial Regex WwwDotRegex();
+
+    // "https colon slash slash" or "https: slash slash" (colon may already be converted by spoken punct)
+    [GeneratedRegex(@"\bhttps\s*(?:colon|:)\s*(?:slash\s+slash|//)\s*", RegexOptions.IgnoreCase)]
+    private static partial Regex HttpsColonSlashRegex();
+
+    // "http colon slash slash" or "http: slash slash"
+    [GeneratedRegex(@"\bhttp\s*(?:colon|:)\s*(?:slash\s+slash|//)\s*", RegexOptions.IgnoreCase)]
+    private static partial Regex HttpColonSlashRegex();
+
+    // "dot com", "dot org", "dot net", "dot io", "dot edu", "dot gov", "dot co"
+    [GeneratedRegex(@"\s+dot\s+(com|org|net|io|edu|gov|co)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex DotTldRegex();
+
+    // "slash" after a domain pattern (word.tld) followed by a path segment
+    [GeneratedRegex(@"(\.\w+)\s+slash\s+(\S+)", RegexOptions.IgnoreCase)]
+    private static partial Regex UrlSlashRegex();
+
+    // ── Phone Number Formatting ───────────────────────────────────────
+
+    /// <summary>
+    /// Formats sequences of space-separated single digits into phone numbers.
+    /// 10 digits → (XXX) XXX-XXXX, 7 digits → XXX-XXXX.
+    /// </summary>
+    private static string FormatPhoneNumbers(string text)
+    {
+        // Match 10 space-separated single digits (not preceded or followed by another digit)
+        text = TenDigitPhoneRegex().Replace(text, m =>
+        {
+            string digits = StripSpaces(m.Value);
+            return $"({digits[..3]}) {digits[3..6]}-{digits[6..]}";
+        });
+
+        // Match 7 space-separated single digits
+        text = SevenDigitPhoneRegex().Replace(text, m =>
+        {
+            string digits = StripSpaces(m.Value);
+            return $"{digits[..3]}-{digits[3..]}";
+        });
+
+        return text;
+    }
+
+    private static string StripSpaces(string s) => s.Replace(" ", "");
+
+    // 10 space-separated single digits at word boundaries
+    [GeneratedRegex(@"(?<!\d)(\d\s+\d\s+\d\s+\d\s+\d\s+\d\s+\d\s+\d\s+\d\s+\d)(?!\s*\d)", RegexOptions.None)]
+    private static partial Regex TenDigitPhoneRegex();
+
+    // 7 space-separated single digits at word boundaries
+    [GeneratedRegex(@"(?<!\d)(\d\s+\d\s+\d\s+\d\s+\d\s+\d\s+\d)(?!\s*\d)", RegexOptions.None)]
+    private static partial Regex SevenDigitPhoneRegex();
 
     // ── Basic Cleanup ──────────────────────────────────────────────────
 

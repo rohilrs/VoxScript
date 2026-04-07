@@ -186,4 +186,35 @@ public class SmartTextFormatterTests
     {
         _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
     }
+
+    // ── Email Assembly ────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("my email is rohils74 at gmail dot com", "My email is rohils74@gmail.com")]
+    [InlineData("send to user at company dot co dot uk", "Send to user@company.co.uk")]
+    public void Emails_are_assembled(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
+    }
+
+    // ── URL Assembly ──────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("go to w w w dot example dot com", "Go to www.example.com")]
+    [InlineData("visit https colon slash slash example dot com", "Visit https://example.com")]
+    [InlineData("check example dot com slash about", "Check example.com/about")]
+    public void Urls_are_assembled(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
+    }
+
+    // ── Phone Number Formatting ───────────────────────────────────────
+
+    [Theory]
+    [InlineData("call 5 5 5 1 2 3 4 5 6 7", "Call (555) 123-4567")]
+    [InlineData("dial 5 5 5 1 2 3 4", "Dial 555-1234")]
+    public void PhoneNumbers_are_formatted(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
+    }
 }
