@@ -10,6 +10,7 @@ import shutil
 from pathlib import Path
 
 import nemo.collections.asr as nemo_asr
+import onnx
 
 
 def main():
@@ -36,6 +37,22 @@ def main():
 
     print(f"Exporting ONNX to {onnx_path}...")
     model.export(str(onnx_path))
+
+    # NeMo may export with external data files (e.g. onnx__MatMul_8046).
+    # Merge everything into a single self-contained ONNX file.
+    print("Merging external weights into single ONNX file...")
+    onnx_model = onnx.load(str(onnx_path), load_external_data=True)
+    onnx.save_model(
+        onnx_model,
+        str(onnx_path),
+        save_as_external_data=False,
+    )
+
+    # Clean up any leftover external data files
+    for f in args.output_dir.iterdir():
+        if f.suffix not in (".onnx", ".model") and f.is_file() and f.name != tokenizer_path.name:
+            f.unlink()
+            print(f"  Removed external data file: {f.name}")
 
     # Extract SentencePiece tokenizer .model file
     tokenizer = model.tokenizer
