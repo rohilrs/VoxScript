@@ -4,7 +4,7 @@ Last updated: 2026-04-05
 
 ## Overview
 
-Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from VoiceInk (macOS Swift/SwiftUI). ~120 C# files, 14 XAML files, 57+ passing tests.
+Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from VoiceInk (macOS Swift/SwiftUI). ~120 C# files, 14 XAML files, 94 passing tests.
 
 **Solution structure:** VoxScript.Core (business logic) → VoxScript.Native (Win32/interop) → VoxScript (WinUI 3 app)
 
@@ -80,7 +80,7 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 - [x] Settings persistence (JSON file at %LOCALAPPDATA%\VoxScript\settings.json)
 - [x] Serilog logging (rolling daily to %LOCALAPPDATA%\VoxScript\Logs\)
 - [x] DI container (all services wired in AppBootstrapper)
-- [x] 86 unit tests passing (settings, hotkeys, transcription filters, word replacements, notes, vocabulary, etc.)
+- [x] 94 unit tests passing (settings, hotkeys, transcription filters, word replacements, notes, vocabulary, etc.)
 
 ### AI Enhancement + Context Modes
 - [x] AI Enhancement service (OpenAI, Anthropic, Ollama backends) with UI config
@@ -198,7 +198,13 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 
 21. **Onboarding flow** — no first-run wizard
 
-22. **Import/export** — dictionary, expansions, corrections, and history
+22. **Import/export** — DONE
+    - Single JSON file with vocabulary, corrections, and expansions
+    - Export/Import buttons in Settings > Extras card
+    - Import skips duplicates (case-insensitive matching), adds new items only
+    - File format versioned (`version: 1`) for future compatibility
+    - Success/error InfoBar with item counts
+    - Files: `IDataPortService.cs`, `DataPortService.cs`, `DataPortModels.cs`, `SettingsViewModel.cs`, `SettingsPage.xaml/.cs`
 
 23. **Screen/clipboard context capture** for AI enhancement
 
