@@ -83,7 +83,7 @@ public sealed class ParakeetBackend : IParakeetBackend, IDisposable
         return new ParakeetResult(text, []); // Word-level timing deferred to Phase 4 polish
     }
 
-    private static List<int> GreedyCtcDecode(Tensor<float> logits)
+    internal static List<int> GreedyCtcDecode(Tensor<float> logits)
     {
         // logits shape: [batch=1, time, vocab_size]
         int time = (int)logits.Dimensions[1];
