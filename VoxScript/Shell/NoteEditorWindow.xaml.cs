@@ -15,6 +15,7 @@ public sealed partial class NoteEditorWindow : Window
     private DispatcherTimer? _searchDebounce;
     private DispatcherTimer? _autoSaveTimer;
     private bool _isLoadingNote;
+    private bool _isDraft; // true when showing an empty unsaved note
     private readonly System.Collections.Specialized.NotifyCollectionChangedEventHandler _collectionHandler;
     private readonly System.ComponentModel.PropertyChangedEventHandler _propertyHandler;
 
@@ -244,16 +245,31 @@ public sealed partial class NoteEditorWindow : Window
     private void LoadSelectedNote()
     {
         var note = ViewModel.SelectedNote;
-        bool hasNote = note is not null;
 
-        EditorEmptyState.Visibility = hasNote ? Visibility.Collapsed : Visibility.Visible;
-        TitleBox.Visibility = hasNote ? Visibility.Visible : Visibility.Collapsed;
-        DeleteButton.Visibility = hasNote ? Visibility.Visible : Visibility.Collapsed;
-        MetadataText.Visibility = hasNote ? Visibility.Visible : Visibility.Collapsed;
-        Editor.Visibility = hasNote ? Visibility.Visible : Visibility.Collapsed;
-        SaveStatusText.Visibility = hasNote ? Visibility.Visible : Visibility.Collapsed;
+        // Always show the editor — if no note selected, show empty draft
+        EditorEmptyState.Visibility = Visibility.Collapsed;
+        TitleBox.Visibility = Visibility.Visible;
+        Editor.Visibility = Visibility.Visible;
+        SaveStatusText.Visibility = Visibility.Visible;
 
-        if (note is null) return;
+        if (note is null)
+        {
+            // Draft mode: empty editor, not saved yet
+            _isDraft = true;
+            _isLoadingNote = true;
+            TitleBox.Text = "";
+            Editor.Document.SetText(TextSetOptions.None, "");
+            MetadataText.Visibility = Visibility.Collapsed;
+            DeleteButton.Visibility = Visibility.Collapsed;
+            SaveStatusText.Text = "";
+            _isLoadingNote = false;
+            TitleBox.Focus(FocusState.Programmatic);
+            return;
+        }
+
+        _isDraft = false;
+        DeleteButton.Visibility = Visibility.Visible;
+        MetadataText.Visibility = Visibility.Visible;
 
         _isLoadingNote = true;
         TitleBox.Text = note.Title;
@@ -317,15 +333,40 @@ public sealed partial class NoteEditorWindow : Window
 
     private async Task SaveCurrentNote()
     {
-        var note = ViewModel.SelectedNote;
-        if (note is null) return;
-
         try
         {
             Editor.Document.GetText(TextGetOptions.FormatRtf, out var rtf);
             Editor.Document.GetText(TextGetOptions.None, out var plain);
+            var plainTrimmed = plain.TrimEnd('\r', '\n');
 
-            await ViewModel.SaveNoteAsync(note, TitleBox.Text, rtf, plain.TrimEnd('\r', '\n'));
+            // Draft mode: create the note on first meaningful edit
+            if (_isDraft)
+            {
+                var title = TitleBox.Text.Trim();
+                if (string.IsNullOrEmpty(title) && string.IsNullOrWhiteSpace(plainTrimmed))
+                    return; // Don't save empty drafts
+
+                var item = await ViewModel.CreateAsync();
+                _isDraft = false;
+
+                // Now save with actual content
+                await ViewModel.SaveNoteAsync(item, string.IsNullOrEmpty(title) ? "Untitled" : title, rtf, plainTrimmed);
+                RebuildSidebar();
+
+                // Show metadata and delete button now that it's saved
+                DeleteButton.Visibility = Visibility.Visible;
+                MetadataText.Visibility = Visibility.Visible;
+                var c = item.CreatedAt.ToLocalTime();
+                var m = item.ModifiedAt.ToLocalTime();
+                MetadataText.Text = $"Created: {FormatDate(c)}  \u00b7  Modified: {FormatDate(m)}";
+                SaveStatusText.Text = ViewModel.SaveStatus;
+                return;
+            }
+
+            var note = ViewModel.SelectedNote;
+            if (note is null) return;
+
+            await ViewModel.SaveNoteAsync(note, TitleBox.Text, rtf, plainTrimmed);
             SaveStatusText.Text = ViewModel.SaveStatus;
 
             var modified = note.ModifiedAt.ToLocalTime();

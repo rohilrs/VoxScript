@@ -132,6 +132,7 @@ public sealed partial class NotesPage : Page
         Grid.SetColumn(title, 0);
         header.Children.Add(title);
 
+        bool copyClicked = false;
         var copyIcon = new FontIcon { Glyph = "\uE8C8", FontSize = 14, Foreground = (SolidColorBrush)Application.Current.Resources["BrandMutedBrush"] };
         var copyBtn = new Button
         {
@@ -144,6 +145,7 @@ public sealed partial class NotesPage : Page
         ToolTipService.SetToolTip(copyBtn, "Copy to clipboard");
         copyBtn.Click += async (_, _) =>
         {
+            copyClicked = true;
             var dp = new DataPackage();
             dp.SetText(item.ContentPlainText);
             Clipboard.SetContent(dp);
@@ -210,8 +212,12 @@ public sealed partial class NotesPage : Page
 
         card.Child = outer;
 
-        // Click card → open editor (Tapped doesn't propagate from Button clicks)
-        card.Tapped += (_, _) => NoteEditorManager.OpenEditor(item.Id);
+        // Click card → open editor (skip if copy button was clicked)
+        card.Tapped += (_, _) =>
+        {
+            if (copyClicked) { copyClicked = false; return; }
+            NoteEditorManager.OpenEditor(item.Id);
+        };
 
         return card;
     }

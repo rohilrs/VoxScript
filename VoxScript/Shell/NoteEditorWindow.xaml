@@ -21,8 +21,8 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Header + New -->
-            <Grid Grid.Row="0" Padding="16,16,16,8">
+            <!-- Header + New (top padding matches title bar area for caption buttons) -->
+            <Grid Grid.Row="0" Padding="16,48,16,8">
                 <TextBlock Text="Notes"
                            FontFamily="Georgia" FontSize="18"
                            Foreground="{StaticResource BrandForegroundBrush}"
@@ -74,9 +74,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Title bar -->
-            <Grid Grid.Row="0" Padding="20,16,20,4">
+            <!-- Title bar (top padding leaves room for window caption buttons) -->
+            <Grid Grid.Row="0" Padding="20,48,20,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
                 <TextBox x:Name="TitleBox"
+                         Grid.Column="0"
                          FontFamily="Georgia" FontSize="20"
                          Foreground="{StaticResource BrandForegroundBrush}"
                          Background="Transparent"
@@ -84,12 +89,14 @@
                          PlaceholderText="Note title..."
                          TextChanged="TitleBox_TextChanged" />
                 <Button x:Name="DeleteButton"
-                        HorizontalAlignment="Right"
+                        Grid.Column="1"
                         Click="DeleteButton_Click"
                         Background="Transparent"
                         BorderThickness="0"
                         Padding="8,4"
                         CornerRadius="6"
+                        VerticalAlignment="Center"
+                        Margin="8,0,0,0"
                         ToolTipService.ToolTip="Delete note">
                     <FontIcon Glyph="&#xE74D;" FontSize="14"
                               Foreground="#CC4444" />
