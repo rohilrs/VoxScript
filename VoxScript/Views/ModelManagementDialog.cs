@@ -63,18 +63,42 @@ public static class ModelManagementDialog
         content.Children.Add(scrollableList);
         content.Children.Add(bottomSection);
 
+        // Build a custom Done button so we can center it and use brand colors
+        var doneButton = new Button
+        {
+            Content = "Done",
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Padding = new Thickness(32, 8, 32, 8),
+            CornerRadius = new CornerRadius(6),
+            Background = GetBrush("BrandPrimaryBrush"),
+            Foreground = new SolidColorBrush(Microsoft.UI.Colors.White),
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+
+        var buttonContainer = new Grid
+        {
+            Margin = new Thickness(0, 12, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Children = { doneButton },
+        };
+
+        bottomSection.Children.Add(buttonContainer);
+
         var dialog = new ContentDialog
         {
             Title = "Manage Models",
             Content = content,
-            PrimaryButtonText = "Done",
             XamlRoot = xamlRoot,
             CornerRadius = new CornerRadius(12),
-            DefaultButton = ContentDialogButton.Primary,
         };
 
+        // Hide the built-in command space since we use a custom Done button
         dialog.Resources["ContentDialogCommandSpaceBackground"] =
-            new SolidColorBrush(Microsoft.UI.Colors.White);
+            new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        dialog.Resources["ContentDialogPadding"] = new Thickness(24, 16, 24, 16);
+
+        doneButton.Click += (_, _) => dialog.Hide();
 
         await dialog.ShowAsync();
     }
