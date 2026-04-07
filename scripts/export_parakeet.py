@@ -90,7 +90,10 @@ def main():
         for attr in dir(tokenizer):
             if attr.startswith("_"):
                 continue
-            val = getattr(tokenizer, attr, None)
+            try:
+                val = getattr(tokenizer, attr, None)
+            except Exception:
+                continue
             if isinstance(val, str) and val.endswith(".model") and Path(val).exists():
                 candidates.append(val)
 
@@ -105,7 +108,10 @@ def main():
         for attr in sorted(dir(tokenizer)):
             if attr.startswith("_"):
                 continue
-            val = getattr(tokenizer, attr, None)
+            try:
+                val = getattr(tokenizer, attr, None)
+            except Exception:
+                continue
             if isinstance(val, str) and len(val) < 500:
                 print(f"  {attr} = {val}")
         print("If you see a path to a .model file above, copy it manually to:")
