@@ -102,20 +102,24 @@ def main():
         shutil.copy2(sp_model_path, tokenizer_path)
         print(f"Tokenizer saved to {tokenizer_path}")
     else:
-        # Last resort: print all string attributes so user can find it
-        print("WARNING: Could not auto-detect SentencePiece .model file.")
-        print("Tokenizer attributes:")
-        for attr in sorted(dir(tokenizer)):
-            if attr.startswith("_"):
+        # Last resort: serialize the SentencePiece model directly from the processor
+        print("Could not find .model file path, extracting from processor...")
+        extracted = False
+        # NeMo wraps sentencepiece.SentencePieceProcessor — serialize its model
+        for attr in ("tokenizer", "sp", "sp_model", "processor"):
+            obj = getattr(tokenizer, attr, None)
+            if obj is None:
                 continue
-            try:
-                val = getattr(tokenizer, attr, None)
-            except Exception:
-                continue
-            if isinstance(val, str) and len(val) < 500:
-                print(f"  {attr} = {val}")
-        print("If you see a path to a .model file above, copy it manually to:")
-        print(f"  {tokenizer_path}")
+            if hasattr(obj, "serialized_model_proto"):
+                proto = obj.serialized_model_proto()
+                tokenizer_path.write_bytes(proto)
+                print(f"Tokenizer extracted via {attr}.serialized_model_proto() to {tokenizer_path}")
+                extracted = True
+                break
+        if not extracted:
+            print(f"WARNING: Could not extract SentencePiece model.")
+            print("You may need to manually locate it from the NeMo cache.")
+            print(f"Expected destination: {tokenizer_path}")
 
     print(f"\nDone! Files in {args.output_dir}:")
     for f in sorted(args.output_dir.iterdir()):
