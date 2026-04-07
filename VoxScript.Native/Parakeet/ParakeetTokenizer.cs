@@ -1,32 +1,37 @@
 // VoxScript.Native/Parakeet/ParakeetTokenizer.cs
+using Microsoft.ML.Tokenizers;
+
 namespace VoxScript.Native.Parakeet;
 
 /// <summary>
-/// Wraps the SentencePiece BPE tokenizer for Parakeet.
-/// Full implementation requires the sentencepiece C# binding or a port.
-/// Stub decodes token IDs using the vocabulary file.
+/// SentencePiece BPE tokenizer for Parakeet, backed by Microsoft.ML.Tokenizers.
+/// Loads a .model file exported from NeMo and decodes token IDs to text.
 /// </summary>
-public sealed class ParakeetTokenizer
+public sealed class ParakeetTokenizer : IDisposable
 {
-    private readonly string[] _vocab;
+    private readonly SentencePieceTokenizer _tokenizer;
 
     public ParakeetTokenizer(string modelPath)
     {
-        // TODO: Load SentencePiece model properly.
-        // For now, read the vocabulary from a co-located vocab.txt if present.
-        var vocabPath = Path.ChangeExtension(modelPath, ".vocab.txt");
-        _vocab = File.Exists(vocabPath)
-            ? File.ReadAllLines(vocabPath)
-            : [];
+        if (!File.Exists(modelPath))
+            throw new FileNotFoundException($"SentencePiece model not found: {modelPath}", modelPath);
+
+        using var stream = File.OpenRead(modelPath);
+        _tokenizer = SentencePieceTokenizer.Create(
+            stream,
+            addBeginningOfSentence: false,
+            addEndOfSentence: false,
+            specialTokens: null);
     }
 
     public string Decode(List<int> tokenIds)
     {
-        if (_vocab.Length == 0) return $"[{tokenIds.Count} tokens]";
+        if (tokenIds.Count == 0) return string.Empty;
+        return _tokenizer.Decode(tokenIds) ?? string.Empty;
+    }
 
-        return string.Concat(tokenIds
-            .Where(t => t < _vocab.Length)
-            .Select(t => _vocab[t].Replace("\u2581", " ")))
-            .Trim();
+    public void Dispose()
+    {
+        // SentencePieceTokenizer does not implement IDisposable; nothing to dispose.
     }
 }
