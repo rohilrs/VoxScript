@@ -169,8 +169,12 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Respects `PauseMediaWhileDictating` setting; toggle enabled in Settings
     - Files: `IMediaControlService.cs`, `MediaControlService.cs`, `VoiceInkEngine.cs`
 
-18. **Auto-add to dictionary** — toggle in Settings, not yet implemented
-    - Automatically add frequently used words to vocabulary
+18. **Auto-add to dictionary** — DONE
+    - After each transcription, extracts uncommon words and adds them to vocabulary
+    - Filters against ~10K common English word list (HashSet, case-insensitive)
+    - Skips single characters, pure numbers, and words already in vocabulary
+    - New pipeline step after word replacement, gated by `AutoAddToDictionary` setting
+    - Files: `ICommonWordList.cs`, `CommonWordList.cs`, `IAutoVocabularyService.cs`, `AutoVocabularyService.cs`, `common-words.txt`
 
 19. **Paste last transcript** — DONE
     - `VoxScriptEngine.LastTranscription` stores post-pipeline result
