@@ -34,7 +34,7 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 ### UI (WinUI 3 + Mica)
 - [x] Custom brand theme (warm palette, Georgia serif headings, Mica backdrop)
 - [x] Waveform logo in nav sidebar
-- [x] Home/TranscribePage — record button, transcript card, status indicators
+- [x] Home/TranscribePage — record button, transcript card, status indicators, AI connection status
 - [x] Navigation sidebar: Home, Dictionary, Expansions, History, Personalize, Notes, Settings
 - [x] Light theme with visible caption buttons (min/max/close)
 - [x] System tray (minimize to tray on close, tray icon with tooltip)
@@ -80,7 +80,7 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 - [x] Settings persistence (JSON file at %LOCALAPPDATA%\VoxScript\settings.json)
 - [x] Serilog logging (rolling daily to %LOCALAPPDATA%\VoxScript\Logs\)
 - [x] DI container (all services wired in AppBootstrapper)
-- [x] 57 unit tests passing (settings, hotkey serialization, transcription filters, word replacements, etc.)
+- [x] 86 unit tests passing (settings, hotkeys, transcription filters, word replacements, notes, vocabulary, etc.)
 
 ### AI Enhancement + Context Modes
 - [x] AI Enhancement service (OpenAI, Anthropic, Ollama backends) with UI config
@@ -90,6 +90,7 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 - [x] Enhancement only fires when a context mode matches the active app (no default fallback)
 - [x] Auto-detects active app via process name + browser URL matching
 - [x] Context badge on TranscribePage showing matched mode + app
+- [x] AI connection status indicator on home page (Ollama ping / API key check)
 - [x] SQLite persistence with first-run seeding of 3 built-in modes
 - [x] User can add/delete custom modes, edit all built-in modes
 
