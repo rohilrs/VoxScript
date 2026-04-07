@@ -114,11 +114,17 @@ public static class MelSpectrogram
                 if (k < binPoints[m - 1] || k > binPoints[m + 1])
                     filterbank[m - 1, k] = 0f;
                 else if (k <= binPoints[m])
-                    filterbank[m - 1, k] = (float)((k - binPoints[m - 1])
-                        / (double)(binPoints[m] - binPoints[m - 1]));
+                {
+                    int denom = binPoints[m] - binPoints[m - 1];
+                    filterbank[m - 1, k] = denom == 0 ? 1f
+                        : (float)((k - binPoints[m - 1]) / (double)denom);
+                }
                 else
-                    filterbank[m - 1, k] = (float)((binPoints[m + 1] - k)
-                        / (double)(binPoints[m + 1] - binPoints[m]));
+                {
+                    int denom = binPoints[m + 1] - binPoints[m];
+                    filterbank[m - 1, k] = denom == 0 ? 1f
+                        : (float)((binPoints[m + 1] - k) / (double)denom);
+                }
             }
         }
         return filterbank;
