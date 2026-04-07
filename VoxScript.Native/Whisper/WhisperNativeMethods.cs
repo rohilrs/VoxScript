@@ -31,6 +31,14 @@ internal static class WhisperNativeMethods
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr whisper_full_get_segment_text(IntPtr ctx, int i_segment);
 
+    /// <summary>Returns segment start time in centiseconds (1/100s).</summary>
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern long whisper_full_get_segment_t0(IntPtr ctx, int i_segment);
+
+    /// <summary>Returns segment end time in centiseconds (1/100s).</summary>
+    [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern long whisper_full_get_segment_t1(IntPtr ctx, int i_segment);
+
     [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
     internal static extern int whisper_lang_id(string lang);
 
@@ -80,5 +88,14 @@ internal static class WhisperNativeMethods
         // bool print_realtime             offset 26
         public const int PrintRealtime = 26;
         // bool print_timestamps           offset 27
+        // ... (floats, ints, bools through tdrz_enable)
+        // const char* suppress_regex      offset 64  (8 bytes, x64 pointer)
+        // const char* initial_prompt      offset 72  (8 bytes, x64 pointer)
+        public const int InitialPrompt = 72;
+        // bool carry_initial_prompt       offset 80
+        // const whisper_token* prompt_tokens offset 88
+        // int prompt_n_tokens             offset 96
+        // const char* language            offset 104 (8 bytes, x64 pointer)
+        public const int Language = 104;
     }
 }

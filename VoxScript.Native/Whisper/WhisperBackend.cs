@@ -63,7 +63,7 @@ public sealed class WhisperBackend : IWhisperBackend, ILocalTranscriptionBackend
         }
     }
 
-    public async Task<string> TranscribeAsync(float[] samples, string? language,
+    public async Task<TranscriptionSegment[]> TranscribeAsync(float[] samples, string? language,
         string? initialPrompt, CancellationToken ct)
     {
         if (!IsModelLoaded) throw new InvalidOperationException("Whisper model not loaded.");
@@ -76,42 +76,64 @@ public sealed class WhisperBackend : IWhisperBackend, ILocalTranscriptionBackend
         finally { _gate.Release(); }
     }
 
-    private string RunInference(float[] rawSamples, string? language, string? initialPrompt)
+    private TranscriptionSegment[] RunInference(float[] rawSamples, string? language, string? initialPrompt)
     {
         // Run VAD to strip silence if model is loaded
         var samples = _vad.IsLoaded ? _vad.ExtractSpeech(rawSamples) : rawSamples;
-        if (samples.Length == 0) return string.Empty;
+        if (samples.Length == 0) return [];
 
         // Get default params as a heap-allocated pointer (avoids struct marshaling issues)
         IntPtr pParams = WhisperNativeMethods.whisper_full_default_params_by_ref(0 /* GREEDY */);
         if (pParams == IntPtr.Zero)
             throw new InvalidOperationException("whisper_full_default_params_by_ref returned null");
 
+        IntPtr pPrompt = IntPtr.Zero;
+        IntPtr pLang = IntPtr.Zero;
         try
         {
             // Set fields by writing directly to known offsets
             int nThreads = Math.Min(Environment.ProcessorCount, 8);
             Marshal.WriteInt32(pParams, WhisperNativeMethods.ParamOffsets.NThreads, nThreads);
-            Marshal.WriteByte(pParams, WhisperNativeMethods.ParamOffsets.NoTimestamps, 1);
+            // no_timestamps defaults to false (timestamps enabled) — do NOT set to 1
             Marshal.WriteByte(pParams, WhisperNativeMethods.ParamOffsets.PrintProgress, 0);
             Marshal.WriteByte(pParams, WhisperNativeMethods.ParamOffsets.PrintRealtime, 0);
+
+            if (!string.IsNullOrEmpty(initialPrompt))
+            {
+                pPrompt = Marshal.StringToCoTaskMemUTF8(initialPrompt);
+                Marshal.WriteIntPtr(pParams, WhisperNativeMethods.ParamOffsets.InitialPrompt, pPrompt);
+            }
+
+            if (!string.IsNullOrEmpty(language))
+            {
+                pLang = Marshal.StringToCoTaskMemUTF8(language);
+                Marshal.WriteIntPtr(pParams, WhisperNativeMethods.ParamOffsets.Language, pLang);
+            }
 
             int ret = WhisperNativeMethods.whisper_full(_ctx, pParams, samples, samples.Length);
             if (ret != 0) throw new InvalidOperationException($"whisper_full failed with code {ret}");
         }
         finally
         {
+            if (pPrompt != IntPtr.Zero) Marshal.FreeCoTaskMem(pPrompt);
+            if (pLang != IntPtr.Zero) Marshal.FreeCoTaskMem(pLang);
             WhisperNativeMethods.whisper_free_params(pParams);
         }
 
         int nSegments = WhisperNativeMethods.whisper_full_n_segments(_ctx);
-        var sb = new System.Text.StringBuilder();
+        var segments = new TranscriptionSegment[nSegments];
         for (int i = 0; i < nSegments; i++)
         {
             IntPtr ptr = WhisperNativeMethods.whisper_full_get_segment_text(_ctx, i);
-            sb.Append(Marshal.PtrToStringUTF8(ptr));
+            string text = Marshal.PtrToStringUTF8(ptr) ?? string.Empty;
+
+            // Whisper timestamps are in centiseconds (1/100s), convert to milliseconds
+            long t0 = WhisperNativeMethods.whisper_full_get_segment_t0(_ctx, i) * 10;
+            long t1 = WhisperNativeMethods.whisper_full_get_segment_t1(_ctx, i) * 10;
+
+            segments[i] = new TranscriptionSegment(text, t0, t1);
         }
-        return sb.ToString().Trim();
+        return segments;
     }
 
     public void Dispose()

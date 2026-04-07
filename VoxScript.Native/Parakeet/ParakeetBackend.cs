@@ -80,11 +80,11 @@ public sealed class ParakeetBackend : IParakeetBackend, ILocalTranscriptionBacke
         finally { _gate.Release(); }
     }
 
-    async Task<string> ILocalTranscriptionBackend.TranscribeAsync(
+    async Task<TranscriptionSegment[]> ILocalTranscriptionBackend.TranscribeAsync(
         float[] samples, string? language, string? initialPrompt, CancellationToken ct)
     {
         var result = await TranscribeAsync(samples, ct);
-        return result.Text;
+        return [new TranscriptionSegment(result.Text, 0, 0)];
     }
 
     private ParakeetResult RunInference(float[] samples)

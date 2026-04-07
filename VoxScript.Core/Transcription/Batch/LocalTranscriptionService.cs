@@ -15,6 +15,11 @@ public sealed class LocalTranscriptionService : ITranscriptionService
     private readonly ILocalTranscriptionBackend _backend;
     private readonly IVocabularyRepository _vocabulary;
 
+    /// <summary>
+    /// Minimum gap in milliseconds between consecutive segments to insert a paragraph break.
+    /// </summary>
+    internal const long ParagraphGapMs = 2500;
+
     public ModelProvider Provider => ModelProvider.Local;
 
     public LocalTranscriptionService(ILocalTranscriptionBackend backend, IVocabularyRepository vocabulary)
@@ -41,7 +46,30 @@ public sealed class LocalTranscriptionService : ITranscriptionService
             // Non-critical — transcription works fine without the prompt
         }
 
-        return await _backend.TranscribeAsync(samples, language, initialPrompt, ct);
+        var segments = await _backend.TranscribeAsync(samples, language, initialPrompt, ct);
+        return JoinWithParagraphBreaks(segments);
+    }
+
+    /// <summary>
+    /// Joins transcription segments into a single string, inserting paragraph breaks
+    /// (double newline) when the gap between consecutive segments exceeds <see cref="ParagraphGapMs"/>.
+    /// </summary>
+    internal static string JoinWithParagraphBreaks(TranscriptionSegment[] segments)
+    {
+        if (segments.Length == 0) return string.Empty;
+        if (segments.Length == 1) return segments[0].Text.Trim();
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append(segments[0].Text.Trim());
+
+        for (int i = 1; i < segments.Length; i++)
+        {
+            long gap = segments[i].StartMs - segments[i - 1].EndMs;
+            sb.Append(gap >= ParagraphGapMs ? "\n\n" : " ");
+            sb.Append(segments[i].Text.Trim());
+        }
+
+        return sb.ToString();
     }
 
     /// <summary>

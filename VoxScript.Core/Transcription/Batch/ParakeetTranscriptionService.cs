@@ -24,7 +24,11 @@ public sealed class ParakeetTranscriptionService : ITranscriptionService
         string? language, CancellationToken ct)
     {
         var samples = await Task.Run(() => ReadWavAsFloat(audioPath), ct);
-        return await _backend.TranscribeAsync(samples, language: null, initialPrompt: null, ct);
+        var segments = await _backend.TranscribeAsync(samples, language: null, initialPrompt: null, ct);
+
+        // Parakeet returns a single segment with no timestamps — just extract text
+        if (segments.Length == 0) return string.Empty;
+        return string.Join(" ", segments.Select(s => s.Text.Trim()));
     }
 
     private static float[] ReadWavAsFloat(string path)
