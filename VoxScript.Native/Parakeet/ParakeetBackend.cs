@@ -89,16 +89,12 @@ public sealed class ParakeetBackend : IParakeetBackend, ILocalTranscriptionBacke
 
     private ParakeetResult RunInference(float[] samples)
     {
-        Log.Information("Parakeet inference: {Samples} samples ({Duration:F2}s)",
-            samples.Length, samples.Length / 16000.0);
-
         // 1. Compute 80-dim log-mel spectrogram with per-feature normalization (NeMo convention)
         var melSpec = MelSpectrogram.Compute(samples,
             sampleRate: 16000, nFft: 512, hopLength: 160, nMels: 80, normalize: true);
 
         // Input tensor: [batch=1, n_mels=80, time_frames]
         int timeFrames = melSpec.GetLength(1);
-        Log.Information("Parakeet mel spectrogram: {Mels}x{Frames}", melSpec.GetLength(0), timeFrames);
         var inputTensor = new DenseTensor<float>(new[] { 1, 80, timeFrames });
         for (int m = 0; m < 80; m++)
             for (int t = 0; t < timeFrames; t++)
@@ -115,17 +111,12 @@ public sealed class ParakeetBackend : IParakeetBackend, ILocalTranscriptionBacke
 
         using var outputs = _session!.Run(inputs);
 
-        // 2. Greedy CTC/TDT decode
+        // 2. Greedy CTC decode (blank = last token, NeMo convention)
         var logits = outputs[0].AsTensor<float>();
-        Log.Information("Parakeet logits shape: [{D0},{D1},{D2}]",
-            logits.Dimensions[0], logits.Dimensions[1], logits.Dimensions[2]);
         var decoded = GreedyCtcDecode(logits);
-        Log.Information("Parakeet CTC decoded: {Count} tokens: [{Tokens}]",
-            decoded.Count, string.Join(", ", decoded.Take(50)));
 
         // 3. Detokenize
         var text = _tokenizer?.Decode(decoded) ?? string.Join("", decoded.Select(t => t.ToString()));
-        Log.Information("Parakeet result: \"{Text}\"", text);
         return new ParakeetResult(text, []);
     }
 
