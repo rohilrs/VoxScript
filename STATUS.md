@@ -4,7 +4,7 @@ Last updated: 2026-04-05
 
 ## Overview
 
-Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from VoiceInk (macOS Swift/SwiftUI). ~120 C# files, 14 XAML files, 94 passing tests.
+Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from VoiceInk (macOS Swift/SwiftUI). ~120 C# files, 14 XAML files, 103 passing tests.
 
 **Solution structure:** VoxScript.Core (business logic) → VoxScript.Native (Win32/interop) → VoxScript (WinUI 3 app)
 
@@ -80,7 +80,7 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 - [x] Settings persistence (JSON file at %LOCALAPPDATA%\VoxScript\settings.json)
 - [x] Serilog logging (rolling daily to %LOCALAPPDATA%\VoxScript\Logs\)
 - [x] DI container (all services wired in AppBootstrapper)
-- [x] 94 unit tests passing (settings, hotkeys, transcription filters, word replacements, notes, vocabulary, etc.)
+- [x] 103 unit tests passing (settings, hotkeys, transcription filters, word replacements, notes, vocabulary, etc.)
 
 ### AI Enhancement + Context Modes
 - [x] AI Enhancement service (OpenAI, Anthropic, Ollama backends) with UI config
@@ -150,9 +150,13 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Hot-swaps model into WhisperBackend without app restart
     - Files: `ModelManagementDialog.cs`, `ModelManagementViewModel.cs`, `SettingsPage.xaml`, `SettingsViewModel.cs`
 
-15. **Parakeet models** — backend exists but untested
-    - ONNX Runtime + DirectML, mel spectrogram, tokenizer stub
-    - Need to verify model export from NeMo and end-to-end inference
+15. **Parakeet models** — DONE
+    - ONNX Runtime + DirectML GPU acceleration via ParakeetBackend
+    - Microsoft.ML.Tokenizers for SentencePiece BPE decoding
+    - Python export script: `scripts/export_parakeet.py` (NeMo → ONNX + tokenizer)
+    - Selectable alongside Whisper in Model Management dialog
+    - ParakeetTranscriptionService routes through existing TranscriptionServiceRegistry
+    - Files: `ParakeetBackend.cs`, `ParakeetTokenizer.cs`, `MelSpectrogram.cs`, `ParakeetTranscriptionService.cs`, `export_parakeet.py`
 
 16. **Recording indicator bar** — DONE
     - Floating dark pill at bottom center of screen, fully transparent background (no window chrome)
