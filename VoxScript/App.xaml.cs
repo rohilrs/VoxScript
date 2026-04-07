@@ -295,9 +295,25 @@ public partial class App : Application
     {
         var settings = services.GetRequiredService<AppSettings>();
         var modelName = settings.SelectedModelName;
-        var downloaded = modelManager.ListDownloaded();
 
-        // Use configured model if it's downloaded, otherwise first available
+        // Check if the configured model is a Parakeet ONNX model
+        var onnxDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "VoxScript", "Models", "whisper");
+        var onnxPath = Path.Combine(onnxDir, $"{modelName}.onnx");
+        if (modelName is not null && File.Exists(onnxPath))
+        {
+            var parakeetBackend = services.GetRequiredService<VoxScript.Native.Parakeet.ParakeetBackend>();
+            if (!parakeetBackend.IsModelLoaded)
+            {
+                Serilog.Log.Information("Loading Parakeet model: {Model}", modelName);
+                await parakeetBackend.LoadModelAsync(onnxPath, CancellationToken.None);
+            }
+            return;
+        }
+
+        // Whisper model
+        var downloaded = modelManager.ListDownloaded();
         var toLoad = modelName is not null && downloaded.Contains(modelName)
             ? modelName
             : downloaded.FirstOrDefault();
