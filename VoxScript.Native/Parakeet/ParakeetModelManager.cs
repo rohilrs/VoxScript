@@ -5,8 +5,8 @@ public sealed class ParakeetModelManager
 {
     private static readonly Dictionary<string, string> KnownModels = new()
     {
-        ["parakeet-tdt-0.6b-v2"] =
-            "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2/resolve/main/parakeet-tdt-0.6b-v2.onnx",
+        ["parakeet-ctc-0.6b"] =
+            "https://huggingface.co/nvidia/parakeet-ctc-0.6b/resolve/main/parakeet-ctc-0.6b.onnx",
     };
 
     private readonly string _modelsDir;

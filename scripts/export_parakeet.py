@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export NVIDIA Parakeet TDT model to ONNX + SentencePiece tokenizer.
+"""Export NVIDIA Parakeet CTC model to ONNX + SentencePiece tokenizer.
 
 Usage:
     pip install nemo_toolkit[asr] onnx
@@ -13,7 +13,7 @@ import nemo.collections.asr as nemo_asr
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Export Parakeet TDT to ONNX")
+    parser = argparse.ArgumentParser(description="Export Parakeet CTC to ONNX")
     parser.add_argument(
         "--output-dir",
         type=Path,
@@ -22,14 +22,14 @@ def main():
     )
     parser.add_argument(
         "--model-name",
-        default="nvidia/parakeet-tdt-0.6b-v2",
-        help="HuggingFace model name (default: nvidia/parakeet-tdt-0.6b-v2)",
+        default="nvidia/parakeet-ctc-0.6b",
+        help="HuggingFace model name (default: nvidia/parakeet-ctc-0.6b)",
     )
     args = parser.parse_args()
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    onnx_path = args.output_dir / "parakeet-tdt-0.6b-v2.onnx"
-    tokenizer_path = args.output_dir / "parakeet-tdt-0.6b-v2.model"
+    onnx_path = args.output_dir / "parakeet-ctc-0.6b.onnx"
+    tokenizer_path = args.output_dir / "parakeet-ctc-0.6b.model"
 
     print(f"Loading {args.model_name} from HuggingFace...")
     model = nemo_asr.models.ASRModel.from_pretrained(args.model_name)
