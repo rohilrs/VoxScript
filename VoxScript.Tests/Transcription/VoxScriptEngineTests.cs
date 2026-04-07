@@ -29,14 +29,16 @@ public class VoxScriptEngineTests
         var powerModeSession = new VoxScript.Core.PowerMode.PowerModeSessionManager(
             powerModeManager,
             Substitute.For<VoxScript.Core.PowerMode.IActiveWindowService>());
+        var settings = new AppSettings(new InMemorySettingsStore());
         var pipeline = new TranscriptionPipeline(
             new TranscriptionOutputFilter(),
             new WhisperTextFormatter(),
             wordReplacement,
             Substitute.For<VoxScript.Core.AI.IAIEnhancementService>(),
             Substitute.For<VoxScript.Core.History.ITranscriptionRepository>(),
-            powerModeSession);
-        var settings = new AppSettings(new InMemorySettingsStore());
+            powerModeSession,
+            Substitute.For<IAutoVocabularyService>(),
+            settings);
         var paste = Substitute.For<IPasteService>();
         var sounds = Substitute.For<ISoundEffectsService>();
         var media = Substitute.For<IMediaControlService>();

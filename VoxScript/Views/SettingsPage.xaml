@@ -503,7 +503,6 @@
                         <ToggleSwitch Grid.Column="1" MinWidth="0"
                                       OnContent="" OffContent=""
                                       IsOn="{x:Bind ViewModel.AutoAddToDictionary, Mode=TwoWay}"
-                                      IsEnabled="False"
                                       VerticalAlignment="Center" />
                     </Grid>
 

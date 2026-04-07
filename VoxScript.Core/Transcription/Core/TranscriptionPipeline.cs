@@ -1,8 +1,10 @@
 using Serilog;
 using VoxScript.Core.AI;
+using VoxScript.Core.Dictionary;
 using VoxScript.Core.History;
 using VoxScript.Core.Persistence;
 using VoxScript.Core.PowerMode;
+using VoxScript.Core.Settings;
 using VoxScript.Core.Transcription.Processing;
 
 namespace VoxScript.Core.Transcription.Core;
@@ -15,6 +17,8 @@ public sealed class TranscriptionPipeline
     private readonly IAIEnhancementService _aiEnhancement;
     private readonly ITranscriptionRepository _repository;
     private readonly PowerModeSessionManager _powerMode;
+    private readonly IAutoVocabularyService _autoVocabulary;
+    private readonly AppSettings _settings;
 
     /// <summary>
     /// After the last transcription, holds the matched Power Mode config name
@@ -29,7 +33,9 @@ public sealed class TranscriptionPipeline
         WordReplacementService wordReplacement,
         IAIEnhancementService aiEnhancement,
         ITranscriptionRepository repository,
-        PowerModeSessionManager powerMode)
+        PowerModeSessionManager powerMode,
+        IAutoVocabularyService autoVocabulary,
+        AppSettings settings)
     {
         _filter = filter;
         _formatter = formatter;
@@ -37,6 +43,8 @@ public sealed class TranscriptionPipeline
         _aiEnhancement = aiEnhancement;
         _repository = repository;
         _powerMode = powerMode;
+        _autoVocabulary = autoVocabulary;
+        _settings = settings;
     }
 
     /// <summary>
@@ -89,6 +97,19 @@ public sealed class TranscriptionPipeline
         {
             Log.Warning(ex, "Word replacement failed, skipping");
             replaced = formatted;
+        }
+
+        // 4b. Auto-add uncommon words to vocabulary
+        if (_settings.AutoAddToDictionary)
+        {
+            try
+            {
+                await _autoVocabulary.ProcessTranscriptionAsync(replaced, ct);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Auto-vocabulary failed, skipping");
+            }
         }
 
         // 5. AI enhancement — only runs when a context mode matches the active app

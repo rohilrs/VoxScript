@@ -72,6 +72,12 @@ public static class AppBootstrapper
         services.AddSingleton<IVocabularyRepository, VocabularyRepository>();
         services.AddSingleton<ICorrectionRepository, CorrectionRepository>();
         services.AddSingleton<WordReplacementService>();
+        services.AddSingleton<ICommonWordList>(sp =>
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, "Assets", "Data", "common-words.txt");
+            return new CommonWordList(path);
+        });
+        services.AddSingleton<IAutoVocabularyService, AutoVocabularyService>();
         services.AddSingleton<ITranscriptionRepository, TranscriptionRepository>();
         services.AddSingleton<INoteRepository, NoteRepository>();
         services.AddSingleton<TranscriptionPipeline>();
