@@ -63,19 +63,14 @@ public static class ModelManagementDialog
         content.Children.Add(scrollableList);
         content.Children.Add(bottomSection);
 
-        // Center the Done button via style (visual tree hack breaks on re-open)
-        var doneStyle = new Style(typeof(Button));
-        doneStyle.Setters.Add(new Setter(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center));
-        doneStyle.Setters.Add(new Setter(FrameworkElement.MinWidthProperty, 120.0));
-
         var dialog = new ContentDialog
         {
             Title = "Manage Models",
             Content = content,
-            CloseButtonText = "Done",
-            CloseButtonStyle = doneStyle,
+            PrimaryButtonText = "Done",
             XamlRoot = xamlRoot,
             CornerRadius = new CornerRadius(12),
+            DefaultButton = ContentDialogButton.Primary,
         };
 
         dialog.Resources["ContentDialogCommandSpaceBackground"] =
