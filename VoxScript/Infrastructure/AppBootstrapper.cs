@@ -19,6 +19,7 @@ using VoxScript.Native.Audio;
 using VoxScript.Native.Platform;
 using VoxScript.Native.Storage;
 using VoxScript.Native.Whisper;
+using VoxScript.Native.Parakeet;
 
 
 namespace VoxScript.Infrastructure;
@@ -52,6 +53,10 @@ public static class AppBootstrapper
         services.AddSingleton<WhisperBackend>();
         services.AddSingleton<IWhisperBackend>(sp => sp.GetRequiredService<WhisperBackend>());
         services.AddSingleton<ILocalTranscriptionBackend>(sp => sp.GetRequiredService<WhisperBackend>());
+
+        // Parakeet ONNX backend
+        services.AddSingleton<ParakeetBackend>();
+
         services.AddSingleton<WhisperModelManager>(sp =>
         {
             var modelsDir = Path.Combine(
@@ -92,6 +97,8 @@ public static class AppBootstrapper
         // Transcription services (registered as IEnumerable<ITranscriptionService>)
         services.AddSingleton<ITranscriptionService, LocalTranscriptionService>();
         services.AddSingleton<ITranscriptionService, CloudTranscriptionService>();
+        services.AddSingleton<ITranscriptionService>(sp =>
+            new ParakeetTranscriptionService(sp.GetRequiredService<ParakeetBackend>()));
 
         // Streaming providers (registered as IEnumerable<IStreamingProvider>)
         services.AddSingleton<IStreamingProvider, DeepgramStreamingProvider>();

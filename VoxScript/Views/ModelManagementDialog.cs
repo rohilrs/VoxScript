@@ -262,7 +262,7 @@ public static class ModelManagementDialog
         // Import local file
         var importBtn = new Button
         {
-            Content = "Import local .bin file",
+            Content = "Import local model file",
             FontSize = 13,
             Padding = new Thickness(12, 8, 12, 8),
             CornerRadius = new CornerRadius(6),
@@ -275,6 +275,7 @@ public static class ModelManagementDialog
         {
             var picker = new FileOpenPicker();
             picker.FileTypeFilter.Add(".bin");
+            picker.FileTypeFilter.Add(".onnx");
 
             // Initialize picker with window handle
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);

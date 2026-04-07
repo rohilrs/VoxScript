@@ -5,6 +5,7 @@ using VoxScript.Core.Settings;
 using VoxScript.Core.Transcription.Core;
 using VoxScript.Core.Transcription.Models;
 using VoxScript.Infrastructure;
+using VoxScript.Native.Parakeet;
 using VoxScript.Native.Whisper;
 
 namespace VoxScript.ViewModels;
@@ -75,6 +76,26 @@ public sealed partial class ModelManagementViewModel : ObservableObject
                 name == ActiveModelName,
                 IsPredefined: false));
         }
+
+        // Also list custom ONNX models (Parakeet)
+        var modelsDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "VoxScript", "Models", "whisper");
+        if (Directory.Exists(modelsDir))
+        {
+            var onnxFiles = Directory.GetFiles(modelsDir, "*.onnx");
+            foreach (var onnxPath in onnxFiles)
+            {
+                var name = Path.GetFileNameWithoutExtension(onnxPath);
+                if (Models.Any(m => m.Name == name)) continue;
+                var size = new FileInfo(onnxPath).Length;
+                Models.Add(new ModelDisplayItem(
+                    name, name, FormatSize(size),
+                    IsDownloaded: true,
+                    name == ActiveModelName,
+                    IsPredefined: false));
+            }
+        }
     }
 
     public async Task UseModelAsync(string modelName)
@@ -84,16 +105,28 @@ public sealed partial class ModelManagementViewModel : ObservableObject
 
         if (!item.IsDownloaded)
         {
-            // Download first (predefined model)
             var predefined = PredefinedModels.All.FirstOrDefault(m => m.Name == modelName);
             if (predefined?.DownloadUrl is null) return;
             await DownloadModelAsync(modelName, predefined.DownloadUrl);
         }
 
-        // Load into backend
-        var modelPath = _modelManager.GetModelPath(modelName);
-        _backend.UnloadModel();
-        await _backend.LoadModelAsync(modelPath, CancellationToken.None);
+        // Determine which backend to load based on model provider
+        var model = PredefinedModels.All.FirstOrDefault(m => m.Name == modelName);
+        if (model?.Provider == ModelProvider.Parakeet)
+        {
+            var parakeetBackend = ServiceLocator.Get<ParakeetBackend>();
+            var modelPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "VoxScript", "Models", "whisper", $"{modelName}.onnx");
+            parakeetBackend.UnloadModel();
+            await parakeetBackend.LoadModelAsync(modelPath, CancellationToken.None);
+        }
+        else
+        {
+            var modelPath = _modelManager.GetModelPath(modelName);
+            _backend.UnloadModel();
+            await _backend.LoadModelAsync(modelPath, CancellationToken.None);
+        }
 
         ActiveModelName = modelName;
         _settings.SelectedModelName = modelName;
@@ -132,9 +165,34 @@ public sealed partial class ModelManagementViewModel : ObservableObject
 
     public async Task ImportLocalFileAsync(string filePath)
     {
-        var name = _modelManager.ImportModel(filePath);
-        Refresh();
-        await UseModelAsync(name);
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
+        if (ext == ".onnx")
+        {
+            var name = Path.GetFileNameWithoutExtension(filePath);
+            var destDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "VoxScript", "Models", "whisper");
+            Directory.CreateDirectory(destDir);
+            var destOnnx = Path.Combine(destDir, $"{name}.onnx");
+            File.Copy(filePath, destOnnx, overwrite: true);
+
+            // Copy co-located .model tokenizer if it exists
+            var tokenizerSrc = Path.ChangeExtension(filePath, ".model");
+            if (File.Exists(tokenizerSrc))
+            {
+                var tokenizerDest = Path.Combine(destDir, $"{name}.model");
+                File.Copy(tokenizerSrc, tokenizerDest, overwrite: true);
+            }
+
+            Refresh();
+            await UseModelAsync(name);
+        }
+        else
+        {
+            var name = _modelManager.ImportModel(filePath);
+            Refresh();
+            await UseModelAsync(name);
+        }
     }
 
     public async Task DownloadCustomAsync()
