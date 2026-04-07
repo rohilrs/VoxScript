@@ -54,6 +54,7 @@ public sealed partial class TranscribePage : Page
         base.OnNavigatedTo(e);
         var model = ResolveModel();
         ModelName.Text = model.DisplayName;
+        _ = CheckAiStatusAsync();
     }
 
     private void OnStateChanged(RecordingState state)
@@ -114,6 +115,68 @@ public sealed partial class TranscribePage : Page
         else
         {
             ContextModeBadge.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private async Task CheckAiStatusAsync()
+    {
+        var settings = ServiceLocator.Get<AppSettings>();
+        if (!settings.AiEnhancementEnabled)
+        {
+            AiStatusPanel.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        AiStatusPanel.Visibility = Visibility.Visible;
+        AiStatusText.Text = "AI Checking...";
+        AiStatusDot.Fill = (SolidColorBrush)Application.Current.Resources["BrandMutedBrush"];
+
+        var aiService = ServiceLocator.Get<AIService>();
+        bool connected;
+
+        if (settings.AiProvider == AiProvider.Local)
+        {
+            // Ollama: ping the endpoint
+            try
+            {
+                var http = ServiceLocator.Get<HttpClient>();
+                var endpoint = settings.OllamaEndpoint.TrimEnd('/');
+                var response = await http.GetAsync($"{endpoint}/api/tags",
+                    new CancellationTokenSource(3000).Token);
+                connected = response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                connected = false;
+            }
+        }
+        else
+        {
+            // Cloud providers: just check if key is configured
+            connected = aiService.IsConfigured;
+        }
+
+        if (connected)
+        {
+            AiStatusDot.Fill = (SolidColorBrush)Application.Current.Resources["BrandSuccessBrush"];
+            AiStatusText.Text = settings.AiProvider switch
+            {
+                AiProvider.Local => "Ollama Connected",
+                AiProvider.OpenAI => "OpenAI Ready",
+                AiProvider.Anthropic => "Anthropic Ready",
+                _ => "AI Ready",
+            };
+        }
+        else
+        {
+            AiStatusDot.Fill = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 204, 68, 68));
+            AiStatusText.Text = settings.AiProvider switch
+            {
+                AiProvider.Local => "Ollama Unavailable",
+                AiProvider.OpenAI => "OpenAI Key Missing",
+                AiProvider.Anthropic => "Anthropic Key Missing",
+                _ => "AI Unavailable",
+            };
         }
     }
 

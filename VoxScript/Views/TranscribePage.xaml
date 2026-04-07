@@ -82,6 +82,14 @@
                            FontSize="13"
                            Foreground="{StaticResource BrandPrimaryBrush}"
                            Visibility="Collapsed" />
+                <StackPanel x:Name="AiStatusPanel" Orientation="Horizontal" Spacing="6"
+                            Visibility="Collapsed">
+                    <Ellipse x:Name="AiStatusDot" Width="8" Height="8"
+                             Fill="{StaticResource BrandMutedBrush}" />
+                    <TextBlock x:Name="AiStatusText" Text=""
+                               FontSize="13"
+                               Foreground="{StaticResource BrandMutedBrush}" />
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <Ellipse x:Name="StatusDot" Width="8" Height="8"
                              Fill="{StaticResource BrandSuccessBrush}" />
