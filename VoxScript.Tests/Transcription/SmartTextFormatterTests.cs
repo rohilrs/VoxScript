@@ -74,7 +74,7 @@ public class SmartTextFormatterTests
     [InlineData("twenty three people", "23 people")]
     [InlineData("one hundred and fifty", "150")]
     [InlineData("two thousand twenty six", "2026")]
-    [InlineData("a hundred dollars", "100 dollars")]
+    [InlineData("a hundred dollars", "$100")]
     [InlineData("three million", "3000000")]
     [InlineData("five hundred thousand", "500000")]
     public void Cardinals_are_converted(string input, string expected)
@@ -135,5 +135,55 @@ public class SmartTextFormatterTests
     {
         _sut.Format("I need 3 eggs and 5 oranges and 7 apples", true)
             .Should().Be("I need 3 eggs and 5 oranges and 7 apples");
+    }
+
+    // ── Currency ──────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("that costs 23 dollars", "That costs $23")]
+    [InlineData("just 50 cents", "Just $0.50")]
+    [InlineData("10 dollars and 50 cents", "$10.50")]
+    [InlineData("about 23 bucks", "About $23")]
+    [InlineData("5 dollars and 5 cents", "$5.05")]
+    public void Currency_is_formatted(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
+    }
+
+    // ── Percentages ───────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("50 percent chance", "50% chance")]
+    [InlineData("100 percent done", "100% done")]
+    public void Percentages_are_formatted(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
+    }
+
+    // ── Dates ─────────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("on March 5", "On March 5th")]
+    [InlineData("March 5 2026", "March 5th, 2026")]
+    [InlineData("January 1 2000", "January 1st, 2000")]
+    [InlineData("December 22", "December 22nd")]
+    [InlineData("April 13", "April 13th")]
+    [InlineData("February 21", "February 21st")]
+    public void Dates_are_formatted(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
+    }
+
+    // ── Times ─────────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData("at 3 30 PM", "At 3:30 PM")]
+    [InlineData("at 3 PM", "At 3:00 PM")]
+    [InlineData("at 3 o'clock", "At 3:00")]
+    [InlineData("at noon today", "At 12:00 PM today")]
+    [InlineData("at midnight", "At 12:00 AM")]
+    public void Times_are_formatted(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
     }
 }

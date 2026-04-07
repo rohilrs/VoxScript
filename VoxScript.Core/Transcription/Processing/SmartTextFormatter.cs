@@ -19,7 +19,10 @@ public sealed partial class SmartTextFormatter
             text = ApplySpokenPunctuation(text);
             text = ConvertNumbers(text);
             text = DetectLists(text);
-            // Future transforms inserted here (Tasks 5-6)
+            text = FormatCurrency(text);
+            text = FormatPercentages(text);
+            text = FormatDates(text);
+            text = FormatTimes(text);
         }
 
         text = ApplyBasicCleanup(text);
@@ -677,6 +680,175 @@ public sealed partial class SmartTextFormatter
     // Matches "1" at a word boundary (the start of a potential list)
     [GeneratedRegex(@"\b1\b")]
     private static partial Regex ListStartRegex();
+
+    // ── Currency ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Converts spoken currency patterns to symbols. Processes most specific pattern first.
+    /// </summary>
+    private static string FormatCurrency(string text)
+    {
+        // Most specific first: "X dollars and Y cents"
+        text = DollarsAndCentsRegex().Replace(text, m =>
+        {
+            string dollars = m.Groups[1].Value;
+            string cents = m.Groups[2].Value.PadLeft(2, '0');
+            return $"${dollars}.{cents}";
+        });
+
+        // "X dollars"
+        text = DollarsRegex().Replace(text, "$$$1");
+
+        // "X cents"
+        text = CentsRegex().Replace(text, m =>
+        {
+            string cents = m.Groups[1].Value.PadLeft(2, '0');
+            return $"$0.{cents}";
+        });
+
+        // "X bucks"
+        text = BucksRegex().Replace(text, "$$$1");
+
+        return text;
+    }
+
+    [GeneratedRegex(@"\b(\d+)\s+dollars\s+and\s+(\d+)\s+cents\b", RegexOptions.IgnoreCase)]
+    private static partial Regex DollarsAndCentsRegex();
+
+    [GeneratedRegex(@"\b(\d+)\s+dollars\b", RegexOptions.IgnoreCase)]
+    private static partial Regex DollarsRegex();
+
+    [GeneratedRegex(@"\b(\d+)\s+cents\b", RegexOptions.IgnoreCase)]
+    private static partial Regex CentsRegex();
+
+    [GeneratedRegex(@"\b(\d+)\s+bucks\b", RegexOptions.IgnoreCase)]
+    private static partial Regex BucksRegex();
+
+    // ── Percentages ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Converts "N percent" to "N%".
+    /// </summary>
+    private static string FormatPercentages(string text)
+    {
+        return PercentRegex().Replace(text, "$1%");
+    }
+
+    [GeneratedRegex(@"\b(\d+)\s+percent\b", RegexOptions.IgnoreCase)]
+    private static partial Regex PercentRegex();
+
+    // ── Dates ─────────────────────────────────────────────────────────
+
+    private static readonly string[] MonthNames =
+    [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    /// <summary>
+    /// Formats dates: "Month Day Year" → "Month DayOrd, Year" and "Month Day" → "Month DayOrd".
+    /// </summary>
+    private static string FormatDates(string text)
+    {
+        // With year: "March 5 2026" → "March 5th, 2026"
+        text = DateWithYearRegex().Replace(text, m =>
+        {
+            string month = m.Groups[1].Value;
+            int day = int.Parse(m.Groups[2].Value);
+            string year = m.Groups[3].Value;
+            if (day < 1 || day > 31) return m.Value;
+            return $"{month} {day}{GetOrdinalSuffix(day)}, {year}";
+        });
+
+        // Without year: "March 5" → "March 5th"
+        text = DateWithoutYearRegex().Replace(text, m =>
+        {
+            string month = m.Groups[1].Value;
+            string dayStr = m.Groups[2].Value;
+            // Don't double-add ordinal if already has suffix
+            if (m.Groups[3].Success && !string.IsNullOrEmpty(m.Groups[3].Value))
+                return m.Value;
+            int day = int.Parse(dayStr);
+            if (day < 1 || day > 31) return m.Value;
+            return $"{month} {day}{GetOrdinalSuffix(day)}";
+        });
+
+        return text;
+    }
+
+    // Match "Month Day Year" where Day is 1-2 digits and Year is 4 digits
+    [GeneratedRegex(@"\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})\s+(\d{4})\b", RegexOptions.None)]
+    private static partial Regex DateWithYearRegex();
+
+    // Match "Month Day" where Day is 1-2 digits, optionally already followed by ordinal suffix
+    [GeneratedRegex(@"\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(st|nd|rd|th)?\b", RegexOptions.None)]
+    private static partial Regex DateWithoutYearRegex();
+
+    // ── Times ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Formats spoken time expressions into standard clock notation.
+    /// </summary>
+    private static string FormatTimes(string text)
+    {
+        // "3 30 PM" → "3:30 PM" (hour + minutes + AM/PM)
+        text = TimeWithMinutesAndAmPmRegex().Replace(text, m =>
+        {
+            string hour = m.Groups[1].Value;
+            string minutes = m.Groups[2].Value;
+            string ampm = NormalizeAmPm(m.Groups[3].Value);
+            return $"{hour}:{minutes} {ampm}";
+        });
+
+        // "3 PM" → "3:00 PM" (hour + AM/PM, no minutes)
+        // Uses negative lookbehind to avoid matching digits after a colon (already formatted times)
+        text = TimeWithAmPmRegex().Replace(text, m =>
+        {
+            string hour = m.Groups[1].Value;
+            string ampm = NormalizeAmPm(m.Groups[2].Value);
+            return $"{hour}:00 {ampm}";
+        });
+
+        // "3 o'clock" → "3:00"
+        text = TimeOClockRegex().Replace(text, "$1:00");
+
+        // "noon" → "12:00 PM"
+        text = NoonRegex().Replace(text, "12:00 PM");
+
+        // "midnight" → "12:00 AM"
+        text = MidnightRegex().Replace(text, "12:00 AM");
+
+        return text;
+    }
+
+    /// <summary>
+    /// Normalizes AM/PM variants (am, pm, a.m., p.m.) to uppercase AM/PM.
+    /// </summary>
+    private static string NormalizeAmPm(string value)
+    {
+        string lower = value.ToLowerInvariant().Replace(".", "");
+        return lower == "am" ? "AM" : "PM";
+    }
+
+    // "3 30 PM" or "3 30 am" or "3 30 a.m."
+    [GeneratedRegex(@"\b(\d{1,2})\s+(\d{2})\s*(AM|PM|am|pm|a\.m\.|p\.m\.)\b", RegexOptions.None)]
+    private static partial Regex TimeWithMinutesAndAmPmRegex();
+
+    // "3 PM" or "3 am" — negative lookbehind prevents matching after colon (already formatted)
+    [GeneratedRegex(@"(?<![:]\d*)(\d{1,2})\s*(AM|PM|am|pm|a\.m\.|p\.m\.)\b", RegexOptions.None)]
+    private static partial Regex TimeWithAmPmRegex();
+
+    // "3 o'clock"
+    [GeneratedRegex(@"\b(\d{1,2})\s*o'clock\b", RegexOptions.IgnoreCase)]
+    private static partial Regex TimeOClockRegex();
+
+    // "noon" as whole word
+    [GeneratedRegex(@"\bnoon\b", RegexOptions.IgnoreCase)]
+    private static partial Regex NoonRegex();
+
+    // "midnight" as whole word
+    [GeneratedRegex(@"\bmidnight\b", RegexOptions.IgnoreCase)]
+    private static partial Regex MidnightRegex();
 
     // ── Basic Cleanup ──────────────────────────────────────────────────
 
