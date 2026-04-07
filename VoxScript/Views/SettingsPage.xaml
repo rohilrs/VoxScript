@@ -489,7 +489,7 @@
                                    VerticalAlignment="Center" />
                     </StackPanel>
 
-                    <Grid Opacity="0.5" ColumnSpacing="32">
+                    <Grid ColumnSpacing="32">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
