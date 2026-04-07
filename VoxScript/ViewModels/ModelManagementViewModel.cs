@@ -172,7 +172,24 @@ public sealed partial class ModelManagementViewModel : ObservableObject
     public void DeleteModel(string modelName)
     {
         if (modelName == ActiveModelName) return; // Can't delete active model
-        _modelManager.DeleteModel(modelName);
+
+        // Try deleting as ONNX model first, then as Whisper .bin
+        var onnxDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "VoxScript", "Models", "whisper");
+        var onnxPath = Path.Combine(onnxDir, $"{modelName}.onnx");
+        var tokenizerPath = Path.Combine(onnxDir, $"{modelName}.model");
+        if (File.Exists(onnxPath))
+        {
+            File.Delete(onnxPath);
+            if (File.Exists(tokenizerPath))
+                File.Delete(tokenizerPath);
+        }
+        else
+        {
+            _modelManager.DeleteModel(modelName);
+        }
+
         Refresh();
     }
 
