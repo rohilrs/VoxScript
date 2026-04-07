@@ -3,6 +3,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using VoxScript.ViewModels;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace VoxScript.Views;
 
@@ -106,6 +108,49 @@ public sealed partial class SettingsPage : Page
         _activeRecordingButton.Foreground = GetBrush("BrandForegroundBrush");
         _activeRecordingButton.BorderBrush = GetBrush("BrandPrimaryLightBrush");
         _activeRecordingButton = null;
+    }
+
+    private async void ExportButton_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileSavePicker();
+        picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+        picker.FileTypeChoices.Add("JSON", [".json"]);
+        picker.SuggestedFileName = "voxscript-data";
+
+        var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
+        InitializeWithWindow.Initialize(picker, hwnd);
+
+        var file = await picker.PickSaveFileAsync();
+        if (file is null) return;
+
+        using var stream = await file.OpenStreamForWriteAsync();
+        stream.SetLength(0);
+        await ViewModel.ExportDataAsync(stream, default);
+
+        DataPortInfoBar.Message = ViewModel.DataPortStatusMessage;
+        DataPortInfoBar.Severity = InfoBarSeverity.Success;
+        DataPortInfoBar.IsOpen = true;
+    }
+
+    private async void ImportButton_Click(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker();
+        picker.FileTypeFilter.Add(".json");
+
+        var hwnd = WindowNative.GetWindowHandle(App.MainWindow);
+        InitializeWithWindow.Initialize(picker, hwnd);
+
+        var file = await picker.PickSingleFileAsync();
+        if (file is null) return;
+
+        using var stream = await file.OpenStreamForReadAsync();
+        await ViewModel.ImportDataAsync(stream, default);
+
+        DataPortInfoBar.Message = ViewModel.DataPortStatusMessage;
+        DataPortInfoBar.Severity = ViewModel.DataPortIsError
+            ? InfoBarSeverity.Error
+            : InfoBarSeverity.Success;
+        DataPortInfoBar.IsOpen = true;
     }
 
     // ── Key event forwarding to ViewModel ──────────────────────

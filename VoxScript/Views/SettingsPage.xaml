@@ -474,6 +474,12 @@
                 </StackPanel>
             </Border>
 
+            <!-- Data port status -->
+            <InfoBar x:Name="DataPortInfoBar"
+                     IsOpen="False"
+                     Severity="Success"
+                     IsClosable="True" />
+
             <!-- Card 5: Extras -->
             <Border Background="{StaticResource BrandCardBrush}"
                     CornerRadius="16" Padding="28"
@@ -521,6 +527,36 @@
                                       OnContent="" OffContent=""
                                       IsOn="{x:Bind ViewModel.SmartFormattingEnabled, Mode=TwoWay}"
                                       VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Import / Export -->
+                    <Grid ColumnSpacing="32">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Import / Export"
+                                       FontSize="15" Foreground="{StaticResource BrandForegroundBrush}" />
+                            <TextBlock Text="Vocabulary, corrections, and expansions"
+                                       FontSize="13" Foreground="{StaticResource BrandMutedBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <Button Content="Export"
+                                    Click="ExportButton_Click"
+                                    Background="{StaticResource BrandBackgroundBrush}"
+                                    Foreground="{StaticResource BrandForegroundBrush}"
+                                    FontSize="13" CornerRadius="8" Padding="12,8"
+                                    BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                                    BorderThickness="1" />
+                            <Button Content="Import"
+                                    Click="ImportButton_Click"
+                                    Background="{StaticResource BrandBackgroundBrush}"
+                                    Foreground="{StaticResource BrandForegroundBrush}"
+                                    FontSize="13" CornerRadius="8" Padding="12,8"
+                                    BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                                    BorderThickness="1" />
+                        </StackPanel>
                     </Grid>
                 </StackPanel>
             </Border>
