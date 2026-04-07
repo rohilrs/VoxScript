@@ -224,9 +224,26 @@ public partial class App : Application
     {
         var settings = ServiceLocator.Get<AppSettings>();
         var modelName = settings.SelectedModelName;
-        return (modelName is not null
+
+        // Check predefined models first
+        var predefined = modelName is not null
             ? PredefinedModels.All.FirstOrDefault(m => m.Name == modelName)
-            : null) ?? PredefinedModels.Default;
+            : null;
+        if (predefined is not null) return predefined;
+
+        // Check if it's an imported ONNX model (Parakeet)
+        if (modelName is not null)
+        {
+            var onnxPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "VoxScript", "Models", "whisper", $"{modelName}.onnx");
+            if (File.Exists(onnxPath))
+                return new TranscriptionModel(
+                    ModelProvider.Parakeet, modelName, modelName,
+                    false, true, null, null);
+        }
+
+        return PredefinedModels.Default;
     }
 
     /// <summary>
