@@ -57,7 +57,7 @@ public sealed partial class ModelManagementViewModel : ObservableObject
         var onnxDownloaded = Directory.Exists(modelsBaseDir)
             ? Directory.GetFiles(modelsBaseDir, "*.onnx")
                 .Select(Path.GetFileNameWithoutExtension)
-                .Where(n => n is not null)
+                .Where(n => n is not null && n != "silero-vad")
                 .Cast<string>()
                 .ToHashSet()
             : new HashSet<string>();
@@ -100,7 +100,7 @@ public sealed partial class ModelManagementViewModel : ObservableObject
             foreach (var onnxPath in onnxFiles)
             {
                 var name = Path.GetFileNameWithoutExtension(onnxPath);
-                if (Models.Any(m => m.Name == name)) continue;
+                if (name == "silero-vad" || Models.Any(m => m.Name == name)) continue;
                 var size = new FileInfo(onnxPath).Length;
                 Models.Add(new ModelDisplayItem(
                     name, name, FormatSize(size),
