@@ -92,9 +92,9 @@ public sealed class ParakeetBackend : IParakeetBackend, ILocalTranscriptionBacke
         Log.Information("Parakeet inference: {Samples} samples ({Duration:F2}s)",
             samples.Length, samples.Length / 16000.0);
 
-        // 1. Compute 80-dim log-mel spectrogram
+        // 1. Compute 80-dim log-mel spectrogram with per-feature normalization (NeMo convention)
         var melSpec = MelSpectrogram.Compute(samples,
-            sampleRate: 16000, nFft: 512, hopLength: 160, nMels: 80);
+            sampleRate: 16000, nFft: 512, hopLength: 160, nMels: 80, normalize: true);
 
         // Input tensor: [batch=1, n_mels=80, time_frames]
         int timeFrames = melSpec.GetLength(1);

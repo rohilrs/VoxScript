@@ -20,7 +20,8 @@ public static class MelSpectrogram
     private static readonly float[,] MelFilterbank = BuildMelFilterbank();
 
     public static float[,] Compute(float[] samples, int sampleRate = 16000,
-        int nFft = NFft, int hopLength = HopLength, int nMels = NMels)
+        int nFft = NFft, int hopLength = HopLength, int nMels = NMels,
+        bool normalize = false)
     {
         int numFrames = (samples.Length - WinLength) / HopLength + 1;
         if (numFrames <= 0) numFrames = 1;
@@ -53,6 +54,35 @@ public static class MelSpectrogram
                 melSpec[m, frame] = MathF.Log(MathF.Max(sum, 1e-10f));
             }
         }
+
+        // Per-feature normalization (NeMo "per_feature" mode):
+        // Each mel band is normalized to zero mean and unit variance across time.
+        if (normalize && numFrames > 1)
+        {
+            for (int m = 0; m < NMels; m++)
+            {
+                // Compute mean
+                float mean = 0f;
+                for (int t = 0; t < numFrames; t++)
+                    mean += melSpec[m, t];
+                mean /= numFrames;
+
+                // Compute std
+                float variance = 0f;
+                for (int t = 0; t < numFrames; t++)
+                {
+                    float diff = melSpec[m, t] - mean;
+                    variance += diff * diff;
+                }
+                float std = MathF.Sqrt(variance / numFrames);
+                if (std < 1e-5f) std = 1e-5f; // avoid division by zero
+
+                // Normalize
+                for (int t = 0; t < numFrames; t++)
+                    melSpec[m, t] = (melSpec[m, t] - mean) / std;
+            }
+        }
+
         return melSpec;
     }
 
