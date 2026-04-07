@@ -63,19 +63,53 @@ def main():
             print(f"  Removed old data file: {f.name}")
 
     # Extract SentencePiece tokenizer .model file
+    # NeMo stores the path in different attributes depending on version/tokenizer type.
     tokenizer = model.tokenizer
     sp_model_path = None
-    if hasattr(tokenizer, "tokenizer") and hasattr(tokenizer.tokenizer, "vocab_file"):
-        sp_model_path = tokenizer.tokenizer.vocab_file
-    elif hasattr(tokenizer, "model_path"):
-        sp_model_path = tokenizer.model_path
+    candidates = []
 
-    if sp_model_path and Path(sp_model_path).exists():
+    # Try common attribute paths
+    for attr_chain in [
+        ("tokenizer", "vocab_file"),
+        ("tokenizer", "model_path"),
+        ("model_path",),
+        ("vocab_file",),
+        ("tokenizer", "sp_model_file"),
+        ("sp_model_file",),
+    ]:
+        obj = tokenizer
+        for attr in attr_chain:
+            obj = getattr(obj, attr, None)
+            if obj is None:
+                break
+        if isinstance(obj, str) and Path(obj).exists():
+            candidates.append(obj)
+
+    # Also try dir() to find any .model file reference
+    if not candidates:
+        for attr in dir(tokenizer):
+            if attr.startswith("_"):
+                continue
+            val = getattr(tokenizer, attr, None)
+            if isinstance(val, str) and val.endswith(".model") and Path(val).exists():
+                candidates.append(val)
+
+    if candidates:
+        sp_model_path = candidates[0]
         shutil.copy2(sp_model_path, tokenizer_path)
         print(f"Tokenizer saved to {tokenizer_path}")
     else:
-        print("WARNING: Could not locate SentencePiece .model file.")
-        print("You may need to manually extract it from the NeMo checkpoint.")
+        # Last resort: print all string attributes so user can find it
+        print("WARNING: Could not auto-detect SentencePiece .model file.")
+        print("Tokenizer attributes:")
+        for attr in sorted(dir(tokenizer)):
+            if attr.startswith("_"):
+                continue
+            val = getattr(tokenizer, attr, None)
+            if isinstance(val, str) and len(val) < 500:
+                print(f"  {attr} = {val}")
+        print("If you see a path to a .model file above, copy it manually to:")
+        print(f"  {tokenizer_path}")
 
     print(f"\nDone! Files in {args.output_dir}:")
     for f in sorted(args.output_dir.iterdir()):
