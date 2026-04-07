@@ -174,7 +174,10 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Filters against ~10K common English word list (HashSet, case-insensitive)
     - Skips single characters, pure numbers, and words already in vocabulary
     - New pipeline step after word replacement, gated by `AutoAddToDictionary` setting
-    - Files: `ICommonWordList.cs`, `CommonWordList.cs`, `IAutoVocabularyService.cs`, `AutoVocabularyService.cs`, `common-words.txt`
+    - Vocabulary words fed to Whisper as `initialPrompt` to bias transcription toward correct spellings
+    - Implicit fuzzy correction: misspellings within edit distance ≤ 2 of vocabulary words (same first letter, length ≥ 4) are auto-corrected in the word replacement step
+    - Pipeline order ensures fuzzy correction runs before auto-add, preventing misspelled duplicates
+    - Files: `ICommonWordList.cs`, `CommonWordList.cs`, `IAutoVocabularyService.cs`, `AutoVocabularyService.cs`, `common-words.txt`, `LocalTranscriptionService.cs`, `WordReplacementService.cs`
 
 19. **Paste last transcript** — DONE
     - `VoxScriptEngine.LastTranscription` stores post-pipeline result
