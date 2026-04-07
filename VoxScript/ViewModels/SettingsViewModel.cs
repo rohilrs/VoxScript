@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VoxScript.Core.AI;
 using VoxScript.Core.Audio;
+using VoxScript.Core.DataPort;
 using VoxScript.Core.Settings;
 using VoxScript.Core.Transcription.Models;
 using VoxScript.Helpers;
@@ -214,6 +215,39 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool AutoAddToDictionary { get; set; }
     partial void OnAutoAddToDictionaryChanged(bool value) => _settings.AutoAddToDictionary = value;
+
+    // ── Import / Export ────────────────────────────────────────
+
+    [ObservableProperty]
+    public partial string DataPortStatusMessage { get; set; } = "";
+
+    [ObservableProperty]
+    public partial bool DataPortIsError { get; set; }
+
+    public async Task<ExportResult> ExportDataAsync(Stream output, CancellationToken ct)
+    {
+        var service = ServiceLocator.Get<IDataPortService>();
+        var result = await service.ExportAsync(output, ct);
+        DataPortIsError = false;
+        DataPortStatusMessage = $"Exported {result.VocabularyCount} vocabulary words, {result.CorrectionsCount} corrections, {result.ExpansionsCount} expansions.";
+        return result;
+    }
+
+    public async Task ImportDataAsync(Stream input, CancellationToken ct)
+    {
+        try
+        {
+            var service = ServiceLocator.Get<IDataPortService>();
+            var result = await service.ImportAsync(input, ct);
+            DataPortIsError = false;
+            DataPortStatusMessage = $"Imported {result.VocabularyAdded} vocabulary words, {result.CorrectionsAdded} corrections, {result.ExpansionsAdded} expansions ({result.Skipped} skipped).";
+        }
+        catch (InvalidOperationException ex)
+        {
+            DataPortIsError = true;
+            DataPortStatusMessage = ex.Message;
+        }
+    }
 
     // ── Keybinds ───────────────────────────────────────────────
 
