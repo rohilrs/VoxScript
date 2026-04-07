@@ -105,4 +105,35 @@ public class SmartTextFormatterTests
     {
         _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
     }
+
+    // ── List Detection ────────────────────────────────────────────────
+
+    [Fact]
+    public void NumberedList_three_items_formatted()
+    {
+        _sut.Format("1 eggs 2 milk 3 oranges", true)
+            .Should().Be("1. Eggs\n2. Milk\n3. Oranges");
+    }
+
+    [Fact]
+    public void NumberedList_four_items_with_surrounding_text()
+    {
+        _sut.Format("my list 1 eggs 2 milk 3 oranges 4 bread and done", true)
+            .Should().Be("My list\n1. Eggs\n2. Milk\n3. Oranges\n4. Bread and done");
+    }
+
+    [Fact]
+    public void Two_items_not_treated_as_list()
+    {
+        // Only 2 items — not enough to trigger list detection
+        _sut.Format("I have 1 dog and 2 cats", true)
+            .Should().Be("I have 1 dog and 2 cats");
+    }
+
+    [Fact]
+    public void NonSequential_numbers_not_treated_as_list()
+    {
+        _sut.Format("I need 3 eggs and 5 oranges and 7 apples", true)
+            .Should().Be("I need 3 eggs and 5 oranges and 7 apples");
+    }
 }

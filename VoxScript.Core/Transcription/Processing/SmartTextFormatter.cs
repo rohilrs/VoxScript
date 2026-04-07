@@ -18,7 +18,8 @@ public sealed partial class SmartTextFormatter
         {
             text = ApplySpokenPunctuation(text);
             text = ConvertNumbers(text);
-            // Future transforms inserted here (Tasks 4-6)
+            text = DetectLists(text);
+            // Future transforms inserted here (Tasks 5-6)
         }
 
         text = ApplyBasicCleanup(text);
@@ -549,6 +550,133 @@ public sealed partial class SmartTextFormatter
         }
         return 0;
     }
+
+    // ── List Detection ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Detects numbered item sequences (1, 2, 3, ...) in text and formats them
+    /// as newline-separated lists. Requires at least 3 consecutive items starting
+    /// from 1 to trigger. Runs after number conversion so numbers are already digits.
+    /// </summary>
+    private static string DetectLists(string text)
+    {
+        // Find the position of "1" at a word boundary
+        var match = ListStartRegex().Match(text);
+        if (!match.Success) return text;
+
+        // Try to find consecutive numbers 1, 2, 3, ... with text between them
+        var items = new List<(int Start, int End, string ItemText)>();
+        int searchFrom = 0;
+
+        // We may need to try multiple "1" positions if the first doesn't yield a list
+        while (true)
+        {
+            match = ListStartRegex().Match(text, searchFrom);
+            if (!match.Success) break;
+
+            items.Clear();
+            int currentNumber = 1;
+            int numberPos = match.Index;
+
+            // Find all consecutive numbers starting from this "1"
+            while (true)
+            {
+                // Find where this number's text starts (after the number itself)
+                string numberStr = currentNumber.ToString();
+                int textStart = numberPos + numberStr.Length;
+
+                // Look for the next number in sequence
+                int nextNumber = currentNumber + 1;
+                var nextPattern = BuildNumberBoundaryPattern(nextNumber);
+                var nextMatch = nextPattern.Match(text, textStart);
+
+                if (nextMatch.Success)
+                {
+                    // Extract text between current number and next number
+                    string itemText = text[textStart..nextMatch.Index].Trim();
+                    if (string.IsNullOrEmpty(itemText))
+                    {
+                        // No text between numbers — not a valid list item
+                        break;
+                    }
+                    items.Add((numberPos, nextMatch.Index, itemText));
+                    numberPos = nextMatch.Index;
+                    currentNumber = nextNumber;
+                }
+                else
+                {
+                    // No next number found — this is the last item
+                    // Extract text from current number to end of string
+                    string itemText = text[textStart..].Trim();
+                    if (string.IsNullOrEmpty(itemText))
+                    {
+                        break;
+                    }
+                    items.Add((numberPos, text.Length, itemText));
+                    break;
+                }
+            }
+
+            // Need at least 3 items to consider it a list
+            if (items.Count >= 3)
+            {
+                return FormatDetectedList(text, items);
+            }
+
+            // Try the next "1" occurrence
+            searchFrom = match.Index + 1;
+        }
+
+        return text;
+    }
+
+    /// <summary>
+    /// Builds the formatted output for a detected list.
+    /// </summary>
+    private static string FormatDetectedList(string text, List<(int Start, int End, string ItemText)> items)
+    {
+        var sb = new StringBuilder();
+
+        // Any text before the first item is a prefix
+        string prefix = text[..items[0].Start].Trim();
+        if (!string.IsNullOrEmpty(prefix))
+        {
+            sb.Append(prefix);
+            sb.Append('\n');
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            int number = i + 1;
+            string itemText = items[i].ItemText;
+
+            // Capitalize the first letter of the item text
+            if (itemText.Length > 0 && char.IsLower(itemText[0]))
+            {
+                itemText = char.ToUpper(itemText[0]) + itemText[1..];
+            }
+
+            sb.Append($"{number}. {itemText}");
+            if (i < items.Count - 1)
+            {
+                sb.Append('\n');
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Creates a regex that matches a specific number at a word boundary.
+    /// </summary>
+    private static Regex BuildNumberBoundaryPattern(int number)
+    {
+        return new Regex($@"\b{number}\b");
+    }
+
+    // Matches "1" at a word boundary (the start of a potential list)
+    [GeneratedRegex(@"\b1\b")]
+    private static partial Regex ListStartRegex();
 
     // ── Basic Cleanup ──────────────────────────────────────────────────
 
