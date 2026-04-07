@@ -38,21 +38,29 @@ def main():
     print(f"Exporting ONNX to {onnx_path}...")
     model.export(str(onnx_path))
 
-    # NeMo may export with external data files (e.g. onnx__MatMul_8046).
-    # Merge everything into a single self-contained ONNX file.
-    print("Merging external weights into single ONNX file...")
+    # NeMo may export with many small external data files (e.g. onnx__MatMul_8046).
+    # Consolidate into a single external data file alongside the .onnx.
+    # (Protobuf has a 2GB limit, so models >2GB must use external data.)
+    print("Consolidating external weights into single data file...")
     onnx_model = onnx.load(str(onnx_path), load_external_data=True)
+    data_filename = f"{onnx_path.stem}.onnx.data"
     onnx.save_model(
         onnx_model,
         str(onnx_path),
-        save_as_external_data=False,
+        save_as_external_data=True,
+        all_tensors_to_one_file=True,
+        location=data_filename,
     )
 
-    # Clean up any leftover external data files
+    # Clean up any leftover scattered data files
     for f in args.output_dir.iterdir():
-        if f.suffix not in (".onnx", ".model") and f.is_file() and f.name != tokenizer_path.name:
+        if f.name in (onnx_path.name, data_filename, tokenizer_path.name):
+            continue
+        if f.suffix in (".onnx", ".model"):
+            continue
+        if f.is_file():
             f.unlink()
-            print(f"  Removed external data file: {f.name}")
+            print(f"  Removed old data file: {f.name}")
 
     # Extract SentencePiece tokenizer .model file
     tokenizer = model.tokenizer

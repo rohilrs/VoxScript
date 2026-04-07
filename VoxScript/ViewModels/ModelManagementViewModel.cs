@@ -178,10 +178,13 @@ public sealed partial class ModelManagementViewModel : ObservableObject
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "VoxScript", "Models", "whisper");
         var onnxPath = Path.Combine(onnxDir, $"{modelName}.onnx");
+        var dataPath = onnxPath + ".data";
         var tokenizerPath = Path.Combine(onnxDir, $"{modelName}.model");
         if (File.Exists(onnxPath))
         {
             File.Delete(onnxPath);
+            if (File.Exists(dataPath))
+                File.Delete(dataPath);
             if (File.Exists(tokenizerPath))
                 File.Delete(tokenizerPath);
         }
@@ -205,6 +208,14 @@ public sealed partial class ModelManagementViewModel : ObservableObject
             Directory.CreateDirectory(destDir);
             var destOnnx = Path.Combine(destDir, $"{name}.onnx");
             File.Copy(filePath, destOnnx, overwrite: true);
+
+            // Copy co-located external data file (.onnx.data) if it exists
+            var dataSrc = filePath + ".data";
+            if (File.Exists(dataSrc))
+            {
+                var dataDest = destOnnx + ".data";
+                File.Copy(dataSrc, dataDest, overwrite: true);
+            }
 
             // Copy co-located .model tokenizer if it exists
             var tokenizerSrc = Path.ChangeExtension(filePath, ".model");
