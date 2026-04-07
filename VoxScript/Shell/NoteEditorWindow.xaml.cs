@@ -29,6 +29,15 @@ public sealed partial class NoteEditorWindow : Window
         SystemBackdrop = new MicaBackdrop();
         ExtendsContentIntoTitleBar = true;
 
+        // Style caption buttons for light background (same as MainWindow)
+        if (AppWindow?.TitleBar is { } titleBar)
+        {
+            titleBar.ButtonForegroundColor = Microsoft.UI.Colors.Black;
+            titleBar.ButtonHoverForegroundColor = Microsoft.UI.Colors.Black;
+            titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(30, 0, 0, 0);
+            titleBar.ButtonInactiveForegroundColor = Microsoft.UI.Colors.Gray;
+        }
+
         _collectionHandler = (_, _) => DispatcherQueue.TryEnqueue(RebuildSidebar);
         _propertyHandler = (_, e) =>
         {
