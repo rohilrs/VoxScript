@@ -22,8 +22,12 @@ public static class PredefinedModels
         "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin",
         809_000_000L);
 
+    public static readonly TranscriptionModel ParakeetTdt = new(
+        ModelProvider.Parakeet, "parakeet-tdt-0.6b-v2", "Parakeet TDT 0.6B v2",
+        false, true, null, 1_200_000_000L);
+
     public static readonly IReadOnlyList<TranscriptionModel> All =
-        [TinyEn, BaseEn, SmallEn, LargeV3Turbo];
+        [TinyEn, BaseEn, SmallEn, LargeV3Turbo, ParakeetTdt];
 
     // Base.en is the sweet spot for CPU-only transcription (fast + decent quality).
     // Switch to LargeV3Turbo once GPU (DirectML/CUDA) is enabled.
