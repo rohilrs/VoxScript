@@ -129,11 +129,15 @@ public sealed class ParakeetBackend : IParakeetBackend, ILocalTranscriptionBacke
         return new ParakeetResult(text, []);
     }
 
-    internal static List<int> GreedyCtcDecode(Tensor<float> logits)
+    internal static List<int> GreedyCtcDecode(Tensor<float> logits, int blankToken = -1)
     {
         // logits shape: [batch=1, time, vocab_size]
         int time = (int)logits.Dimensions[1];
         int vocab = (int)logits.Dimensions[2];
+
+        // Blank token: default to last index (NeMo CTC convention)
+        // Standard CTC uses 0, but NeMo Parakeet uses vocab_size-1
+        if (blankToken < 0) blankToken = vocab - 1;
 
         var result = new List<int>();
         int lastToken = -1;
@@ -149,8 +153,8 @@ public sealed class ParakeetBackend : IParakeetBackend, ILocalTranscriptionBacke
                 if (val > bestVal) { bestVal = val; best = v; }
             }
 
-            // CTC collapse: skip blank (token 0) and repeated tokens
-            if (best != 0 && best != lastToken)
+            // CTC collapse: skip blank and repeated tokens
+            if (best != blankToken && best != lastToken)
                 result.Add(best);
             lastToken = best;
         }
