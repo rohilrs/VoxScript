@@ -128,7 +128,9 @@ public sealed partial class SettingsPage : Page
         await ViewModel.ExportDataAsync(stream, default);
 
         DataPortInfoBar.Message = ViewModel.DataPortStatusMessage;
-        DataPortInfoBar.Severity = InfoBarSeverity.Success;
+        DataPortInfoBar.Severity = ViewModel.DataPortIsError
+            ? InfoBarSeverity.Error
+            : InfoBarSeverity.Success;
         DataPortInfoBar.IsOpen = true;
     }
 

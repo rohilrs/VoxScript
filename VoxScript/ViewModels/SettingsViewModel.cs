@@ -224,13 +224,20 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool DataPortIsError { get; set; }
 
-    public async Task<ExportResult> ExportDataAsync(Stream output, CancellationToken ct)
+    public async Task ExportDataAsync(Stream output, CancellationToken ct)
     {
-        var service = ServiceLocator.Get<IDataPortService>();
-        var result = await service.ExportAsync(output, ct);
-        DataPortIsError = false;
-        DataPortStatusMessage = $"Exported {result.VocabularyCount} vocabulary words, {result.CorrectionsCount} corrections, {result.ExpansionsCount} expansions.";
-        return result;
+        try
+        {
+            var service = ServiceLocator.Get<IDataPortService>();
+            var result = await service.ExportAsync(output, ct);
+            DataPortIsError = false;
+            DataPortStatusMessage = $"Exported {result.VocabularyCount} vocabulary words, {result.CorrectionsCount} corrections, {result.ExpansionsCount} expansions.";
+        }
+        catch (Exception ex)
+        {
+            DataPortIsError = true;
+            DataPortStatusMessage = $"Export failed: {ex.Message}";
+        }
     }
 
     public async Task ImportDataAsync(Stream input, CancellationToken ct)

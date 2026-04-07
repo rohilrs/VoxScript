@@ -61,6 +61,9 @@ public sealed class DataPortService : IDataPortService
 
     public async Task<ImportResult> ImportAsync(Stream input, CancellationToken ct)
     {
+        if (input.CanSeek && input.Length > 50 * 1024 * 1024)
+            throw new InvalidOperationException("File is too large to import.");
+
         DataPortPayload? payload;
         try
         {
@@ -99,7 +102,7 @@ public sealed class DataPortService : IDataPortService
 
         foreach (var c in payload.Corrections)
         {
-            if (string.IsNullOrWhiteSpace(c.Wrong) || !correctionSet.Add(c.Wrong))
+            if (string.IsNullOrWhiteSpace(c.Wrong) || string.IsNullOrWhiteSpace(c.Correct) || !correctionSet.Add(c.Wrong))
             {
                 skipped++;
                 continue;
@@ -110,7 +113,7 @@ public sealed class DataPortService : IDataPortService
 
         foreach (var e in payload.Expansions)
         {
-            if (string.IsNullOrWhiteSpace(e.Original) || !expansionSet.Add(e.Original))
+            if (string.IsNullOrWhiteSpace(e.Original) || string.IsNullOrWhiteSpace(e.Replacement) || !expansionSet.Add(e.Original))
             {
                 skipped++;
                 continue;
