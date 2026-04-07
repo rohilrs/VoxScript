@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using VoxScript.Core.AI;
 using VoxScript.Core.Audio;
+using VoxScript.Core.DataPort;
 using VoxScript.Core.Dictionary;
 using VoxScript.Core.History;
 using VoxScript.Core.Persistence;
@@ -72,6 +73,7 @@ public static class AppBootstrapper
         services.AddSingleton<IVocabularyRepository, VocabularyRepository>();
         services.AddSingleton<ICorrectionRepository, CorrectionRepository>();
         services.AddSingleton<WordReplacementService>();
+        services.AddSingleton<IDataPortService, DataPortService>();
         services.AddSingleton<ICommonWordList>(sp =>
         {
             var path = Path.Combine(AppContext.BaseDirectory, "Assets", "Data", "common-words.txt");
