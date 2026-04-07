@@ -227,13 +227,10 @@ public static class ModelManagementDialog
                 },
             };
             ToolTipService.SetToolTip(deleteBtn, "Delete model");
-            deleteBtn.Click += async (_, _) =>
+            deleteBtn.Click += (_, _) =>
             {
-                if (await Helpers.DialogHelper.ConfirmDeleteAsync(xamlRoot, $"model \"{item.DisplayName}\""))
-                {
-                    vm.DeleteModel(item.Name);
-                    rebuild();
-                }
+                vm.DeleteModel(item.Name);
+                rebuild();
             };
             buttons.Children.Add(deleteBtn);
         }
