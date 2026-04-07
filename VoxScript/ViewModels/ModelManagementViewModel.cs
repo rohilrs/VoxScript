@@ -50,14 +50,27 @@ public sealed partial class ModelManagementViewModel : ObservableObject
         Models.Clear();
         var downloaded = _modelManager.ListDownloaded();
 
+        // Check for ONNX models in the models directory
+        var modelsBaseDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "VoxScript", "Models", "whisper");
+        var onnxDownloaded = Directory.Exists(modelsBaseDir)
+            ? Directory.GetFiles(modelsBaseDir, "*.onnx")
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(n => n is not null)
+                .Cast<string>()
+                .ToHashSet()
+            : new HashSet<string>();
+
         // Predefined models
         foreach (var model in PredefinedModels.All)
         {
+            var isDownloaded = downloaded.Contains(model.Name) || onnxDownloaded.Contains(model.Name);
             Models.Add(new ModelDisplayItem(
                 model.Name,
                 model.DisplayName,
                 FormatSize(model.FileSizeBytes),
-                downloaded.Contains(model.Name),
+                isDownloaded,
                 model.Name == ActiveModelName,
                 IsPredefined: true));
         }
@@ -110,16 +123,16 @@ public sealed partial class ModelManagementViewModel : ObservableObject
             await DownloadModelAsync(modelName, predefined.DownloadUrl);
         }
 
-        // Determine which backend to load based on model provider
-        var model = PredefinedModels.All.FirstOrDefault(m => m.Name == modelName);
-        if (model?.Provider == ModelProvider.Parakeet)
+        // Determine which backend to load: check if an ONNX file exists (Parakeet), else Whisper
+        var onnxDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "VoxScript", "Models", "whisper");
+        var onnxPath = Path.Combine(onnxDir, $"{modelName}.onnx");
+        if (File.Exists(onnxPath))
         {
             var parakeetBackend = ServiceLocator.Get<ParakeetBackend>();
-            var modelPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "VoxScript", "Models", "whisper", $"{modelName}.onnx");
             parakeetBackend.UnloadModel();
-            await parakeetBackend.LoadModelAsync(modelPath, CancellationToken.None);
+            await parakeetBackend.LoadModelAsync(onnxPath, CancellationToken.None);
         }
         else
         {

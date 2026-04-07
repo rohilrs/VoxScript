@@ -42,20 +42,19 @@ public static class ModelManagementDialog
         // Custom model section
         var customSection = BuildCustomSection(vm, xamlRoot, RebuildList, progressBar, progressText);
 
-        // Scrollable model list only
-        var scrollableList = new ScrollViewer
+        var innerContent = new StackPanel { Spacing = 16, MinWidth = 500 };
+        innerContent.Children.Add(modelList);
+        innerContent.Children.Add(progressBar);
+        innerContent.Children.Add(progressText);
+        innerContent.Children.Add(BuildSeparator());
+        innerContent.Children.Add(customSection);
+
+        var content = new ScrollViewer
         {
-            Content = modelList,
-            MaxHeight = 300,
+            Content = innerContent,
+            MaxHeight = 500,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
         };
-
-        var content = new StackPanel { Spacing = 16, MinWidth = 500 };
-        content.Children.Add(scrollableList);
-        content.Children.Add(progressBar);
-        content.Children.Add(progressText);
-        content.Children.Add(BuildSeparator());
-        content.Children.Add(customSection);
 
         var dialog = new ContentDialog
         {
