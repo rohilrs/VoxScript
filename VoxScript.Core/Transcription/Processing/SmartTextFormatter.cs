@@ -6,7 +6,7 @@ namespace VoxScript.Core.Transcription.Processing;
 /// <summary>
 /// Formats transcription output with optional smart transforms (spoken punctuation, etc.)
 /// and always-on basic cleanup (whitespace normalization, sentence capitalization, punctuation spacing).
-/// Designed to replace <see cref="WhisperTextFormatter"/>.
+/// Replaces the former WhisperTextFormatter with smart formatting capabilities.
 /// </summary>
 public sealed partial class SmartTextFormatter
 {

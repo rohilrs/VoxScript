@@ -12,7 +12,7 @@ namespace VoxScript.Core.Transcription.Core;
 public sealed class TranscriptionPipeline
 {
     private readonly TranscriptionOutputFilter _filter;
-    private readonly WhisperTextFormatter _formatter;
+    private readonly SmartTextFormatter _formatter;
     private readonly WordReplacementService _wordReplacement;
     private readonly IAIEnhancementService _aiEnhancement;
     private readonly ITranscriptionRepository _repository;
@@ -29,7 +29,7 @@ public sealed class TranscriptionPipeline
 
     public TranscriptionPipeline(
         TranscriptionOutputFilter filter,
-        WhisperTextFormatter formatter,
+        SmartTextFormatter formatter,
         WordReplacementService wordReplacement,
         IAIEnhancementService aiEnhancement,
         ITranscriptionRepository repository,
@@ -79,7 +79,7 @@ public sealed class TranscriptionPipeline
         string formatted;
         try
         {
-            formatted = _formatter.Format(filtered);
+            formatted = _formatter.Format(filtered, _settings.SmartFormattingEnabled);
         }
         catch (Exception ex)
         {

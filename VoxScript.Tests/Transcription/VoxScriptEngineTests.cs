@@ -33,7 +33,7 @@ public class VoxScriptEngineTests
         var settings = new AppSettings(new InMemorySettingsStore());
         var pipeline = new TranscriptionPipeline(
             new TranscriptionOutputFilter(),
-            new WhisperTextFormatter(),
+            new SmartTextFormatter(),
             wordReplacement,
             Substitute.For<VoxScript.Core.AI.IAIEnhancementService>(),
             Substitute.For<VoxScript.Core.History.ITranscriptionRepository>(),

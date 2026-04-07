@@ -73,7 +73,7 @@ public static class AppBootstrapper
         services.AddSingleton<AIEnhancementOutputFilter>();
         services.AddSingleton<IAIEnhancementService, AIEnhancementService>();
         services.AddSingleton<TranscriptionOutputFilter>();
-        services.AddSingleton<WhisperTextFormatter>();
+        services.AddSingleton<SmartTextFormatter>();
         services.AddSingleton<IWordReplacementRepository, WordReplacementRepository>();
         services.AddSingleton<IVocabularyRepository, VocabularyRepository>();
         services.AddSingleton<ICorrectionRepository, CorrectionRepository>();
