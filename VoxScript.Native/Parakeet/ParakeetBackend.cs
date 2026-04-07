@@ -1,6 +1,7 @@
 // VoxScript.Native/Parakeet/ParakeetBackend.cs
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using VoxScript.Core.Transcription.Core;
 
 namespace VoxScript.Native.Parakeet;
 
@@ -11,7 +12,7 @@ namespace VoxScript.Native.Parakeet;
 /// Preprocessing: 80-dim log-mel spectrogram (n_fft=512, hop=160, win=400).
 /// Postprocessing: CTC/TDT greedy decode + SentencePiece BPE tokenizer.
 /// </summary>
-public sealed class ParakeetBackend : IParakeetBackend, IDisposable
+public sealed class ParakeetBackend : IParakeetBackend, ILocalTranscriptionBackend, IDisposable
 {
     private InferenceSession? _session;
     private ParakeetTokenizer? _tokenizer;
@@ -38,6 +39,19 @@ public sealed class ParakeetBackend : IParakeetBackend, IDisposable
         finally { _gate.Release(); }
     }
 
+    public void UnloadModel()
+    {
+        _gate.Wait();
+        try
+        {
+            _tokenizer?.Dispose();
+            _tokenizer = null;
+            _session?.Dispose();
+            _session = null;
+        }
+        finally { _gate.Release(); }
+    }
+
     public async Task<ParakeetResult> TranscribeAsync(float[] samples, CancellationToken ct)
     {
         if (_session is null) throw new InvalidOperationException("Parakeet model not loaded.");
@@ -48,6 +62,13 @@ public sealed class ParakeetBackend : IParakeetBackend, IDisposable
             return await Task.Run(() => RunInference(samples), ct);
         }
         finally { _gate.Release(); }
+    }
+
+    async Task<string> ILocalTranscriptionBackend.TranscribeAsync(
+        float[] samples, string? language, string? initialPrompt, CancellationToken ct)
+    {
+        var result = await TranscribeAsync(samples, ct);
+        return result.Text;
     }
 
     private ParakeetResult RunInference(float[] samples)
@@ -115,6 +136,7 @@ public sealed class ParakeetBackend : IParakeetBackend, IDisposable
     {
         if (!_disposed)
         {
+            _tokenizer?.Dispose();
             _session?.Dispose();
             _gate.Dispose();
             _disposed = true;
