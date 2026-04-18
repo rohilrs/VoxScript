@@ -138,6 +138,122 @@ public sealed partial class SettingsViewModel : ObservableObject
         };
     }
 
+    // ── LLM Structural Formatting ──────────────────────────────────
+
+    [ObservableProperty]
+    public partial bool StructuralFormattingEnabled { get; set; }
+    partial void OnStructuralFormattingEnabledChanged(bool value) =>
+        _settings.StructuralFormattingEnabled = value;
+
+    public IReadOnlyList<string> StructuralAiProviders { get; } = ["Local (Ollama)", "OpenAI", "Anthropic"];
+
+    [ObservableProperty]
+    public partial int SelectedStructuralAiProviderIndex { get; set; }
+
+    partial void OnSelectedStructuralAiProviderIndexChanged(int value)
+    {
+        var newProvider = value switch
+        {
+            1 => AiProvider.OpenAI,
+            2 => AiProvider.Anthropic,
+            _ => AiProvider.Local
+        };
+
+        // Swap to provider default only if the model is still the previous default
+        var previousDefault = _settings.StructuralAiProvider switch
+        {
+            AiProvider.OpenAI    => "gpt-4o-mini",
+            AiProvider.Anthropic => "claude-haiku-4-5-20251001",
+            _                    => "qwen2.5:3b",
+        };
+        var newDefault = newProvider switch
+        {
+            AiProvider.OpenAI    => "gpt-4o-mini",
+            AiProvider.Anthropic => "claude-haiku-4-5-20251001",
+            _                    => "qwen2.5:3b",
+        };
+
+        if (_settings.StructuralAiModel == previousDefault)
+        {
+            _settings.StructuralAiModel = newDefault;
+            StructuralAiModel = newDefault;
+        }
+
+        _settings.StructuralAiProvider = newProvider;
+        OnPropertyChanged(nameof(IsStructuralLocalProvider));
+        OnPropertyChanged(nameof(IsStructuralCloudProvider));
+        UpdateStructuralStatus();
+    }
+
+    public bool IsStructuralLocalProvider  => SelectedStructuralAiProviderIndex == 0;
+    public bool IsStructuralCloudProvider  => SelectedStructuralAiProviderIndex > 0;
+
+    [ObservableProperty]
+    public partial string StructuralAiModel { get; set; } = "";
+    partial void OnStructuralAiModelChanged(string value) => _settings.StructuralAiModel = value;
+
+    [ObservableProperty]
+    public partial string StructuralOllamaEndpoint { get; set; } = "";
+    partial void OnStructuralOllamaEndpointChanged(string value) => _settings.StructuralOllamaEndpoint = value;
+
+    [ObservableProperty]
+    public partial string StructuralApiKeyDisplay { get; set; } = "";
+
+    [ObservableProperty]
+    public partial string StructuralStatusText { get; set; } = "";
+
+    public void SaveStructuralApiKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return;
+        if (_settings.StructuralAiProvider == AiProvider.OpenAI)
+            _keyManager.SetStructuralOpenAiKey(key);
+        else if (_settings.StructuralAiProvider == AiProvider.Anthropic)
+            _keyManager.SetStructuralAnthropicKey(key);
+        UpdateStructuralApiKeyDisplay();
+        UpdateStructuralStatus();
+    }
+
+    public void ClearStructuralApiKey()
+    {
+        if (_settings.StructuralAiProvider == AiProvider.OpenAI)
+            _keyManager.SetStructuralOpenAiKey("");
+        else if (_settings.StructuralAiProvider == AiProvider.Anthropic)
+            _keyManager.SetStructuralAnthropicKey("");
+        UpdateStructuralApiKeyDisplay();
+        UpdateStructuralStatus();
+    }
+
+    private void UpdateStructuralApiKeyDisplay()
+    {
+        var key = _settings.StructuralAiProvider switch
+        {
+            AiProvider.OpenAI    => _keyManager.GetStructuralOpenAiKey(),
+            AiProvider.Anthropic => _keyManager.GetStructuralAnthropicKey(),
+            _                    => null,
+        };
+        StructuralApiKeyDisplay = key is { Length: > 8 }
+            ? $"{key[..4]}...{key[^4..]}"
+            : key is { Length: > 0 } ? "****" : "";
+    }
+
+    private void UpdateStructuralStatus()
+    {
+        if (!StructuralFormattingEnabled)
+        {
+            StructuralStatusText = "";
+            return;
+        }
+        StructuralStatusText = _settings.StructuralAiProvider switch
+        {
+            AiProvider.OpenAI    => _keyManager.GetStructuralOpenAiKey() is { Length: > 0 }
+                ? "Configured" : "Not configured — enter API key",
+            AiProvider.Anthropic => _keyManager.GetStructuralAnthropicKey() is { Length: > 0 }
+                ? "Configured" : "Not configured — enter API key",
+            AiProvider.Local     => "Using Ollama at " + _settings.StructuralOllamaEndpoint,
+            _                    => "",
+        };
+    }
+
     // ── Audio Devices ──────────────────────────────────────────
 
     public ObservableCollection<AudioDeviceDisplay> AudioDevices { get; } = new();
@@ -580,6 +696,19 @@ public sealed partial class SettingsViewModel : ObservableObject
         OllamaEndpoint = _settings.OllamaEndpoint;
         UpdateApiKeyDisplay();
         UpdateAiStatus();
+
+        // LLM Structural Formatting
+        StructuralFormattingEnabled = _settings.StructuralFormattingEnabled;
+        SelectedStructuralAiProviderIndex = _settings.StructuralAiProvider switch
+        {
+            AiProvider.OpenAI    => 1,
+            AiProvider.Anthropic => 2,
+            _                    => 0,
+        };
+        StructuralAiModel      = _settings.StructuralAiModel;
+        StructuralOllamaEndpoint = _settings.StructuralOllamaEndpoint;
+        UpdateStructuralApiKeyDisplay();
+        UpdateStructuralStatus();
     }
 }
 
