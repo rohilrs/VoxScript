@@ -153,7 +153,7 @@ public sealed class AppSettings
 
     public string StructuralAiModel
     {
-        get => _store.Get<string>(nameof(StructuralAiModel)) ?? "qwen2.5:3b";
+        get => _store.Get<string>(nameof(StructuralAiModel)) ?? "qwen2.5:7b";
         set => _store.Set(nameof(StructuralAiModel), value);
     }
 

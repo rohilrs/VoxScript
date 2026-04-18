@@ -170,13 +170,13 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             AiProvider.OpenAI    => "gpt-4o-mini",
             AiProvider.Anthropic => "claude-haiku-4-5-20251001",
-            _                    => "qwen2.5:3b",
+            _                    => "qwen2.5:7b",
         };
         var newDefault = newProvider switch
         {
             AiProvider.OpenAI    => "gpt-4o-mini",
             AiProvider.Anthropic => "claude-haiku-4-5-20251001",
-            _                    => "qwen2.5:3b",
+            _                    => "qwen2.5:7b",
         };
 
         if (_settings.StructuralAiModel == previousDefault)

@@ -35,20 +35,20 @@ public class StructuralFormattingPromptTests
     // ── Ratio boundary: lower bound ────────────────────────────────────────
 
     [Fact]
-    public void ValidateOutput_returns_null_when_ratio_is_below_0_85()
+    public void ValidateOutput_returns_null_when_ratio_is_below_0_75()
     {
-        // original: 20 words. result: 16 words → ratio = 0.80 → reject
+        // original: 20 words. result: 14 words → ratio = 0.70 → reject
         string original = string.Join(" ", Enumerable.Repeat("word", 20));
-        string result   = string.Join(" ", Enumerable.Repeat("word", 16));
+        string result   = string.Join(" ", Enumerable.Repeat("word", 14));
         StructuralFormattingPrompt.ValidateOutput(result, original).Should().BeNull();
     }
 
     [Fact]
-    public void ValidateOutput_accepts_ratio_at_exactly_0_85()
+    public void ValidateOutput_accepts_ratio_at_exactly_0_75()
     {
-        // original: 20 words. result: 17 words → ratio = 0.85 → accept
+        // original: 20 words. result: 15 words → ratio = 0.75 → accept
         string original = string.Join(" ", Enumerable.Repeat("word", 20));
-        string result   = string.Join(" ", Enumerable.Repeat("word", 17));
+        string result   = string.Join(" ", Enumerable.Repeat("word", 15));
         StructuralFormattingPrompt.ValidateOutput(result, original).Should().NotBeNull();
     }
 

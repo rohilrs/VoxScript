@@ -61,6 +61,9 @@ public static class StructuralFormattingPrompt
     /// A "content word" is any whitespace-delimited token containing at least one letter —
     /// pure numeric/punctuation tokens like "1.", "-", "2)" are excluded so list markers
     /// added by the LLM don't falsely fail the ratio check.
+    /// Asymmetric bounds: lower 0.75 tolerates legitimate compression (the LLM dropping
+    /// ordinal words like "first/second/third" when it converts them to "1./2./3."),
+    /// while upper 1.15 catches hallucination (the LLM adding explanatory content).
     /// </summary>
     public static string? ValidateOutput(string? result, string original)
     {
@@ -72,7 +75,7 @@ public static class StructuralFormattingPrompt
         if (origCount == 0) return null;
 
         double ratio = (double)resultCount / origCount;
-        if (ratio < 0.85 || ratio > 1.15) return null;
+        if (ratio < 0.75 || ratio > 1.15) return null;
 
         return result.Trim();
     }

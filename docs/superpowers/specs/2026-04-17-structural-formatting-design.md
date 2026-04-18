@@ -120,7 +120,7 @@ public AiProvider StructuralAiProvider
 
 public string StructuralAiModel
 {
-    get => _store.Get<string>(nameof(StructuralAiModel)) ?? "qwen2.5:3b";
+    get => _store.Get<string>(nameof(StructuralAiModel)) ?? "qwen2.5:7b";
     set => _store.Set(nameof(StructuralAiModel), value);
 }
 
@@ -161,11 +161,11 @@ When the user changes provider in `SettingsViewModel.OnStructuralAiProviderChang
 
 | Provider | Default model |
 |---|---|
-| Local | `qwen2.5:3b` |
+| Local | `qwen2.5:7b` |
 | OpenAI | `gpt-4o-mini` |
 | Anthropic | `claude-haiku-4-5-20251001` |
 
-If the user has typed a custom model name, leave it alone. This prevents the common footgun of pointing OpenAI at `qwen2.5:3b` after switching providers.
+If the user has typed a custom model name, leave it alone. This prevents the common footgun of pointing OpenAI at `qwen2.5:7b` after switching providers.
 
 ## Pipeline Integration
 
@@ -256,7 +256,7 @@ public static string? ValidateOutput(string? result, string original)
     if (origCount == 0) return null;
 
     double ratio = (double)resultCount / origCount;
-    if (ratio < 0.85 || ratio > 1.15) return null;
+    if (ratio < 0.75 || ratio > 1.15) return null;
 
     return result.Trim();
 }
@@ -268,7 +268,7 @@ private static int CountContentWords(string text) =>
 
 A "content word" is any whitespace-delimited token containing at least one letter. Pure-numeric/punctuation tokens like `"1."`, `"-"`, `"2)"` are excluded so list markers added by the LLM don't inflate the count and falsely fail the ratio check on short inputs.
 
-The 0.85–1.15 band absorbs minor LLM behavior (splitting run-on sentences, adding "Item:") while catching hallucinated content.
+The 0.75–1.15 band is asymmetric on purpose. The lower bound tolerates legitimate compression — small models (and bigger ones too) tend to drop ordinal words ("first/second/third") when converting them to "1./2./3." markers, plus a few connecting fillers, landing real list transformations around 0.75–0.90 ratio. The upper bound (1.15) is tighter to catch hallucination — when the LLM ignores "output ONLY the reformatted text" and explains itself ("No structural changes needed. Output remains: ...").
 
 ### Error handling / fallback chain
 
@@ -296,14 +296,14 @@ A single failed structural pass falls back to rule-based output. That's already 
 | Layer | Test class | What it verifies | Mocks |
 |---|---|---|---|
 | HTTP/provider | `AiCompleterTests` | Each provider builds correct URL, headers, body shape; parses response; throws on non-success | `HttpMessageHandler` (record requests, return canned responses) |
-| Validator (pure) | `StructuralFormattingPromptTests` | Word-count ratio at boundaries: 0.84 rejected, 0.85 accepted, 1.15 accepted, 1.16 rejected; empty rejected; pure-numeric tokens excluded; list-marker tolerance | none |
+| Validator (pure) | `StructuralFormattingPromptTests` | Word-count ratio at boundaries: 0.70 rejected, 0.75 accepted, 1.15 accepted, 1.16 rejected; empty rejected; pure-numeric tokens excluded; list-marker tolerance | none |
 | Service | `StructuralFormattingServiceTests` | Returns null when not configured; null on empty input; returns LLM output when valid; null when validator rejects; null on `HttpRequestException`; null on internal timeout; **propagates** `OperationCanceledException` when external token cancels | `IAiCompleter` |
 | Pipeline | `TranscriptionPipelineTests` | Step 3b skipped when setting off; skipped when service not configured; runs when both true; falls back to SmartFormatter output when service returns null; output stored in `Text` column | `IStructuralFormattingService`, repos |
 | AIService refactor smoke | (extend existing or add minimal) | `AIService.CompleteAsync` delegates the right config to `IAiCompleter` | `IAiCompleter` |
 
 ### Manual smoke test before merge
 
-1. Configure Ollama with `qwen2.5:3b`, enable structural formatting.
+1. Configure Ollama with `qwen2.5:7b`, enable structural formatting.
 2. Dictate: "There are three things I want to cover. First, we need to fix the auth bug. Then we should improve logging — that's been broken for weeks. And finally, the deployment script needs work."
 3. Expect output formatted as a numbered list with each item on its own line.
 4. Verify `Text` column in DB contains the structured version.
