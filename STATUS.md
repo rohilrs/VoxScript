@@ -1,10 +1,10 @@
 # VoxScript — Development Status
 
-Last updated: 2026-04-05
+Last updated: 2026-04-17
 
 ## Overview
 
-Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from VoiceInk (macOS Swift/SwiftUI). ~120 C# files, 14 XAML files, 103 passing tests.
+Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from VoiceInk (macOS Swift/SwiftUI). ~120 C# files, 14 XAML files, 225 passing tests.
 
 **Solution structure:** VoxScript.Core (business logic) → VoxScript.Native (Win32/interop) → VoxScript (WinUI 3 app)
 
@@ -81,6 +81,37 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 - [x] Serilog logging (rolling daily to %LOCALAPPDATA%\VoxScript\Logs\)
 - [x] DI container (all services wired in AppBootstrapper)
 - [x] 103 unit tests passing (settings, hotkeys, transcription filters, word replacements, notes, vocabulary, etc.)
+
+### Smart Formatting (rule-based)
+- [x] `SmartTextFormatter` runs after hallucination filter, before word replacement
+- [x] Spoken punctuation ("comma", "period", "new paragraph", etc.)
+- [x] Number word → digit conversion (preserves trailing punctuation: "one." → "1.")
+- [x] Numbered list detection (adjacent items, rule-based)
+- [x] Currency, percentage, date, time formatting
+- [x] Email assembly, URL assembly, phone number formatting
+- [x] Paragraph breaks from segment timestamps (≥2.5s audio gap)
+- [x] Capitalization + whitespace normalization
+- [x] CommonWordList matches inflected forms (ing/ies/tion/es/ed/ly/er/s suffix stripping)
+
+### LLM Structural Formatting (optional, default OFF)
+- [x] `IAiCompleter` abstraction shared with `AIService`; supports OpenAI, Anthropic, Ollama
+- [x] `StructuralFormattingService` runs as pipeline step 3b (between SmartFormatter and WordReplacement)
+- [x] Independent provider/model/credentials per feature (separate from AI Enhancement)
+- [x] Output validator: word-count ratio 0.75–1.15 (asymmetric — tolerates ordinal compression, catches hallucination)
+- [x] 30s internal timeout with linked CTS; distinguishes external cancel from timeout
+- [x] Fire-and-forget warmup at app launch (Local provider only) so first dictation isn't slow
+- [x] `keep_alive: -1` on Ollama requests so model stays resident
+- [x] Skip LLM call entirely when input < 10 content words (avoids burning calls on short utterances)
+- [x] Settings card mirrors AI Enhancement (toggle, provider, model, conditional Ollama endpoint / API key)
+- [x] Smart per-provider model defaults (qwen2.5:7b / gpt-4o-mini / claude-haiku-4-5-20251001)
+- [x] Files: `IAiCompleter.cs`, `AiCompleter.cs`, `AiCompletionConfig.cs`, `IStructuralFormattingService.cs`, `StructuralFormattingService.cs`, `StructuralFormattingPrompt.cs`
+
+### Window Chrome Polish
+- [x] SVG logo replaces ASCII bar logo in NavigationView pane header
+- [x] Window icon set from `Assets/app.ico` (absolute path resolution)
+- [x] 32px title bar drag region — page content can't scroll under min/max/close caption buttons; gives the window a real drag handle
+- [x] `MainWindow.OnClosed` respects `MinimizeToTray` setting (was hardcoded to always hide)
+- [x] `App.ExitApp()` uses `Environment.Exit(0)` so tray Exit and X-button (when MinimizeToTray=off) actually terminate the process (Application.Current.Exit() stalled on background threads — keyboard hook, WASAPI, native whisper)
 
 ### AI Enhancement + Context Modes
 - [x] AI Enhancement service (OpenAI, Anthropic, Ollama backends) with UI config
