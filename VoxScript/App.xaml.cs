@@ -71,55 +71,14 @@ public partial class App : Application
         var services = AppBootstrapper.Build();
         ServiceLocator.Initialize(services);
 
-        // Create database tables on startup (no migrations scaffolded yet — use EnsureCreated)
         try
         {
-            var db = services.GetRequiredService<AppDbContext>();
-            db.Database.EnsureCreated();
-
-            // EnsureCreated won't add new tables to an existing DB.
-            // Manually create any missing tables via raw SQL.
-            db.Database.ExecuteSqlRaw("""
-                CREATE TABLE IF NOT EXISTS Corrections (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Wrong TEXT NOT NULL DEFAULT '',
-                    Correct TEXT NOT NULL DEFAULT ''
-                )
-                """);
-
-            db.Database.ExecuteSqlRaw("""
-                CREATE TABLE IF NOT EXISTS PowerModeConfigs (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL DEFAULT '',
-                    SystemPrompt TEXT,
-                    ProcessNameFilter TEXT,
-                    UrlPatternFilter TEXT,
-                    WindowTitleFilter TEXT,
-                    IsEnabled INTEGER NOT NULL DEFAULT 1,
-                    Priority INTEGER NOT NULL DEFAULT 0,
-                    Preset INTEGER NOT NULL DEFAULT 1,
-                    IsBuiltIn INTEGER NOT NULL DEFAULT 0
-                )
-                """);
-
-            db.Database.ExecuteSqlRaw("""
-                CREATE TABLE IF NOT EXISTS Notes (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Title TEXT NOT NULL DEFAULT '',
-                    ContentRtf TEXT NOT NULL DEFAULT '',
-                    ContentPlainText TEXT NOT NULL DEFAULT '',
-                    IsStarred INTEGER NOT NULL DEFAULT 0,
-                    SourceTranscriptionId INTEGER,
-                    CreatedAt TEXT NOT NULL DEFAULT '0001-01-01T00:00:00',
-                    ModifiedAt TEXT NOT NULL DEFAULT '0001-01-01T00:00:00'
-                )
-                """);
-
-            Serilog.Log.Information("Database initialized");
+            await AppBootstrapper.InitializeAsync(services);
+            Serilog.Log.Information("Database migrated");
         }
         catch (Exception ex)
         {
-            Serilog.Log.Error(ex, "Database initialization failed");
+            Serilog.Log.Error(ex, "Database migration failed");
         }
 
         // Seed Power Mode configs and load into manager

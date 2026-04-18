@@ -69,8 +69,8 @@ public sealed partial class HomePage : Page
 
     private void ViewHistoryButton_Click(object sender, RoutedEventArgs e)
     {
-        var mainWindow = ServiceLocator.Get<VoxScript.Shell.MainWindow>();
-        mainWindow.NavigateTo(typeof(HistoryPage));
+        if (App.MainWindow is VoxScript.Shell.MainWindow mainWindow)
+            mainWindow.NavigateTo(typeof(HistoryPage));
     }
 
     private async Task RefreshAllAsync()

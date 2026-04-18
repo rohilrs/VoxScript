@@ -48,7 +48,7 @@ public sealed partial class MainWindow : Window
         }
 
         // Navigate to transcribe page by default and mark Home as selected
-        ContentFrame.Navigate(typeof(TranscribePage));
+        ContentFrame.Navigate(typeof(HomePage));
         NavView.SelectedItem = NavView.MenuItems[0];
     }
 
@@ -60,14 +60,14 @@ public sealed partial class MainWindow : Window
             var tag = item.Tag?.ToString();
             Type? pageType = tag switch
             {
-                "Home"        => typeof(TranscribePage),
+                "Home"        => typeof(HomePage),
                 "Dictionary"  => typeof(DictionaryPage),
                 "Expansions"  => typeof(ExpansionsPage),
                 "History"     => typeof(HistoryPage),
                 "Personalize" => typeof(PersonalizePage),
                 "Notes"       => typeof(NotesPage),
                 "Settings"    => typeof(SettingsPage),
-                _             => typeof(TranscribePage),
+                _             => typeof(HomePage),
             };
             ContentFrame.Navigate(pageType);
         }
@@ -106,7 +106,7 @@ public sealed partial class MainWindow : Window
             var tag = item.Tag?.ToString();
             Type? mapped = tag switch
             {
-                "Home"        => typeof(TranscribePage),
+                "Home"        => typeof(HomePage),
                 "Dictionary"  => typeof(DictionaryPage),
                 "Expansions"  => typeof(ExpansionsPage),
                 "History"     => typeof(HistoryPage),
