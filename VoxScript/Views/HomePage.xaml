@@ -56,7 +56,6 @@
                            Grid.Row="1"
                            TextWrapping="Wrap"
                            TextTrimming="CharacterEllipsis"
-                           VerticalAlignment="Top"
                            FontSize="17"
                            LineHeight="26"
                            Foreground="{StaticResource BrandForegroundBrush}" />
