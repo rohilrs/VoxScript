@@ -52,6 +52,7 @@ public sealed partial class ModelStepViewModel : ObservableObject
 
     public async Task StartDownloadAsync()
     {
+        if (_downloadCts is not null) return; // guard against re-entrancy (rapid Retry clicks, double-fire)
         _downloadCts = new CancellationTokenSource();
         var ct = _downloadCts.Token;
         var model = Choices[SelectedChoiceIndex].Model;
@@ -97,7 +98,12 @@ public sealed partial class ModelStepViewModel : ObservableObject
         }
     }
 
-    public void CancelDownload() => _downloadCts?.Cancel();
+    public void CancelDownload()
+    {
+        // Capture locally — the finally in StartDownloadAsync may Dispose this concurrently.
+        var cts = _downloadCts;
+        try { cts?.Cancel(); } catch (ObjectDisposedException) { }
+    }
 
     public void ReturnToPicker()
     {

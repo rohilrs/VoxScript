@@ -25,6 +25,7 @@ public partial class App : Application
     private GlobalHotkeyService? _hotkey;
     private RecordingIndicatorWindow? _indicatorWindow;
     private RecordingIndicatorViewModel? _indicatorViewModel;
+    private bool _onboardingActive; // when true, App's hotkey handlers stand down so the wizard's handlers own the engine
 
     public static Window? MainWindow { get; private set; }
 
@@ -105,6 +106,7 @@ public partial class App : Application
 
         _hotkey.RecordingToggleRequested += (_, _) =>
         {
+            if (_onboardingActive) return; // wizard owns the engine during onboarding
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 var model = ResolveModel();
@@ -115,6 +117,7 @@ public partial class App : Application
         };
         _hotkey.RecordingStartRequested += (_, _) =>
         {
+            if (_onboardingActive) return;
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 if (engine.State == VoxScript.Core.Transcription.Core.RecordingState.Idle)
@@ -141,6 +144,7 @@ public partial class App : Application
         };
         _hotkey.RecordingStopRequested += (_, _) =>
         {
+            if (_onboardingActive) return;
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 // StopAndTranscribeAsync handles its own state guards, including
@@ -150,6 +154,7 @@ public partial class App : Application
         };
         _hotkey.RecordingCancelRequested += (_, _) =>
         {
+            if (_onboardingActive) return;
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 // CancelRecordingAsync handles startup-in-progress internally.
@@ -223,7 +228,9 @@ public partial class App : Application
             {
                 _mainWindow.DispatcherQueue.TryEnqueue(async () =>
                 {
+                    _onboardingActive = false; // release hotkey handlers back to the main app
                     tryItVm.Dispose();
+                    await micVm.StopMonitoringAsync(); // in case finish was pressed from MicPick
                     _mainWindow.ShowShell();
                     // Ensure VAD is present even if the wizard skipped it
                     await EnsureVadModelAsync(services, modelManager);
@@ -232,6 +239,7 @@ public partial class App : Application
                 });
             };
 
+            _onboardingActive = true;
             _mainWindow.ShowOnboarding(onboardingView);
         }
         else

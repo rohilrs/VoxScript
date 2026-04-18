@@ -49,14 +49,27 @@ public sealed partial class OnboardingView : UserControl
         Header.Progress = _vm.ProgressValue;
         Header.StepText = _vm.StepLabel;
 
-        // Start/stop mic monitoring on step transitions into/out of MicPick
+        // Start/stop mic monitoring on step transitions into/out of MicPick.
+        // Set _displayedStep BEFORE awaits so a second ApplyState firing during the
+        // await cannot also trigger the transition.
         if (_displayedStep != _vm.CurrentStep)
         {
-            if (_displayedStep == OnboardingStep.MicPick)
-                await _micVm.StopMonitoringAsync();
-            if (_vm.CurrentStep == OnboardingStep.MicPick)
-                await _micVm.StartMonitoringAsync();
-            _displayedStep = _vm.CurrentStep;
+            var leaving = _displayedStep;
+            var entering = _vm.CurrentStep;
+            _displayedStep = entering;
+
+            try
+            {
+                if (leaving == OnboardingStep.MicPick)
+                    await _micVm.StopMonitoringAsync();
+                if (entering == OnboardingStep.MicPick)
+                    await _micVm.StartMonitoringAsync();
+            }
+            catch (Exception ex)
+            {
+                // async void -> can't throw out. Log and continue; the wizard should still function.
+                Serilog.Log.Warning(ex, "Onboarding: mic monitor transition failed");
+            }
         }
 
         StepHost.Content = _stepViews[_vm.CurrentStep];

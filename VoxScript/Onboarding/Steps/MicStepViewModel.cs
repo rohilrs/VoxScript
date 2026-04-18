@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Dispatching;
 using VoxScript.Core.Audio;
 using VoxScript.Core.Settings;
 
@@ -112,18 +113,23 @@ public sealed partial class MicStepViewModel : ObservableObject
         _monitorCts = new CancellationTokenSource();
         _lastSampleTime = DateTime.UtcNow;
 
+        // WASAPI callbacks come in on an audio thread; [ObservableProperty] setters raise
+        // PropertyChanged synchronously, which WinUI requires to be on the UI thread for
+        // bound elements. Capture the dispatcher and marshal each sample across.
+        var dispatcher = DispatcherQueue.GetForCurrentThread();
+
         try
         {
             await _capture.StartAsync(SelectedDevice.Id, (data, count) =>
             {
-                var now = DateTime.UtcNow;
-                var delta = (now - _lastSampleTime).TotalSeconds;
-                _lastSampleTime = now;
                 var rms = ComputeRms(data, count);
-                // Marshal back to UI thread-safe property setter; ObservableProperty
-                // is already main-thread-affine if updated on that thread. Since
-                // the audio callback is arbitrary thread, just set the backing field.
-                OnAudioLevel(rms, delta);
+                dispatcher.TryEnqueue(() =>
+                {
+                    var now = DateTime.UtcNow;
+                    var delta = (now - _lastSampleTime).TotalSeconds;
+                    _lastSampleTime = now;
+                    OnAudioLevel(rms, delta);
+                });
             }, _monitorCts.Token);
         }
         catch (Exception ex)
@@ -157,12 +163,6 @@ public sealed partial class MicStepViewModel : ObservableObject
         return (float)Math.Min(rms / short.MaxValue, 1.0);
     }
 
-    // Overload preserved for tests that want to verify writes against a dedicated settings instance.
-    internal void ConfirmDevice(AppSettings settings)
-    {
-        if (SelectedDevice is not null)
-            settings.AudioDeviceId = SelectedDevice.Id;
-    }
 
     public void Retry()
     {

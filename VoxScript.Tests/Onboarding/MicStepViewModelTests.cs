@@ -77,7 +77,7 @@ public class MicStepViewModelTests
     public void ConfirmDevice_writes_AudioDeviceId_to_settings()
     {
         var (vm, _, _, settings) = Build();
-        vm.ConfirmDevice(settings);
+        vm.ConfirmDevice();
         settings.AudioDeviceId.Should().Be("id-1");
     }
 
