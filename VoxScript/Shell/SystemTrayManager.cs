@@ -83,12 +83,26 @@ public sealed class SystemTrayManager : IDisposable
         UpdateTrayTooltip(_engine.State);
     }
 
+    // H.NotifyIcon's SecondWindow mode sizes its host popup window by calling
+    // MenuFlyoutItem.Measure() on each item and using DesiredSize.Width (see
+    // HavenDV/H.NotifyIcon issue #21, TaskbarIcon.ContextMenu.WinUI.SecondWindow
+    // line 209). On the very first right-click, font metrics haven't fully
+    // resolved and that measurement comes back too narrow, causing the host
+    // window to clip item text. Setting MinWidth on each item floors the
+    // measurement at a sensible size so the host window never under-sizes.
+    // Tuned to roughly match the natural rendered width of the longest static
+    // item ("Paste Last Transcript" at default Segoe UI 14pt), so the fix
+    // protects against first-render underestimates without inflating the
+    // overall menu. Longer content (e.g. long mic device names) still expands
+    // past it on subsequent measures.
+    private const double MenuItemMinWidth = 200.0;
+
     private MenuFlyout BuildContextMenu()
     {
         var menu = new MenuFlyout();
 
         // Home
-        var homeItem = new MenuFlyoutItem { Text = "Home" };
+        var homeItem = new MenuFlyoutItem { Text = "Home", MinWidth = MenuItemMinWidth };
         homeItem.Click += (_, _) =>
         {
             if (_mainWindow is MainWindow mw)
@@ -100,7 +114,7 @@ public sealed class SystemTrayManager : IDisposable
         menu.Items.Add(homeItem);
 
         // Paste Last Transcript
-        var pasteItem = new MenuFlyoutItem { Text = "Paste Last Transcript" };
+        var pasteItem = new MenuFlyoutItem { Text = "Paste Last Transcript", MinWidth = MenuItemMinWidth };
         pasteItem.Click += (_, _) =>
         {
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
@@ -125,7 +139,7 @@ public sealed class SystemTrayManager : IDisposable
         menu.Items.Add(new MenuFlyoutSeparator());
 
         // Microphone submenu
-        var micSub = new MenuFlyoutSubItem { Text = "Microphone" };
+        var micSub = new MenuFlyoutSubItem { Text = "Microphone", MinWidth = MenuItemMinWidth };
         try
         {
             var audio = ServiceLocator.Get<IAudioCaptureService>();
@@ -163,7 +177,7 @@ public sealed class SystemTrayManager : IDisposable
         menu.Items.Add(micSub);
 
         // Settings
-        var settingsItem = new MenuFlyoutItem { Text = "Settings" };
+        var settingsItem = new MenuFlyoutItem { Text = "Settings", MinWidth = MenuItemMinWidth };
         settingsItem.Click += (_, _) =>
         {
             if (_mainWindow is MainWindow mw)
@@ -177,7 +191,7 @@ public sealed class SystemTrayManager : IDisposable
         menu.Items.Add(new MenuFlyoutSeparator());
 
         // Exit
-        var exitItem = new MenuFlyoutItem { Text = "Exit" };
+        var exitItem = new MenuFlyoutItem { Text = "Exit", MinWidth = MenuItemMinWidth };
         exitItem.Click += (_, _) =>
         {
             _mainWindow.DispatcherQueue.TryEnqueue(() =>
