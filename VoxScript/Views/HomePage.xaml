@@ -89,20 +89,18 @@
                            Foreground="{StaticResource BrandMutedBrush}"
                            Margin="0,0,0,10" />
 
-                <Grid Grid.Row="1">
+                <Grid x:Name="GraphHost" Grid.Row="1" SizeChanged="GraphHost_SizeChanged">
                     <!-- Baseline -->
                     <Rectangle Height="1"
                                VerticalAlignment="Bottom"
                                Fill="{StaticResource BrandPrimaryLightBrush}"
                                Opacity="0.6" />
-                    <!-- Bars container (12 columns, filled in code-behind) -->
-                    <Grid x:Name="GraphBars" VerticalAlignment="Stretch" />
+                    <!-- Line + area fill drawn in code-behind -->
                 </Grid>
 
-                <!-- Axis labels: -12h, -8h, -4h, now -->
+                <!-- Axis labels evenly spaced via 3 equal columns: -12h, -8h, -4h at column lefts; "now" overlaps column 2 right -->
                 <Grid Grid.Row="2" Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -113,13 +111,13 @@
                                Foreground="{StaticResource BrandMutedBrush}" />
                     <TextBlock Grid.Column="1" Text="-8h"
                                FontSize="10"
-                               HorizontalAlignment="Center"
+                               HorizontalAlignment="Left"
                                Foreground="{StaticResource BrandMutedBrush}" />
                     <TextBlock Grid.Column="2" Text="-4h"
                                FontSize="10"
-                               HorizontalAlignment="Center"
+                               HorizontalAlignment="Left"
                                Foreground="{StaticResource BrandMutedBrush}" />
-                    <TextBlock Grid.Column="3" Text="now"
+                    <TextBlock Grid.Column="2" Text="now"
                                FontSize="10"
                                HorizontalAlignment="Right"
                                Foreground="{StaticResource BrandMutedBrush}" />

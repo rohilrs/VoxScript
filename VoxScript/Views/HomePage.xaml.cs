@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 using VoxScript.Core.Home;
 using VoxScript.Core.Transcription.Core;
 using VoxScript.Infrastructure;
@@ -103,7 +104,14 @@ public sealed partial class HomePage : Page
             ? ((int)Math.Round(_vm.AvgWpm)).ToString()
             : "—";
 
-        RenderGraph(_vm.HourlyBuckets);
+        RenderGraph(_vm.ActivityBuckets);
+    }
+
+    private void GraphHost_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // Re-render when the container is measured or resized so the polyline coordinates match.
+        if (_vm is not null)
+            RenderGraph(_vm.ActivityBuckets);
     }
 
     private void ApplyLatestTranscript()
@@ -131,36 +139,64 @@ public sealed partial class HomePage : Page
 
     private void RenderGraph(IReadOnlyList<int> buckets)
     {
-        GraphBars.ColumnDefinitions.Clear();
-        GraphBars.Children.Clear();
+        // Clear any prior line/fill (Rectangle baseline is child 0 and stays).
+        for (int i = GraphHost.Children.Count - 1; i >= 1; i--)
+            GraphHost.Children.RemoveAt(i);
 
-        for (int i = 0; i < buckets.Count; i++)
-            GraphBars.ColumnDefinitions.Add(
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        if (buckets.Count < 2) return;
 
-        int max = buckets.Count > 0 ? buckets.Max() : 0;
-        if (max == 0) return; // Only baseline visible when no activity
+        double w = GraphHost.ActualWidth;
+        double h = GraphHost.ActualHeight;
+        if (w <= 0 || h <= 0) return; // Will be re-rendered on SizeChanged
 
-        const double maxBarHeight = 80.0;
-        const double minBarHeight = 6.0;
+        int max = buckets.Max();
+        if (max == 0) return; // Only baseline shows when no activity
+
+        const double topPad = 4;
+        const double bottomPad = 1; // Sit just above the baseline rule when value = 0
+        double usableHeight = Math.Max(1, h - topPad - bottomPad);
+
+        var linePoints = new PointCollection();
+        var fillPoints = new PointCollection
+        {
+            new Point(0, h - bottomPad), // Start at bottom-left
+        };
 
         for (int i = 0; i < buckets.Count; i++)
         {
-            int count = buckets[i];
-            if (count <= 0) continue;
+            double x = (double)i / (buckets.Count - 1) * w;
+            double ratio = (double)buckets[i] / max;
+            double y = (h - bottomPad) - ratio * usableHeight;
 
-            double barHeight = Math.Max(minBarHeight, (count / (double)max) * maxBarHeight);
-            var bar = new Border
-            {
-                Height = barHeight,
-                CornerRadius = new CornerRadius(3, 3, 0, 0),
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Background = (SolidColorBrush)Application.Current.Resources["BrandPrimaryBrush"],
-                Margin = new Thickness(2, 0, 2, 0),
-            };
-            Grid.SetColumn(bar, i);
-            GraphBars.Children.Add(bar);
+            linePoints.Add(new Point(x, y));
+            fillPoints.Add(new Point(x, y));
         }
+
+        fillPoints.Add(new Point(w, h - bottomPad)); // Close at bottom-right
+
+        var brandBrush = (SolidColorBrush)Application.Current.Resources["BrandPrimaryBrush"];
+        var fillColor = brandBrush.Color;
+        fillColor.A = 40; // Subtle fill
+
+        var fill = new Polygon
+        {
+            Points = fillPoints,
+            Fill = new SolidColorBrush(fillColor),
+            StrokeThickness = 0,
+        };
+
+        var line = new Polyline
+        {
+            Points = linePoints,
+            Stroke = brandBrush,
+            StrokeThickness = 2,
+            StrokeLineJoin = PenLineJoin.Round,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+        };
+
+        GraphHost.Children.Add(fill);
+        GraphHost.Children.Add(line);
     }
 
     private void ApplyDot(Ellipse dot, StatusLevel level)

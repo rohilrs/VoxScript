@@ -6,6 +6,10 @@ namespace VoxScript.ViewModels;
 
 public sealed partial class HomeViewModel : ObservableObject
 {
+    // 12-hour activity window at 15-minute resolution = 48 buckets.
+    public const int ActivityBucketCount = 48;
+    public static readonly TimeSpan ActivityBucketInterval = TimeSpan.FromMinutes(15);
+
     private readonly IHomeStatusService _statusService;
     private readonly IHomeStatsService _statsService;
     private readonly ITranscriptionRepository _repository;
@@ -29,7 +33,7 @@ public sealed partial class HomeViewModel : ObservableObject
     public partial double AvgWpm { get; set; }
 
     [ObservableProperty]
-    public partial IReadOnlyList<int> HourlyBuckets { get; set; }
+    public partial IReadOnlyList<int> ActivityBuckets { get; set; }
 
     [ObservableProperty]
     public partial string LatestTranscriptText { get; set; }
@@ -53,7 +57,7 @@ public sealed partial class HomeViewModel : ObservableObject
         ModelStatus = new StatusResult(StatusLevel.Ready, "Model Ready");
         AiEnhanceStatus = new StatusResult(StatusLevel.Off, "AI Enhancement off");
         LlmFormatStatus = new StatusResult(StatusLevel.Off, "LLM Formatting off");
-        HourlyBuckets = new int[12];
+        ActivityBuckets = new int[ActivityBucketCount];
         LatestTranscriptText = "";
     }
 
@@ -85,7 +89,8 @@ public sealed partial class HomeViewModel : ObservableObject
     {
         TotalWords = await _statsService.GetTotalWordsAsync(ct);
         AvgWpm = await _statsService.GetAverageWpmAsync(ct);
-        HourlyBuckets = await _statsService.GetHourlyWordBucketsAsync(12, ct);
+        ActivityBuckets = await _statsService.GetBucketedWordsAsync(
+            ActivityBucketInterval, ActivityBucketCount, ct);
     }
 
     private async Task RefreshLatestTranscriptAsync(CancellationToken ct)

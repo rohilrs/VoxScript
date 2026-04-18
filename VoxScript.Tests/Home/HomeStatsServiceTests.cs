@@ -93,46 +93,69 @@ public class HomeStatsServiceTests
     }
 
     [Fact]
-    public async Task GetHourlyWordBucketsAsync_returns_12_slots()
+    public async Task GetBucketedWordsAsync_returns_requested_slot_count()
     {
         var repo = MakeRepo((0, 0.0));
         var svc = new HomeStatsService(repo);
 
-        var buckets = await svc.GetHourlyWordBucketsAsync(12, CancellationToken.None);
+        var buckets = await svc.GetBucketedWordsAsync(
+            TimeSpan.FromMinutes(15), 48, CancellationToken.None);
 
-        buckets.Count.Should().Be(12);
+        buckets.Count.Should().Be(48);
     }
 
     [Fact]
-    public async Task GetHourlyWordBucketsAsync_sums_words_into_correct_hour_slot()
+    public async Task GetBucketedWordsAsync_places_record_in_correct_slot_by_age()
     {
         var now = DateTimeOffset.Now;
-        var oneHourAgo = now.AddHours(-1);
-
+        // 1 hour ago = 4 × 15-min intervals = bucketsFromEnd=4; slot = 48-1-4 = 43
         var record = new TranscriptionRecord
         {
             Text = "hello world",
             WordCount = 50,
             DurationSeconds = 30,
-            CreatedAt = oneHourAgo,
+            CreatedAt = now.AddHours(-1).AddMinutes(-5), // safely inside slot 43's 15-min window
         };
 
         var repo = MakeRepo((50, 30.0), new[] { record });
         var svc = new HomeStatsService(repo);
 
-        var buckets = await svc.GetHourlyWordBucketsAsync(12, CancellationToken.None);
+        var buckets = await svc.GetBucketedWordsAsync(
+            TimeSpan.FromMinutes(15), 48, CancellationToken.None);
 
-        buckets[10].Should().Be(50);
-        buckets[11].Should().Be(0);
+        buckets[43].Should().Be(50);
+        buckets[47].Should().Be(0);
     }
 
     [Fact]
-    public async Task GetHourlyWordBucketsAsync_all_zero_when_no_records()
+    public async Task GetBucketedWordsAsync_all_zero_when_no_records()
     {
         var repo = MakeRepo((0, 0.0));
         var svc = new HomeStatsService(repo);
 
-        var buckets = await svc.GetHourlyWordBucketsAsync(12, CancellationToken.None);
+        var buckets = await svc.GetBucketedWordsAsync(
+            TimeSpan.FromMinutes(15), 48, CancellationToken.None);
+
+        buckets.Should().AllSatisfy(b => b.Should().Be(0));
+    }
+
+    [Fact]
+    public async Task GetBucketedWordsAsync_drops_records_older_than_window()
+    {
+        var now = DateTimeOffset.Now;
+        var ancient = new TranscriptionRecord
+        {
+            Text = "old",
+            WordCount = 100,
+            DurationSeconds = 60,
+            CreatedAt = now.AddHours(-24), // outside 12h window
+        };
+
+        var repo = MakeRepo((100, 60.0), new[] { ancient });
+        var svc = new HomeStatsService(repo);
+
+        var buckets = await svc.GetBucketedWordsAsync(
+            TimeSpan.FromMinutes(15), 48, CancellationToken.None);
 
         buckets.Should().AllSatisfy(b => b.Should().Be(0));
     }

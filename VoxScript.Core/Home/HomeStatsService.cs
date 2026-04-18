@@ -26,22 +26,24 @@ public sealed class HomeStatsService : IHomeStatsService
         return seconds > 0 ? (words / seconds) * 60.0 : 0.0;
     }
 
-    public async Task<IReadOnlyList<int>> GetHourlyWordBucketsAsync(int hours, CancellationToken ct)
+    public async Task<IReadOnlyList<int>> GetBucketedWordsAsync(
+        TimeSpan interval, int count, CancellationToken ct)
     {
         var now = DateTimeOffset.Now;
-        var from = now.AddHours(-hours);
+        var window = TimeSpan.FromTicks(interval.Ticks * count);
+        var from = now - window;
 
         var records = await _repository.GetRangeAsync(from, now, ct);
 
-        var buckets = new int[hours];
-        var currentHour = now.LocalDateTime.Hour;
-
+        var buckets = new int[count];
         foreach (var record in records)
         {
-            var localHour = record.CreatedAt.LocalDateTime.Hour;
-            var hoursAgo = ((currentHour - localHour) + 24) % 24;
-            var slot = hours - 1 - hoursAgo;
-            if (slot >= 0 && slot < hours)
+            var age = now - record.CreatedAt;
+            if (age < TimeSpan.Zero || age >= window) continue;
+
+            int bucketsFromEnd = (int)(age.TotalMilliseconds / interval.TotalMilliseconds);
+            int slot = count - 1 - bucketsFromEnd;
+            if (slot >= 0 && slot < count)
                 buckets[slot] += record.WordCount;
         }
 

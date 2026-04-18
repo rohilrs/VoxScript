@@ -31,8 +31,9 @@ public class HomeViewModelTests
         var statsService = Substitute.For<IHomeStatsService>();
         statsService.GetTotalWordsAsync(Arg.Any<CancellationToken>()).Returns(totalWords);
         statsService.GetAverageWpmAsync(Arg.Any<CancellationToken>()).Returns(avgWpm);
-        statsService.GetHourlyWordBucketsAsync(12, Arg.Any<CancellationToken>())
-                    .Returns((IReadOnlyList<int>)new int[12]);
+        statsService.GetBucketedWordsAsync(
+                Arg.Any<TimeSpan>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyList<int>)new int[HomeViewModel.ActivityBucketCount]);
 
         var repo = Substitute.For<ITranscriptionRepository>();
         var records = latest is not null
