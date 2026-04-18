@@ -34,7 +34,10 @@ public sealed class StructuralFormattingService(
 
         try
         {
-            var raw       = await completer.CompleteAsync(BuildConfig(), StructuralFormattingPrompt.System, text, linked.Token);
+            var systemPrompt = string.IsNullOrWhiteSpace(settings.StructuralFormattingPromptOverride)
+                ? StructuralFormattingPrompt.System
+                : settings.StructuralFormattingPromptOverride!;
+            var raw       = await completer.CompleteAsync(BuildConfig(), systemPrompt, text, linked.Token);
             var validated = StructuralFormattingPrompt.ValidateOutput(raw, text);
 
             int origWords   = CountContentWords(text);

@@ -92,6 +92,55 @@ public sealed partial class SettingsPage : Page
         ViewModel.ClearStructuralApiKey();
     }
 
+    private async void EditStructuralPromptButton_Click(object sender, RoutedEventArgs e)
+    {
+        var promptBox = new TextBox
+        {
+            Text = ViewModel.GetEffectiveStructuralPrompt(),
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            Width = 640,
+            Height = 380,
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas, Cascadia Mono, Courier New"),
+            FontSize = 13,
+            VerticalContentAlignment = VerticalAlignment.Top,
+        };
+
+        var dialog = new ContentDialog
+        {
+            Title = "Edit Structural Formatting Prompt",
+            Content = new ScrollViewer
+            {
+                Content = promptBox,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            },
+            PrimaryButtonText = "Save",
+            SecondaryButtonText = "Reset to default",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = this.XamlRoot,
+        };
+
+        // Secondary button resets the textbox to the built-in default without closing.
+        dialog.SecondaryButtonClick += (_, args) =>
+        {
+            args.Cancel = true;
+            promptBox.Text = VoxScript.Core.AI.StructuralFormattingPrompt.System;
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            // If the user saved text identical to the default, clear the override
+            // so future default-prompt updates are picked up automatically.
+            if (promptBox.Text.Trim() == VoxScript.Core.AI.StructuralFormattingPrompt.System.Trim())
+                ViewModel.ResetStructuralPromptToDefault();
+            else
+                ViewModel.SaveStructuralPromptOverride(promptBox.Text);
+        }
+    }
+
     private async void ManageModelsButton_Click(object sender, RoutedEventArgs e)
     {
         await ModelManagementDialog.ShowAsync(this.XamlRoot);
