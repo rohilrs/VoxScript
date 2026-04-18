@@ -75,22 +75,66 @@ public class StructuralFormattingPromptTests
     // ── List markers are not counted as content words ──────────────────────
 
     [Fact]
-    public void ValidateOutput_excludes_pure_numeric_list_markers_from_count()
+    public void ValidateOutput_excludes_dash_tokens_from_count()
     {
-        // original: 3 content words. result: same 3 words + "1." "2." "3." markers
-        // Without exclusion, result would be 6 "words" → ratio 2.0 → reject
-        // With exclusion, result is 3 content words → ratio 1.0 → accept
-        const string original = "fix auth logging deployment";
-        const string result = "1. fix\n2. auth logging\n3. deployment";
+        // Dash markers aren't treated as list markers by the safety net
+        // (only "^N. " counts), so this only exercises content-word counting.
+        const string original = "alpha beta gamma";
+        const string result = "- alpha\n- beta\n- gamma";
+        StructuralFormattingPrompt.ValidateOutput(result, original).Should().NotBeNull();
+    }
+
+    // ── Numbered-marker safety net ─────────────────────────────────────────
+
+    [Fact]
+    public void ValidateOutput_rejects_added_numbered_markers_without_signal()
+    {
+        // The LLM cannot invent numbered list markers without an enumeration
+        // signal (ordinal word, cue phrase, or existing markers) in the input.
+        // Regression: "I think one thing I want to make sure..." was being
+        // rewritten as "1. I want to make sure..." — word-count ratio alone
+        // didn't catch it because the ratio was plausible.
+        const string original = "I think one thing I want to make sure is that the harness branch is rebased on main";
+        const string result   = "I think one thing I want to make sure is that\n\n1. The harness branch is rebased on main";
+        StructuralFormattingPrompt.ValidateOutput(result, original).Should().BeNull();
+    }
+
+    [Fact]
+    public void ValidateOutput_allows_numbered_markers_when_input_has_ordinal_word()
+    {
+        // "first" is a recognized enumeration signal.
+        const string original = "first alpha beta gamma delta epsilon zeta eta theta iota";
+        const string result   = "1. alpha beta gamma\n2. delta epsilon zeta\n3. eta theta iota";
+        // ratio = 9/10 = 0.9, safety net passes (signal present)
         StructuralFormattingPrompt.ValidateOutput(result, original).Should().NotBeNull();
     }
 
     [Fact]
-    public void ValidateOutput_excludes_dash_tokens_from_count()
+    public void ValidateOutput_allows_numbered_markers_when_input_has_cue_phrase()
     {
-        const string original = "alpha beta gamma";
-        const string result = "- alpha\n- beta\n- gamma";
+        const string original = "the following alpha beta gamma delta epsilon zeta eta theta iota";
+        const string result   = "1. alpha beta gamma\n2. delta epsilon zeta\n3. eta theta iota";
         StructuralFormattingPrompt.ValidateOutput(result, original).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ValidateOutput_allows_preserving_existing_numbered_markers()
+    {
+        // Input already has numbered markers → output preserving them is fine.
+        const string original = "1. alpha beta\n2. gamma delta\n3. epsilon zeta";
+        const string result   = "1. alpha beta\n2. gamma delta\n3. epsilon zeta";
+        StructuralFormattingPrompt.ValidateOutput(result, original).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ValidateOutput_word_one_alone_is_not_an_enumeration_signal()
+    {
+        // "one" is too common in prose ("one thing", "one of") to count as a
+        // list signal. Without any ordinal or cue, markers in the output must
+        // be rejected even if "one" appears in the input.
+        const string original = "I think one thing we should fix the auth bug and the logging issue";
+        const string result   = "I think one thing we should fix\n\n1. The auth bug\n2. The logging issue";
+        StructuralFormattingPrompt.ValidateOutput(result, original).Should().BeNull();
     }
 
     // ── Result is trimmed ──────────────────────────────────────────────────

@@ -11,7 +11,7 @@ namespace VoxScript.Shell;
 
 public sealed partial class MainWindow : Window
 {
-    private const int MinWindowWidth = 900;
+    private const int MinWindowWidth = 950;
     private const int MinWindowHeight = 600;
 
     public MainWindow()

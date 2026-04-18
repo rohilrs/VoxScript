@@ -220,6 +220,14 @@ public sealed partial class SmartTextFormatter
                 return true;
         }
 
+        // Check within 3 tokens ahead for "thing": "one other thing",
+        // "one good thing", "one more thing" — colloquial phrasing should stay as prose.
+        for (int lookahead = 2; lookahead <= 3 && index + lookahead < tokens.Length; lookahead++)
+        {
+            if (tokens[index + lookahead].Equals("thing", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
         // Check previous word: "for one", "the one", "no one"
         if (index > 0)
         {

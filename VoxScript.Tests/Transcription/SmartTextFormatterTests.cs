@@ -173,6 +173,30 @@ public class SmartTextFormatterTests
             .Should().Be("My list 1 eggs 2 milk 3 oranges");
     }
 
+    [Fact]
+    public void One_other_thing_is_not_converted_to_digit()
+    {
+        // Regression: "one other thing" / "one good thing" / "one more thing"
+        // were being converted to "1 other thing" because IsExcludedOne only
+        // checked the immediately-next token for "thing".
+        _sut.Format("I noticed one other thing in the logs", true)
+            .Should().Be("I noticed one other thing in the logs");
+    }
+
+    [Fact]
+    public void One_good_thing_is_not_converted_to_digit()
+    {
+        _sut.Format("There's one good thing about this", true)
+            .Should().Be("There's one good thing about this");
+    }
+
+    [Fact]
+    public void One_more_thing_is_not_converted_to_digit()
+    {
+        _sut.Format("just one more thing to mention", true)
+            .Should().Be("Just one more thing to mention");
+    }
+
     // ── Currency ──────────────────────────────────────────────────────
 
     [Theory]

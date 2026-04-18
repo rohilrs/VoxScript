@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace VoxScript.Core.AI;
 
 public static class StructuralFormattingPrompt
@@ -9,40 +11,37 @@ public static class StructuralFormattingPrompt
         numbers converted, etc.).
 
         Your ONLY job is to fix structural formatting that requires contextual
-        understanding.
+        understanding. Be CONSERVATIVE — when in doubt, return the input unchanged.
 
-        ## What to do
+        ## When to create a numbered list
 
-        LIST DETECTION: When the speaker enumerates items, format them as a
-        numbered list. Each item starts on its own line with the actual digit
-        followed by a period and a space — like "1. ", "2. ", "3. " — and so on.
-        Use real digits, never the literal letter N.
+        Only convert content into a numbered list when the speaker gave an
+        EXPLICIT enumeration signal in the input. Valid signals:
 
-        Apply this even if the items are separated by long paragraphs of
-        discussion between them.
+        - The text contains the ordinal words "first", "second", "third" (or
+          "fourth", "fifth", …) functioning as list markers, in the ORDER they
+          enumerate items. Replace each ordinal word with "1.", "2.", "3." and
+          drop the ordinal word itself.
+        - The text already contains sequential numbered markers at line starts
+          ("1.", "2.", "3." at the beginning of lines). Preserve them.
+        - The text contains a direct list cue like "here are N things:",
+          "the following:", "these are:" immediately followed by items.
 
-        PARAGRAPH BREAKS: Insert blank lines where the speaker shifts topics
-        within a single discussion block. Do not break within a single thought.
+        Do NOT create a list in any other situation. In particular:
 
-        AMBIGUOUS WORDS: When "first/second/third" function as list ordinals,
-        replace them with "1.", "2.", "3." and drop the redundant ordinal word.
-        When "first" is used in prose ("we did this first"), leave it alone.
-        Same logic for "one" — the number "one" in an enumeration becomes "1",
-        but "one of the things" stays as "one".
+        - "One thing I want to mention…" is NOT a list cue. It stays as prose.
+        - "One other thing is…" is NOT a list cue. It stays as prose.
+        - "I need to do X, Y, and Z" is NOT a list. It stays as prose.
+        - A sentence that just happens to contain the word "one", "two", or "three"
+          as a count is NOT enumeration.
+        - If the speaker only gives one enumerated item (e.g. only says "first"
+          with nothing matching "second"), do NOT create a single-item list.
 
-        ## Example
+        ## Paragraph breaks
 
-        Input:
-        There are three things I want to cover. First, we need to fix the auth
-        bug. Then we should improve logging. And finally, the deployment script
-        needs work.
-
-        Output:
-        There are three things I want to cover.
-
-        1. We need to fix the auth bug.
-        2. We should improve logging.
-        3. The deployment script needs work.
+        Insert a blank line between clearly separate topics within a longer
+        dictation. Do not break mid-thought. If the text is short (under ~40
+        words) or is a single coherent thought, leave it alone.
 
         ## Rules
 
@@ -52,18 +51,43 @@ public static class StructuralFormattingPrompt
           words ("first", "second", "third") that have been replaced by digit
           markers, but do not drop or rephrase any other content.
         - Do not fix grammar, do not change tone, do not rewrite sentences.
-        - If the text needs no structural changes, return it exactly as-is.
+        - If the text needs no structural changes, return it EXACTLY as-is.
+
+        ## Example — valid list conversion
+
+        Input:
+        There are three things I want to cover. First, we need to fix the auth
+        bug. Second, we should improve logging. Third, the deployment script
+        needs work.
+
+        Output:
+        There are three things I want to cover.
+
+        1. We need to fix the auth bug.
+        2. We should improve logging.
+        3. The deployment script needs work.
+
+        ## Example — NOT a list, leave unchanged
+
+        Input:
+        I think one other thing I want to make sure is that the harness branch
+        is rebased on main so all the recent changes are caught. Also, we should
+        double-check the test coverage before merging.
+
+        Output:
+        I think one other thing I want to make sure is that the harness branch
+        is rebased on main so all the recent changes are caught. Also, we should
+        double-check the test coverage before merging.
         """;
 
     /// <summary>
-    /// Validates LLM output by comparing content word counts against the original.
-    /// Returns null if the output should be rejected; returns the trimmed result if accepted.
-    /// A "content word" is any whitespace-delimited token containing at least one letter —
-    /// pure numeric/punctuation tokens like "1.", "-", "2)" are excluded so list markers
-    /// added by the LLM don't falsely fail the ratio check.
-    /// Asymmetric bounds: lower 0.75 tolerates legitimate compression (the LLM dropping
-    /// ordinal words like "first/second/third" when it converts them to "1./2./3."),
-    /// while upper 1.15 catches hallucination (the LLM adding explanatory content).
+    /// Validates LLM output and returns the trimmed result if acceptable, otherwise null.
+    ///
+    /// Checks:
+    ///  - Content-word-count ratio in [0.75, 1.15] (catches both hallucination and gutting).
+    ///  - List-marker safety: if the LLM inserted numbered list markers, the input must
+    ///    contain at least one enumeration signal (ordinal word, existing list marker, or
+    ///    a cue phrase). Prevents the model from turning plain prose into a numbered list.
     /// </summary>
     public static string? ValidateOutput(string? result, string original)
     {
@@ -77,10 +101,40 @@ public static class StructuralFormattingPrompt
         double ratio = (double)resultCount / origCount;
         if (ratio < 0.75 || ratio > 1.15) return null;
 
+        // List-marker safety net.
+        if (CountListMarkers(result) > 0 && !HasEnumerationSignal(original))
+            return null;
+
         return result.Trim();
     }
 
     private static int CountContentWords(string text) =>
         text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
             .Count(t => t.Any(char.IsLetter));
+
+    /// <summary>Count of lines that begin with a "N. " numbered list marker.</summary>
+    private static int CountListMarkers(string text) =>
+        Regex.Matches(text, @"(?m)^\s*\d+\.\s").Count;
+
+    /// <summary>
+    /// True if the input contains an ordinal enumeration word, an existing list marker,
+    /// or an explicit list cue phrase. "one" is intentionally excluded — it's too common
+    /// in prose ("one thing", "one of", "one way") to be a reliable list signal.
+    /// </summary>
+    private static bool HasEnumerationSignal(string text)
+    {
+        if (CountListMarkers(text) > 0) return true;
+
+        if (Regex.IsMatch(text,
+                @"\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b",
+                RegexOptions.IgnoreCase))
+            return true;
+
+        if (Regex.IsMatch(text,
+                @"\b(the following|here are|these are)\b",
+                RegexOptions.IgnoreCase))
+            return true;
+
+        return false;
+    }
 }
