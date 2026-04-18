@@ -56,6 +56,7 @@ public static class AppBootstrapper
         services.AddSingleton<CursorPasterService>();
         services.AddSingleton<IPasteService>(sp => sp.GetRequiredService<CursorPasterService>());
         services.AddSingleton<GlobalHotkeyService>();
+        services.AddSingleton<IGlobalHotkeyEvents>(sp => sp.GetRequiredService<GlobalHotkeyService>());
 
         // Whisper -- register the concrete type and both interfaces it implements
         services.AddSingleton<WhisperBackend>();
@@ -117,6 +118,7 @@ public static class AppBootstrapper
 
         services.AddSingleton<TranscriptionServiceRegistry>();
         services.AddSingleton<VoxScriptEngine>();
+        services.AddSingleton<IWizardEngine>(sp => sp.GetRequiredService<VoxScriptEngine>());
 
         // Home page services
         services.AddSingleton<IModelManager>(sp =>

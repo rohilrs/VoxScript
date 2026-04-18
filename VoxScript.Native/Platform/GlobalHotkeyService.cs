@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Serilog;
+using VoxScript.Core.Transcription.Core;
 
 namespace VoxScript.Native.Platform;
 
@@ -19,7 +20,7 @@ namespace VoxScript.Native.Platform;
 /// a Win keyup to arrive before Space keydown. The hold-stop is deferred briefly
 /// (200ms) so Space can still convert to toggle mode.
 /// </summary>
-public sealed class GlobalHotkeyService : IDisposable
+public sealed class GlobalHotkeyService : IDisposable, IGlobalHotkeyEvents
 {
     public event EventHandler? RecordingStartRequested;
     public event EventHandler? RecordingStopRequested;

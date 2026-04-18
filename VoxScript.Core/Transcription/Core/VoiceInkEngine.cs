@@ -8,7 +8,7 @@ using VoxScript.Core.Transcription.Models;
 
 namespace VoxScript.Core.Transcription.Core;
 
-public sealed partial class VoxScriptEngine : ObservableObject
+public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
 {
     private readonly IAudioCaptureService _audio;
     private readonly TranscriptionServiceRegistry _registry;
