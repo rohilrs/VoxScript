@@ -10,11 +10,14 @@ namespace VoxScript.Tests.Transcription;
 public class WordReplacementServiceTests
 {
     private readonly IVocabularyRepository _vocab = Substitute.For<IVocabularyRepository>();
+    private readonly ICommonWordList _commonWords = Substitute.For<ICommonWordList>();
 
     public WordReplacementServiceTests()
     {
         _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string>()));
+        // Default: no word is "common" — tests opt in where needed.
+        _commonWords.Contains(Arg.Any<string>()).Returns(false);
     }
 
     private IWordReplacementRepository MakeRepo(params WordReplacementRecord[] records)
@@ -28,7 +31,7 @@ public class WordReplacementServiceTests
     public async Task ApplyAsync_replaces_whole_word()
     {
         var svc = new WordReplacementService(MakeRepo(
-            new WordReplacementRecord { Original = "colour", Replacement = "color" }), _vocab);
+            new WordReplacementRecord { Original = "colour", Replacement = "color" }), _vocab, _commonWords);
 
         var result = await svc.ApplyAsync("The colour is red.", default);
         result.Should().Be("The color is red.");
@@ -38,7 +41,7 @@ public class WordReplacementServiceTests
     public async Task ApplyAsync_does_not_replace_partial_word()
     {
         var svc = new WordReplacementService(MakeRepo(
-            new WordReplacementRecord { Original = "cat", Replacement = "dog" }), _vocab);
+            new WordReplacementRecord { Original = "cat", Replacement = "dog" }), _vocab, _commonWords);
 
         var result = await svc.ApplyAsync("The category is set.", default);
         result.Should().Be("The category is set.");
@@ -48,7 +51,7 @@ public class WordReplacementServiceTests
     public async Task ApplyAsync_case_insensitive_by_default()
     {
         var svc = new WordReplacementService(MakeRepo(
-            new WordReplacementRecord { Original = "hello", Replacement = "hi", CaseSensitive = false }), _vocab);
+            new WordReplacementRecord { Original = "hello", Replacement = "hi", CaseSensitive = false }), _vocab, _commonWords);
 
         var result = await svc.ApplyAsync("HELLO world", default);
         result.Should().Be("hi world");
@@ -62,7 +65,7 @@ public class WordReplacementServiceTests
         _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "Rohil" }));
 
-        var svc = new WordReplacementService(MakeRepo(), _vocab);
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
         var result = await svc.ApplyAsync("Hello Rohill how are you", default);
         result.Should().Be("Hello Rohil how are you");
     }
@@ -73,7 +76,7 @@ public class WordReplacementServiceTests
         _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "Serilog" }));
 
-        var svc = new WordReplacementService(MakeRepo(), _vocab);
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
         var result = await svc.ApplyAsync("We use Seralog for logging", default);
         result.Should().Be("We use Serilog for logging");
     }
@@ -84,7 +87,7 @@ public class WordReplacementServiceTests
         _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "Rohil" }));
 
-        var svc = new WordReplacementService(MakeRepo(), _vocab);
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
         var result = await svc.ApplyAsync("Hello Rohil", default);
         result.Should().Be("Hello Rohil");
     }
@@ -95,7 +98,7 @@ public class WordReplacementServiceTests
         _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "Kubernetes" }));
 
-        var svc = new WordReplacementService(MakeRepo(), _vocab);
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
         // "Tubernetes" starts with T, not K — should not match
         var result = await svc.ApplyAsync("Using Tubernetes for orchestration", default);
         result.Should().Be("Using Tubernetes for orchestration");
@@ -107,7 +110,7 @@ public class WordReplacementServiceTests
         _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "cat" }));
 
-        var svc = new WordReplacementService(MakeRepo(), _vocab);
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
         // "car" is edit distance 1 from "cat" but both are < 4 chars
         var result = await svc.ApplyAsync("The car is red", default);
         result.Should().Be("The car is red");
@@ -119,10 +122,38 @@ public class WordReplacementServiceTests
         _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "Kubernetes" }));
 
-        var svc = new WordReplacementService(MakeRepo(), _vocab);
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
         // "Kubanatees" has too many edits from "Kubernetes"
         var result = await svc.ApplyAsync("Deploy to Kubanatees", default);
         result.Should().Be("Deploy to Kubanatees");
+    }
+
+    [Fact]
+    public async Task ApplyAsync_skips_fuzzy_match_for_common_english_words()
+    {
+        // Regression: "list" was getting corrected to "LSTM" because both are 4 chars,
+        // share first letter 'l', and have edit distance 2.
+        _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "LSTM" }));
+        _commonWords.Contains("list").Returns(true);
+
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
+        var result = await svc.ApplyAsync("Here is my list of items", default);
+        result.Should().Be("Here is my list of items");
+    }
+
+    [Fact]
+    public async Task ApplyAsync_still_corrects_uncommon_misspellings()
+    {
+        // Ensure the common-word guard doesn't break legitimate corrections.
+        // "Rohill" is not a common English word, should still be fuzzy-corrected.
+        _vocab.GetWordsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<string>>(new List<string> { "Rohil" }));
+        _commonWords.Contains("Rohill").Returns(false);
+
+        var svc = new WordReplacementService(MakeRepo(), _vocab, _commonWords);
+        var result = await svc.ApplyAsync("Hello Rohill how are you", default);
+        result.Should().Be("Hello Rohil how are you");
     }
 
     // ── Levenshtein distance unit tests ─────────────────────────

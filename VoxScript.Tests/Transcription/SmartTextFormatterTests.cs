@@ -128,10 +128,17 @@ public class SmartTextFormatterTests
     }
 
     [Fact]
-    public void NumberedList_four_items_with_surrounding_text()
+    public void NumberedList_after_colon_is_formatted()
     {
-        _sut.Format("my list 1 eggs 2 milk 3 oranges 4 bread and done", true)
-            .Should().Be("My list\n1. Eggs\n2. Milk\n3. Oranges\n4. Bread and done");
+        _sut.Format("my list: 1 eggs 2 milk 3 oranges 4 bread and done", true)
+            .Should().Be("My list:\n1. Eggs\n2. Milk\n3. Oranges\n4. Bread and done");
+    }
+
+    [Fact]
+    public void NumberedList_after_newline_is_formatted()
+    {
+        _sut.Format("here are my items\n1 eggs 2 milk 3 oranges", true)
+            .Should().Be("Here are my items\n1. Eggs\n2. Milk\n3. Oranges");
     }
 
     [Fact]
@@ -147,6 +154,23 @@ public class SmartTextFormatterTests
     {
         _sut.Format("I need 3 eggs and 5 oranges and 7 apples", true)
             .Should().Be("I need 3 eggs and 5 oranges and 7 apples");
+    }
+
+    [Fact]
+    public void MidSentence_numbers_are_not_fragmented_into_list()
+    {
+        // Regression: narrative prose with sequential numbers used to be reformatted
+        // as a list. The starting "1" is mid-sentence, so it must NOT anchor a list.
+        _sut.Format("I had 1 coffee, met 2 friends, walked 3 miles", true)
+            .Should().Be("I had 1 coffee, met 2 friends, walked 3 miles");
+    }
+
+    [Fact]
+    public void Numbers_in_middle_of_prose_without_cue_stay_inline()
+    {
+        // No colon, no newline, no start-of-string before the "1" — stays as prose.
+        _sut.Format("my list 1 eggs 2 milk 3 oranges", true)
+            .Should().Be("My list 1 eggs 2 milk 3 oranges");
     }
 
     // ── Currency ──────────────────────────────────────────────────────

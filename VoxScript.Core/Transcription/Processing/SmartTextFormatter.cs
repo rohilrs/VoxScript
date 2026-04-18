@@ -622,6 +622,15 @@ public sealed partial class SmartTextFormatter
             match = ListStartRegex().Match(text, searchFrom);
             if (!match.Success) break;
 
+            // Require the starting "1" to sit at a list-like anchor so narrative prose
+            // ("I had 1 coffee, met 2 friends, walked 3 miles") doesn't get fragmented.
+            // Valid anchors: start of string, after a newline, or after a colon.
+            if (!IsAnchoredListStart(text, match.Index))
+            {
+                searchFrom = match.Index + 1;
+                continue;
+            }
+
             items.Clear();
             int currentNumber = 1;
             int numberPos = match.Index;
@@ -725,6 +734,22 @@ public sealed partial class SmartTextFormatter
     // Matches "1" at a word boundary (the start of a potential list)
     [GeneratedRegex(@"\b1\b")]
     private static partial Regex ListStartRegex();
+
+    /// <summary>
+    /// True when the character immediately before <paramref name="index"/> (skipping
+    /// horizontal whitespace) is the start of the string, a newline, or a colon —
+    /// positions where a "1" is plausibly the head of a list rather than a count
+    /// embedded in narrative prose.
+    /// </summary>
+    private static bool IsAnchoredListStart(string text, int index)
+    {
+        int i = index - 1;
+        while (i >= 0 && (text[i] == ' ' || text[i] == '\t'))
+            i--;
+
+        if (i < 0) return true;
+        return text[i] == '\n' || text[i] == ':';
+    }
 
     // ── Currency ──────────────────────────────────────────────────────
 
