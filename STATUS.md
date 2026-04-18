@@ -1,6 +1,6 @@
 # VoxScript — Development Status
 
-Last updated: 2026-04-17 (media pause: state-aware via SMTC)
+Last updated: 2026-04-17 (media pause: state-aware via SMTC; home page dashboard rework)
 
 ## Overview
 
@@ -34,7 +34,7 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
 ### UI (WinUI 3 + Mica)
 - [x] Custom brand theme (warm palette, Georgia serif headings, Mica backdrop)
 - [x] Waveform logo in nav sidebar
-- [x] Home/TranscribePage — record button, transcript card, status indicators, AI connection status
+- [x] HomePage — dashboard layout (content left + 240px status rail right); latest transcript card with Copy + View History, 12-hour activity graph, overall + component statuses (model/AI-enhance/LLM-format), total words, avg WPM; `HomeViewModel` + `IHomeStatusService`/`IHomeStatsService` in Core; EF Core migrations (replaces `EnsureCreated`); `WordCount` column on `TranscriptionRecord`
 - [x] Navigation sidebar: Home, Dictionary, Expansions, History, Personalize, Notes, Settings
 - [x] Light theme with visible caption buttons (min/max/close)
 - [x] System tray (minimize to tray on close, tray icon with tooltip)
