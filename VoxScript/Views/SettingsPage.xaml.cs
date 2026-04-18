@@ -65,6 +65,33 @@ public sealed partial class SettingsPage : Page
         ViewModel.ClearApiKey();
     }
 
+    private async void SetStructuralApiKeyButton_Click(object sender, RoutedEventArgs e)
+    {
+        var keyBox = new PasswordBox
+        {
+            PlaceholderText = "Enter API key",
+            Width = 400,
+        };
+        var dialog = new ContentDialog
+        {
+            Title = "Set Structural Formatting API Key",
+            Content = keyBox,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = this.XamlRoot,
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            ViewModel.SaveStructuralApiKey(keyBox.Password);
+        }
+    }
+
+    private void ClearStructuralApiKeyButton_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ClearStructuralApiKey();
+    }
+
     private async void ManageModelsButton_Click(object sender, RoutedEventArgs e)
     {
         await ModelManagementDialog.ShowAsync(this.XamlRoot);
