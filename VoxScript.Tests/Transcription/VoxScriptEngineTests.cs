@@ -25,7 +25,8 @@ public class VoxScriptEngineTests
         var registry = new TranscriptionServiceRegistry([], []);
         var wordReplacement = new WordReplacementService(
             Substitute.For<IWordReplacementRepository>(),
-            Substitute.For<IVocabularyRepository>());
+            Substitute.For<IVocabularyRepository>(),
+            Substitute.For<ICommonWordList>());
         var powerModeManager = new VoxScript.Core.PowerMode.PowerModeManager();
         var powerModeSession = new VoxScript.Core.PowerMode.PowerModeSessionManager(
             powerModeManager,

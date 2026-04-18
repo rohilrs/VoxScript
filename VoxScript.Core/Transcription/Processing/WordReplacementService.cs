@@ -7,11 +7,16 @@ public sealed partial class WordReplacementService
 {
     private readonly IWordReplacementRepository _repo;
     private readonly IVocabularyRepository _vocab;
+    private readonly ICommonWordList _commonWords;
 
-    public WordReplacementService(IWordReplacementRepository repo, IVocabularyRepository vocab)
+    public WordReplacementService(
+        IWordReplacementRepository repo,
+        IVocabularyRepository vocab,
+        ICommonWordList commonWords)
     {
         _repo = repo;
         _vocab = vocab;
+        _commonWords = commonWords;
     }
 
     public async Task<string> ApplyAsync(string text, CancellationToken ct)
@@ -44,9 +49,11 @@ public sealed partial class WordReplacementService
     /// <summary>
     /// For each word in the text, if it's not an exact match to a vocabulary word
     /// but is a close fuzzy match (same first letter, edit distance ≤ 2, length ≥ 4),
-    /// replace it with the vocabulary word.
+    /// replace it with the vocabulary word. Common English words are never rewritten —
+    /// this prevents everyday words like "list" from being silently corrected to
+    /// near-neighbor vocab entries like "LSTM".
     /// </summary>
-    private static string ApplyVocabularyCorrections(string text, IReadOnlyList<string> vocabWords)
+    private string ApplyVocabularyCorrections(string text, IReadOnlyList<string> vocabWords)
     {
         // Build a lookup for fast exact-match checking
         var vocabSet = new HashSet<string>(vocabWords, StringComparer.OrdinalIgnoreCase);
@@ -60,6 +67,9 @@ public sealed partial class WordReplacementService
 
             // Skip if already an exact vocabulary match
             if (vocabSet.Contains(word)) return word;
+
+            // Protect common English words from being rewritten to vocab near-neighbors.
+            if (_commonWords.Contains(word)) return word;
 
             // Find the best fuzzy match
             string? bestMatch = null;

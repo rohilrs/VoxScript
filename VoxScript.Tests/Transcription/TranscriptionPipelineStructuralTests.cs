@@ -48,7 +48,7 @@ public class TranscriptionPipelineStructuralTests
         var pipeline = new TranscriptionPipeline(
             new TranscriptionOutputFilter(),
             new SmartTextFormatter(),
-            new WordReplacementService(wordReplacementRepo, vocabRepo),
+            new WordReplacementService(wordReplacementRepo, vocabRepo, Substitute.For<ICommonWordList>()),
             aiEnhancement,
             repo,
             powerMode,
