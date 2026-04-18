@@ -69,7 +69,9 @@ public static class AppBootstrapper
         services.AddSingleton<AppSettings>();
         services.AddSingleton<ApiKeyManager>();
         services.AddSingleton<HttpClient>();
+        services.AddSingleton<IAiCompleter, AiCompleter>();
         services.AddSingleton<AIService>();
+        services.AddSingleton<IStructuralFormattingService, StructuralFormattingService>();
         services.AddSingleton<AIEnhancementOutputFilter>();
         services.AddSingleton<IAIEnhancementService, AIEnhancementService>();
         services.AddSingleton<TranscriptionOutputFilter>();
