@@ -34,10 +34,10 @@ public sealed class HomeStatusService : IHomeStatusService
     public async Task<StatusResult> GetAiEnhancementStatusAsync(CancellationToken ct)
     {
         if (!_settings.AiEnhancementEnabled)
-            return new StatusResult(StatusLevel.Off, "AI Enhancement off");
+            return new StatusResult(StatusLevel.Off, "Off");
 
         if (_settings.AiProvider == AiProvider.Local)
-            return await PingOllamaAsync(_settings.OllamaEndpoint, "AI Enhancement", ct);
+            return await PingOllamaAsync(_settings.OllamaEndpoint, ct);
 
         return new StatusResult(StatusLevel.Ready,
             _settings.AiProvider == AiProvider.OpenAI ? "OpenAI ready" : "Anthropic ready");
@@ -46,10 +46,10 @@ public sealed class HomeStatusService : IHomeStatusService
     public async Task<StatusResult> GetLlmFormattingStatusAsync(CancellationToken ct)
     {
         if (!_settings.StructuralFormattingEnabled)
-            return new StatusResult(StatusLevel.Off, "LLM Formatting off");
+            return new StatusResult(StatusLevel.Off, "Off");
 
         if (_settings.StructuralAiProvider == AiProvider.Local)
-            return await PingOllamaAsync(_settings.StructuralOllamaEndpoint, "LLM Formatting", ct);
+            return await PingOllamaAsync(_settings.StructuralOllamaEndpoint, ct);
 
         return new StatusResult(StatusLevel.Ready,
             _settings.StructuralAiProvider == AiProvider.OpenAI ? "OpenAI ready" : "Anthropic ready");
@@ -71,8 +71,7 @@ public sealed class HomeStatusService : IHomeStatusService
         return new StatusResult(StatusLevel.Ready, "Ready");
     }
 
-    private async Task<StatusResult> PingOllamaAsync(
-        string endpoint, string label, CancellationToken ct)
+    private async Task<StatusResult> PingOllamaAsync(string endpoint, CancellationToken ct)
     {
         try
         {
@@ -83,12 +82,12 @@ public sealed class HomeStatusService : IHomeStatusService
             var response = await _http.GetAsync(url, cts.Token);
 
             return response.IsSuccessStatusCode
-                ? new StatusResult(StatusLevel.Ready, $"{label}: Ollama connected")
-                : new StatusResult(StatusLevel.Unavailable, $"{label}: Ollama error");
+                ? new StatusResult(StatusLevel.Ready, "Ollama connected")
+                : new StatusResult(StatusLevel.Unavailable, "Ollama error");
         }
         catch
         {
-            return new StatusResult(StatusLevel.Unavailable, $"{label}: Ollama unavailable");
+            return new StatusResult(StatusLevel.Unavailable, "Ollama unavailable");
         }
     }
 }

@@ -56,7 +56,7 @@
                            Grid.Row="1"
                            TextWrapping="Wrap"
                            TextTrimming="CharacterEllipsis"
-                           MaxLines="6"
+                           VerticalAlignment="Top"
                            FontSize="17"
                            LineHeight="26"
                            Foreground="{StaticResource BrandForegroundBrush}" />
@@ -79,6 +79,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0"
@@ -88,11 +89,41 @@
                            Foreground="{StaticResource BrandMutedBrush}"
                            Margin="0,0,0,10" />
 
-                <StackPanel x:Name="GraphBars"
-                            Grid.Row="1"
-                            Orientation="Horizontal"
-                            Spacing="3"
-                            VerticalAlignment="Bottom" />
+                <Grid Grid.Row="1">
+                    <!-- Baseline -->
+                    <Rectangle Height="1"
+                               VerticalAlignment="Bottom"
+                               Fill="{StaticResource BrandPrimaryLightBrush}"
+                               Opacity="0.6" />
+                    <!-- Bars container (12 columns, filled in code-behind) -->
+                    <Grid x:Name="GraphBars" VerticalAlignment="Stretch" />
+                </Grid>
+
+                <!-- Axis labels: -12h, -8h, -4h, now -->
+                <Grid Grid.Row="2" Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="-12h"
+                               FontSize="10"
+                               HorizontalAlignment="Left"
+                               Foreground="{StaticResource BrandMutedBrush}" />
+                    <TextBlock Grid.Column="1" Text="-8h"
+                               FontSize="10"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource BrandMutedBrush}" />
+                    <TextBlock Grid.Column="2" Text="-4h"
+                               FontSize="10"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource BrandMutedBrush}" />
+                    <TextBlock Grid.Column="3" Text="now"
+                               FontSize="10"
+                               HorizontalAlignment="Right"
+                               Foreground="{StaticResource BrandMutedBrush}" />
+                </Grid>
             </Grid>
         </Border>
 
@@ -122,32 +153,62 @@
                     CornerRadius="12" Padding="16"
                     BorderBrush="{StaticResource BrandPrimaryLightBrush}"
                     BorderThickness="1">
-                <StackPanel Spacing="10">
+                <StackPanel Spacing="12">
                     <TextBlock Text="COMPONENTS"
                                FontSize="10" FontWeight="Medium"
                                CharacterSpacing="120"
                                Foreground="{StaticResource BrandMutedBrush}" />
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Ellipse x:Name="ModelDot" Width="8" Height="8"
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse x:Name="ModelDot" Grid.Column="0"
+                                 Width="8" Height="8"
                                  VerticalAlignment="Center" />
-                        <TextBlock x:Name="ModelLabel" FontSize="13"
-                                   Foreground="{StaticResource BrandForegroundBrush}" />
-                    </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="1">
+                            <TextBlock Text="Model" FontSize="13" FontWeight="Medium"
+                                       Foreground="{StaticResource BrandForegroundBrush}" />
+                            <TextBlock x:Name="ModelLabel" FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource BrandMutedBrush}" />
+                        </StackPanel>
+                    </Grid>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Ellipse x:Name="AiDot" Width="8" Height="8"
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse x:Name="AiDot" Grid.Column="0"
+                                 Width="8" Height="8"
                                  VerticalAlignment="Center" />
-                        <TextBlock x:Name="AiLabel" FontSize="13"
-                                   Foreground="{StaticResource BrandForegroundBrush}" />
-                    </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="1">
+                            <TextBlock Text="AI Enhancement" FontSize="13" FontWeight="Medium"
+                                       Foreground="{StaticResource BrandForegroundBrush}" />
+                            <TextBlock x:Name="AiLabel" FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource BrandMutedBrush}" />
+                        </StackPanel>
+                    </Grid>
 
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Ellipse x:Name="LlmDot" Width="8" Height="8"
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse x:Name="LlmDot" Grid.Column="0"
+                                 Width="8" Height="8"
                                  VerticalAlignment="Center" />
-                        <TextBlock x:Name="LlmLabel" FontSize="13"
-                                   Foreground="{StaticResource BrandForegroundBrush}" />
-                    </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="1">
+                            <TextBlock Text="LLM Formatting" FontSize="13" FontWeight="Medium"
+                                       Foreground="{StaticResource BrandForegroundBrush}" />
+                            <TextBlock x:Name="LlmLabel" FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource BrandMutedBrush}" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
 

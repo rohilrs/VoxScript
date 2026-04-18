@@ -131,24 +131,34 @@ public sealed partial class HomePage : Page
 
     private void RenderGraph(IReadOnlyList<int> buckets)
     {
+        GraphBars.ColumnDefinitions.Clear();
         GraphBars.Children.Clear();
+
+        for (int i = 0; i < buckets.Count; i++)
+            GraphBars.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
         int max = buckets.Count > 0 ? buckets.Max() : 0;
+        if (max == 0) return; // Only baseline visible when no activity
+
         const double maxBarHeight = 80.0;
+        const double minBarHeight = 6.0;
 
-        foreach (var count in buckets)
+        for (int i = 0; i < buckets.Count; i++)
         {
-            double height = max > 0
-                ? Math.Max(4.0, (count / (double)max) * maxBarHeight)
-                : 4.0;
+            int count = buckets[i];
+            if (count <= 0) continue;
 
+            double barHeight = Math.Max(minBarHeight, (count / (double)max) * maxBarHeight);
             var bar = new Border
             {
-                Width = 14,
-                Height = height,
+                Height = barHeight,
                 CornerRadius = new CornerRadius(3, 3, 0, 0),
                 VerticalAlignment = VerticalAlignment.Bottom,
                 Background = (SolidColorBrush)Application.Current.Resources["BrandPrimaryBrush"],
+                Margin = new Thickness(2, 0, 2, 0),
             };
+            Grid.SetColumn(bar, i);
             GraphBars.Children.Add(bar);
         }
     }
