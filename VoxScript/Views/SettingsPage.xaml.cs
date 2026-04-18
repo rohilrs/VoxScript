@@ -105,16 +105,16 @@ public sealed partial class SettingsPage : Page
             FontSize = 13,
             VerticalContentAlignment = VerticalAlignment.Top,
         };
+        // TextBox has its own internal ScrollViewer — force vertical-only so
+        // TextWrapping.Wrap actually wraps against the fixed Width instead of
+        // letting the box scroll horizontally.
+        ScrollViewer.SetVerticalScrollBarVisibility(promptBox, ScrollBarVisibility.Auto);
+        ScrollViewer.SetHorizontalScrollBarVisibility(promptBox, ScrollBarVisibility.Disabled);
 
         var dialog = new ContentDialog
         {
             Title = "Edit Structural Formatting Prompt",
-            Content = new ScrollViewer
-            {
-                Content = promptBox,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            },
+            Content = promptBox,
             PrimaryButtonText = "Save",
             SecondaryButtonText = "Reset to default",
             CloseButtonText = "Cancel",
