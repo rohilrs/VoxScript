@@ -159,6 +159,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             _activeSession = null;
             _cts?.Dispose();
             _cts = null;
+            _suppressAutoPaste = false;
             State = RecordingState.Idle;
         }
         finally
@@ -205,6 +206,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             _activeSession = null;
             _cts?.Dispose();
             _cts = null;
+            _suppressAutoPaste = false;
             return;
         }
 
@@ -313,6 +315,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
         if (_settings.PauseMediaWhileDictating)
             await _media.ResumeMediaAsync();
         AudioLevel = 0f;
+        _suppressAutoPaste = false;
     }
 
     /// <summary>
