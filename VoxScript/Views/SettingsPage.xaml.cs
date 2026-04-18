@@ -95,11 +95,7 @@ public sealed partial class SettingsPage : Page
     private async void EditStructuralPromptButton_Click(object sender, RoutedEventArgs e)
     {
         // ContentDialog's default ContentDialogMaxWidth theme resource is 456 DIPs —
-        // anything wider than that gets clipped on the right, which was what made
-        // text like "The text has" appear cut off mid-word regardless of our
-        // TextBox MaxWidth. We override the resource on this dialog instance below.
-        // MinHeight is kept well below the 600-DIP window minimum so the dialog
-        // always fits with breathing room.
+        // override at the dialog level so the 640-DIP TextBox fits on the right.
         var promptBox = new TextBox
         {
             Text = ViewModel.GetEffectiveStructuralPrompt(),
@@ -117,29 +113,38 @@ public sealed partial class SettingsPage : Page
         ScrollViewer.SetVerticalScrollBarVisibility(promptBox, ScrollBarVisibility.Auto);
         ScrollViewer.SetHorizontalScrollBarVisibility(promptBox, ScrollBarVisibility.Disabled);
 
-        var panel = new StackPanel { MinWidth = 600, MaxWidth = 640 };
+        // Inline Reset button instead of SecondaryButton + args.Cancel=true.
+        // The Cancel pattern was producing a visible "dialog closes and reopens"
+        // flash on some WinUI builds — an inline button keeps the dialog in a
+        // single state and only mutates the TextBox content.
+        var resetButton = new Button
+        {
+            Content = "Reset to default",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            BorderBrush = (Microsoft.UI.Xaml.Media.SolidColorBrush)Application.Current.Resources["BrandPrimaryLightBrush"],
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(10, 4, 10, 4),
+            FontSize = 12,
+        };
+        resetButton.Click += (_, _) =>
+            promptBox.Text = VoxScript.Core.AI.StructuralFormattingPrompt.System;
+
+        var panel = new StackPanel { MinWidth = 600, MaxWidth = 640, Spacing = 10 };
         panel.Children.Add(promptBox);
+        panel.Children.Add(resetButton);
 
         var dialog = new ContentDialog
         {
             Title = "Edit Structural Formatting Prompt",
             Content = panel,
             PrimaryButtonText = "Save",
-            SecondaryButtonText = "Reset to default",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot,
         };
-        // Widen the dialog beyond the default 456 DIP theme max so the 640 DIP
-        // content area actually fits without horizontal clipping.
         dialog.Resources["ContentDialogMaxWidth"] = 720.0;
-
-        // Secondary button resets the textbox to the built-in default without closing.
-        dialog.SecondaryButtonClick += (_, args) =>
-        {
-            args.Cancel = true;
-            promptBox.Text = VoxScript.Core.AI.StructuralFormattingPrompt.System;
-        };
 
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Primary)
