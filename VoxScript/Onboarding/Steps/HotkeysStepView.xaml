@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VoxScript.Onboarding.Steps.HotkeysStepView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="KbdStyle" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{StaticResource BrandMutedBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,2,8,2" />
+            <Setter Property="Background" Value="#FFFEFB" />
+        </Style>
+    </UserControl.Resources>
+    <StackPanel MaxWidth="620" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+        <TextBlock Text="Your dictation shortcuts"
+                   FontFamily="Georgia" FontSize="22" FontWeight="SemiBold" />
+        <TextBlock Text="These work globally — hold, speak, release. You can rebind them in Settings → Keybinds."
+                   FontSize="12" Foreground="{StaticResource BrandMutedBrush}"
+                   Margin="0,0,0,12" />
+
+        <Border CornerRadius="8" BorderThickness="1"
+                BorderBrush="{StaticResource BrandMutedBrush}"
+                Padding="16,4,16,4">
+            <StackPanel>
+                <Grid Padding="0,10,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="170" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Style="{StaticResource KbdStyle}"><TextBlock Text="Ctrl" FontFamily="Consolas" FontSize="12" /></Border>
+                        <TextBlock Text="+" VerticalAlignment="Center" Foreground="{StaticResource BrandMutedBrush}" />
+                        <Border Style="{StaticResource KbdStyle}"><TextBlock Text="Win" FontFamily="Consolas" FontSize="12" /></Border>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock FontSize="13"><Run FontWeight="SemiBold" Text="Hold to dictate" /><Run Text=" · release to stop and insert text" /></TextBlock>
+                    </StackPanel>
+                </Grid>
+
+                <Border BorderThickness="0,1,0,0" BorderBrush="{StaticResource BrandMutedBrush}" />
+
+                <Grid Padding="0,10,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="170" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Style="{StaticResource KbdStyle}"><TextBlock Text="Ctrl" FontFamily="Consolas" FontSize="12" /></Border>
+                        <TextBlock Text="+" VerticalAlignment="Center" Foreground="{StaticResource BrandMutedBrush}" />
+                        <Border Style="{StaticResource KbdStyle}"><TextBlock Text="Win" FontFamily="Consolas" FontSize="12" /></Border>
+                        <TextBlock Text="+" VerticalAlignment="Center" Foreground="{StaticResource BrandMutedBrush}" />
+                        <Border Style="{StaticResource KbdStyle}"><TextBlock Text="Space" FontFamily="Consolas" FontSize="12" /></Border>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock FontSize="13"><Run FontWeight="SemiBold" Text="Toggle on/off" /><Run Text=" · press again to finish, for longer dictations" /></TextBlock>
+                    </StackPanel>
+                </Grid>
+
+                <Border BorderThickness="0,1,0,0" BorderBrush="{StaticResource BrandMutedBrush}" />
+
+                <Grid Padding="0,10,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" MinWidth="170" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Border Style="{StaticResource KbdStyle}"><TextBlock Text="Esc" FontFamily="Consolas" FontSize="12" /></Border>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock FontSize="13"><Run FontWeight="SemiBold" Text="Cancel" /><Run Text=" · throw away the current recording" /></TextBlock>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

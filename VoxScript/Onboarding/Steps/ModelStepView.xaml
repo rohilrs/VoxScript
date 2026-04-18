@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VoxScript.Onboarding.Steps.ModelStepView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid MaxWidth="640" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel x:Name="PickerPanel" Spacing="10">
+            <TextBlock Text="Pick a transcription model"
+                       FontFamily="Georgia" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Text="We'll download this so transcription works offline. You can change it anytime in Settings."
+                       FontSize="12" Foreground="{StaticResource BrandMutedBrush}"
+                       Margin="0,0,0,8" />
+
+            <StackPanel x:Name="CardsHost" Orientation="Horizontal" Spacing="10" />
+
+            <TextBlock FontSize="11" Foreground="{StaticResource BrandMutedBrush}"
+                       TextWrapping="Wrap" Margin="0,10,0,0">
+                Want something different? You can import your own model or pick from the full list later in Settings → Manage models.
+            </TextBlock>
+        </StackPanel>
+
+        <StackPanel x:Name="DownloadingPanel" Spacing="8" Visibility="Collapsed">
+            <TextBlock x:Name="DownloadTitle"
+                       Text="Downloading model"
+                       FontFamily="Georgia" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Text="This usually takes under a minute. Feel free to leave the window open."
+                       FontSize="12" Foreground="{StaticResource BrandMutedBrush}" />
+            <ProgressBar x:Name="DownloadBar" Minimum="0" Maximum="1" Height="6" Margin="0,14,0,0"
+                         Background="{StaticResource BrandMutedBrush}"
+                         Foreground="{StaticResource BrandPrimaryBrush}" />
+            <TextBlock x:Name="DownloadPct" FontSize="11" Foreground="{StaticResource BrandMutedBrush}" />
+        </StackPanel>
+
+        <StackPanel x:Name="DonePanel" Spacing="6" Visibility="Collapsed">
+            <TextBlock Text="Model ready"
+                       FontFamily="Georgia" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock x:Name="DoneSubtitle"
+                       FontSize="12" Foreground="{StaticResource BrandMutedBrush}" />
+        </StackPanel>
+
+        <StackPanel x:Name="FailedPanel" Spacing="10" Visibility="Collapsed">
+            <TextBlock Text="Download failed"
+                       FontFamily="Georgia" FontSize="22" FontWeight="SemiBold"
+                       Foreground="#B04040" />
+            <TextBlock x:Name="FailedMessage"
+                       FontSize="12" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Retry" Click="Retry_Click" />
+                <Button Content="Pick a different model" Click="ReturnToPicker_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

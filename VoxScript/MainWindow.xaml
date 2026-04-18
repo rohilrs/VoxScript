@@ -82,5 +82,11 @@
 
             <Frame x:Name="ContentFrame" />
         </NavigationView>
+
+        <!-- Onboarding takeover. Hidden by default; swapped in by App.xaml.cs
+             on first run, swapped out again when the wizard completes. -->
+        <ContentPresenter x:Name="OnboardingPresenter"
+                          Grid.Row="1"
+                          Visibility="Collapsed" />
     </Grid>
 </Window>

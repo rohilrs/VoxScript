@@ -17,6 +17,8 @@ public sealed partial class MicStepViewModel : ObservableObject
     private double _continuousSignalSeconds;
     private double _noSignalSeconds;
     private bool _skipUsed;
+    private CancellationTokenSource? _monitorCts;
+    private DateTime _lastSampleTime;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsNextEnabled))]
@@ -92,7 +94,71 @@ public sealed partial class MicStepViewModel : ObservableObject
         OnPropertyChanged(nameof(IsNextEnabled));
     }
 
-    public void ConfirmDevice(AppSettings settings)
+    public void ConfirmDevice()
+    {
+        if (SelectedDevice is not null)
+            _settings.AudioDeviceId = SelectedDevice.Id;
+    }
+
+    /// <summary>
+    /// Open the mic device and start driving OnAudioLevel from real PCM frames.
+    /// Safe to call multiple times — subsequent calls are no-ops while active.
+    /// </summary>
+    public async Task StartMonitoringAsync()
+    {
+        if (_monitorCts is not null) return;
+        if (SelectedDevice is null) return;
+
+        _monitorCts = new CancellationTokenSource();
+        _lastSampleTime = DateTime.UtcNow;
+
+        try
+        {
+            await _capture.StartAsync(SelectedDevice.Id, (data, count) =>
+            {
+                var now = DateTime.UtcNow;
+                var delta = (now - _lastSampleTime).TotalSeconds;
+                _lastSampleTime = now;
+                var rms = ComputeRms(data, count);
+                // Marshal back to UI thread-safe property setter; ObservableProperty
+                // is already main-thread-affine if updated on that thread. Since
+                // the audio callback is arbitrary thread, just set the backing field.
+                OnAudioLevel(rms, delta);
+            }, _monitorCts.Token);
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Onboarding: mic monitoring failed to start");
+            _monitorCts?.Dispose();
+            _monitorCts = null;
+        }
+    }
+
+    public async Task StopMonitoringAsync()
+    {
+        if (_monitorCts is null) return;
+        try { _monitorCts.Cancel(); } catch { }
+        _monitorCts.Dispose();
+        _monitorCts = null;
+        try { await _capture.StopAsync(); } catch { }
+    }
+
+    private static float ComputeRms(byte[] data, int count)
+    {
+        int sampleCount = count / 2;
+        if (sampleCount == 0) return 0f;
+        double sumSquares = 0;
+        for (int i = 0; i < count - 1; i += 2)
+        {
+            short sample = (short)(data[i] | (data[i + 1] << 8));
+            sumSquares += sample * (double)sample;
+        }
+        double rms = Math.Sqrt(sumSquares / sampleCount);
+        return (float)Math.Min(rms / short.MaxValue, 1.0);
+    }
+
+    // Overload preserved for tests that want to verify writes against a dedicated settings instance.
+    internal void ConfirmDevice(AppSettings settings)
     {
         if (SelectedDevice is not null)
             settings.AudioDeviceId = SelectedDevice.Id;

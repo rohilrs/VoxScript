@@ -198,13 +198,72 @@ public partial class App : Application
 
         _mainWindow.Activate();
 
-        // First-run model download (after window is visible so user sees progress)
-        await EnsureDefaultModelAsync(services);
+        // Resolve onboarding state and either show the wizard or proceed to
+        // normal startup (including model download).
+        var modelManager = ServiceLocator.Get<WhisperModelManager>();
+        bool shouldShowOnboarding = ResolveOnboardingState(settings, modelManager);
 
-        // Warm up the structural formatting LLM (no-op if disabled or cloud).
-        // Fire-and-forget: we don't want to block startup if Ollama is down.
-        if (settings.StructuralFormattingEnabled)
-            _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
+        if (shouldShowOnboarding)
+        {
+            var onboardingVm = new VoxScript.Onboarding.OnboardingViewModel(settings);
+            var micVm = new VoxScript.Onboarding.Steps.MicStepViewModel(
+                ServiceLocator.Get<IAudioCaptureService>(), settings, onboardingVm);
+            var modelVm = new VoxScript.Onboarding.Steps.ModelStepViewModel(
+                ServiceLocator.Get<IWhisperModelManager>(),
+                ServiceLocator.Get<ILocalTranscriptionBackend>(),
+                settings, onboardingVm);
+            var tryItVm = new VoxScript.Onboarding.Steps.TryItStepViewModel(
+                ServiceLocator.Get<IGlobalHotkeyEvents>(),
+                ServiceLocator.Get<IWizardEngine>(),
+                settings, onboardingVm);
+
+            var onboardingView = new VoxScript.Onboarding.OnboardingView(onboardingVm, micVm, modelVm, tryItVm);
+
+            onboardingVm.WizardCompleted += () =>
+            {
+                _mainWindow.DispatcherQueue.TryEnqueue(async () =>
+                {
+                    tryItVm.Dispose();
+                    _mainWindow.ShowShell();
+                    // Ensure VAD is present even if the wizard skipped it
+                    await EnsureVadModelAsync(services, modelManager);
+                    if (settings.StructuralFormattingEnabled)
+                        _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
+                });
+            };
+
+            _mainWindow.ShowOnboarding(onboardingView);
+        }
+        else
+        {
+            // First-run model download (after window is visible so user sees progress)
+            await EnsureDefaultModelAsync(services);
+
+            if (settings.StructuralFormattingEnabled)
+                _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
+        }
+    }
+
+    private static bool ResolveOnboardingState(AppSettings settings, WhisperModelManager modelManager)
+    {
+        var completed = settings.OnboardingCompleted;
+        if (completed.HasValue)
+            return !completed.Value;
+
+        // Key absent — one-time migration
+        var hasModels = modelManager.ListDownloaded().Count > 0;
+        if (hasModels)
+        {
+            settings.OnboardingCompleted = true;
+            Serilog.Log.Information(
+                "Onboarding: existing install detected ({Count} models on disk), skipping wizard",
+                modelManager.ListDownloaded().Count);
+            return false;
+        }
+
+        settings.OnboardingCompleted = false;
+        Serilog.Log.Information("Onboarding: no models found, starting wizard");
+        return true;
     }
 
     private static ITranscriptionModel ResolveModel()
