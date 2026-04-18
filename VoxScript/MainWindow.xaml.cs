@@ -3,6 +3,7 @@ using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VoxScript.Infrastructure;
 using VoxScript.Views;
 using WinUIEx;
 
@@ -18,6 +19,9 @@ public sealed partial class MainWindow : Window
         this.InitializeComponent();
         ExtendsContentIntoTitleBar = true;
         this.Closed += OnClosed;
+
+        // Set window icon (absolute path so it works regardless of working directory)
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico"));
 
         // Enforce minimum window size
         AppWindow.Changed += (s, e) =>
@@ -70,14 +74,49 @@ public sealed partial class MainWindow : Window
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
-        // Minimize to tray instead of closing
-        args.Handled = true;
-        this.Hide();
+        var settings = ServiceLocator.Get<VoxScript.Core.Settings.AppSettings>();
+        if (settings.MinimizeToTray)
+        {
+            args.Handled = true;
+            this.Hide();
+        }
+        else
+        {
+            // Actually close — let the app exit
+            Application.Current.Exit();
+        }
     }
 
     public void BringToFront()
     {
         this.Show();
         this.Activate();
+    }
+
+    public void NavigateTo(Type pageType)
+    {
+        ContentFrame.Navigate(pageType);
+
+        // Update sidebar selection to match
+        foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
+        {
+            var tag = item.Tag?.ToString();
+            Type? mapped = tag switch
+            {
+                "Home"        => typeof(TranscribePage),
+                "Dictionary"  => typeof(DictionaryPage),
+                "Expansions"  => typeof(ExpansionsPage),
+                "History"     => typeof(HistoryPage),
+                "Personalize" => typeof(PersonalizePage),
+                "Notes"       => typeof(NotesPage),
+                "Settings"    => typeof(SettingsPage),
+                _             => null,
+            };
+            if (mapped == pageType)
+            {
+                NavView.SelectedItem = item;
+                break;
+            }
+        }
     }
 }

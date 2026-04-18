@@ -23,16 +23,12 @@
             <!-- Sidebar Header / Logo -->
             <NavigationView.PaneHeader>
                 <StackPanel Orientation="Horizontal" Spacing="10" Padding="8,12">
-                    <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                        <Border Width="3" Height="16" CornerRadius="2"
-                                Background="{StaticResource BrandPrimaryBrush}" />
-                        <Border Width="3" Height="24" CornerRadius="2"
-                                Background="{StaticResource BrandPrimaryBrush}" />
-                        <Border Width="3" Height="12" CornerRadius="2"
-                                Background="{StaticResource BrandPrimaryBrush}" />
-                        <Border Width="3" Height="20" CornerRadius="2"
-                                Background="{StaticResource BrandPrimaryBrush}" />
-                    </StackPanel>
+                    <Image Width="48" Height="48"
+                           VerticalAlignment="Center">
+                        <Image.Source>
+                            <SvgImageSource UriSource="Assets/logo-transparent.svg" />
+                        </Image.Source>
+                    </Image>
                     <TextBlock Text="VoxScript"
                                FontFamily="Georgia"
                                FontSize="20"
