@@ -37,7 +37,14 @@ public sealed partial class OnboardingView : UserControl
         };
 
         _vm.PropertyChanged += OnVmChanged;
+        _modelVm.PropertyChanged += OnModelChanged;
         ApplyState();
+    }
+
+    private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Sub-state transitions in the model step change the footer button label + enabled state.
+        if (_vm.CurrentStep == OnboardingStep.ModelPick) ApplyState();
     }
 
     private OnboardingStep _displayedStep = (OnboardingStep)(-1);
@@ -90,6 +97,29 @@ public sealed partial class OnboardingView : UserControl
         {
             PrimaryButton.Content = "Got it";
             PrimaryButton.IsEnabled = true;
+        }
+        else if (_vm.CurrentStep == OnboardingStep.ModelPick)
+        {
+            // Button label + enabled state track the download sub-state
+            switch (_modelVm.SubState)
+            {
+                case ModelSubState.Picker:
+                    PrimaryButton.Content = "Download";
+                    PrimaryButton.IsEnabled = true;
+                    break;
+                case ModelSubState.Downloading:
+                    PrimaryButton.Content = "Next";
+                    PrimaryButton.IsEnabled = false;
+                    break;
+                case ModelSubState.Done:
+                    PrimaryButton.Content = "Next";
+                    PrimaryButton.IsEnabled = true;
+                    break;
+                case ModelSubState.Failed:
+                    PrimaryButton.Content = "Next";
+                    PrimaryButton.IsEnabled = false;
+                    break;
+            }
         }
         else
         {

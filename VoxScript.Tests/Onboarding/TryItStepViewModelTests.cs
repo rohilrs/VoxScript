@@ -31,6 +31,10 @@ public class TryItStepViewModelTests
 
         var settings = new AppSettings(new InMemorySettingsStore());
         var onboarding = new OnboardingViewModel(settings);
+        // Advance onboarding to the TryIt step — hotkey handlers no-op on other steps.
+        onboarding.UnlockMicStep();
+        onboarding.UnlockModelStep();
+        for (int i = 0; i < 4; i++) onboarding.GoNext(); // Welcome → MicPick → ModelPick → Hotkeys → TryIt
         var vm = new TryItStepViewModel(hotkey, engine, settings, onboarding);
         return (vm, hotkey, engine, onboarding);
     }
@@ -94,16 +98,11 @@ public class TryItStepViewModelTests
     public void SkipForNow_unlocks_step_in_onboarding()
     {
         var (vm, _, _, onboarding) = Build();
-        vm.SkipForNow();
-        // Walk forward to the TryIt step — SkipForNow should have unlocked it
-        onboarding.UnlockMicStep();
-        onboarding.UnlockModelStep();
-        onboarding.GoNext(); // Welcome → MicPick
-        onboarding.GoNext(); // MicPick → ModelPick
-        onboarding.GoNext(); // ModelPick → Hotkeys
-        onboarding.GoNext(); // Hotkeys → TryIt
+        // Build() lands us on TryIt, which is still gated at this point
         onboarding.CurrentStep.Should().Be(OnboardingStep.TryIt);
-        onboarding.CanGoNext.Should().BeTrue(); // TryIt was unlocked by SkipForNow
+        onboarding.CanGoNext.Should().BeFalse();
+        vm.SkipForNow();
+        onboarding.CanGoNext.Should().BeTrue();
     }
 
     [Fact]

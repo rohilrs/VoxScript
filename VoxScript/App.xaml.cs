@@ -164,6 +164,7 @@ public partial class App : Application
         var soundService = ServiceLocator.Get<ISoundEffectsService>();
         _hotkey.ToggleLockActivated += () =>
         {
+            if (_onboardingActive) return; // wizard owns the session + sound during onboarding
             soundService.PlayToggle();
         };
 

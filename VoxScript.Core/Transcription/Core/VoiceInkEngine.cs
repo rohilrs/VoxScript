@@ -29,6 +29,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
     private bool _startingUp; // true while StartRecordingAsync is setting up the pipeline
     private bool _stopRequestedDuringStartup; // set if StopAndTranscribeAsync called during startup
     private bool _suppressAutoPaste; // set by onboarding try-it; cleared in StopAndTranscribeAsync finally
+    private bool _suppressPersist;   // set by onboarding try-it so ephemeral clips don't write to history
 
     [ObservableProperty]
     private RecordingState _state = RecordingState.Idle;
@@ -62,20 +63,27 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         _media = media;
     }
 
-    public async Task ToggleRecordAsync(ITranscriptionModel model)
+    public Task ToggleRecordAsync(ITranscriptionModel model) =>
+        ToggleRecordAsync(model, suppressAutoPaste: false);
+
+    public async Task ToggleRecordAsync(ITranscriptionModel model, bool suppressAutoPaste)
     {
         if (State == RecordingState.Recording)
             await StopAndTranscribeAsync();
         else if (State == RecordingState.Idle && !_startingUp)
-            await StartRecordingAsync(model);
+            await StartRecordingAsync(model, suppressAutoPaste);
     }
 
-    public async Task StartRecordingAsync(ITranscriptionModel model, bool suppressAutoPaste = false)
+    public Task StartRecordingAsync(ITranscriptionModel model, bool suppressAutoPaste = false) =>
+        StartRecordingAsync(model, suppressAutoPaste, suppressPersist: suppressAutoPaste);
+
+    public async Task StartRecordingAsync(ITranscriptionModel model, bool suppressAutoPaste, bool suppressPersist)
     {
         if (State != RecordingState.Idle || _startingUp) return;
         _startingUp = true;
         _stopRequestedDuringStartup = false;
         _suppressAutoPaste = suppressAutoPaste;
+        _suppressPersist = suppressPersist;
 
         try
         {
@@ -160,6 +168,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
             _cts?.Dispose();
             _cts = null;
             _suppressAutoPaste = false;
+            _suppressPersist = false;
             State = RecordingState.Idle;
         }
         finally
@@ -207,6 +216,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
             _cts?.Dispose();
             _cts = null;
             _suppressAutoPaste = false;
+            _suppressPersist = false;
             return;
         }
 
@@ -220,7 +230,8 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         {
             var text = await _pipeline.RunAsync(
                 _activeSession, _currentAudioPath!, duration,
-                _settings.AiEnhancementEnabled, _cts!.Token);
+                _settings.AiEnhancementEnabled, _cts!.Token,
+                suppressPersist: _suppressPersist);
 
             State = RecordingState.Idle;
             if (text is not null)
@@ -257,6 +268,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
             _cts?.Dispose();
             _cts = null;
             _suppressAutoPaste = false;
+            _suppressPersist = false;
         }
     }
 

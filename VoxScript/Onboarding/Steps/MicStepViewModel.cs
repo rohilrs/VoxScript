@@ -11,15 +11,26 @@ public sealed partial class MicStepViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly OnboardingViewModel _onboarding;
 
-    // Noise floor on the sqrt-scaled RMS (so thresholds line up with what
-    // the user sees on the meter). ~0.08 clears quiet-room rustle but trips
-    // almost immediately on any actual speech.
-    private const float NoiseFloorThreshold = 0.08f;
-    private const double SignalRequiredSeconds = 2.0;
+    // Threshold on raw linear RMS. Typical PC mic idle sits at 0.001–0.008;
+    // quiet speech starts at ~0.02. 0.015 separates silence from any real voice,
+    // and also acts as the visual noise gate — below this, meter pins at 0.
+    private const float NoiseFloorThreshold = 0.015f;
+    private const double SignalRequiredSeconds = 0.5;
     private const double NoSignalTimeoutSeconds = 8.0;
+
+    // Release envelope: once the signal crosses threshold, below-threshold frames
+    // still count as signal for this long. Bridges consonants and word trail-offs
+    // so short utterances like "testing" don't fall below the gate mid-syllable.
+    private const double ReleaseHangSeconds = 0.3;
+
+    // Display curve: sqrt-with-gain. sqrt spreads the speech band wider than
+    // cube root (whispers and normal speech visibly differ), gain pushes loud
+    // sounds into the top. Whisper ~0.28, normal speech ~0.6, flicks ~0.9.
+    private const double DisplayGain = 2.0;
 
     private double _continuousSignalSeconds;
     private double _noSignalSeconds;
+    private double _sinceLastAboveThreshold = double.PositiveInfinity;
     private bool _skipUsed;
     private CancellationTokenSource? _monitorCts;
     private DateTime _lastSampleTime;
@@ -59,16 +70,38 @@ public sealed partial class MicStepViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Called with the current RMS level [0..1] and elapsed time since the last call.
-    /// Accumulates time above the noise floor to detect sustained speech.
+    /// Called with the current LINEAR RMS level [0..1] and elapsed time since
+    /// the last call. Gating uses the linear value; display uses a perceptual
+    /// curve so normal speech reads in the middle of the bar.
     /// </summary>
-    public void OnAudioLevel(float rms, double deltaSeconds)
+    public void OnAudioLevel(float rmsLinear, double deltaSeconds)
     {
-        AudioLevel = rms;
+        // Hard gate at the noise floor — anything quieter is displayed as 0 so
+        // idle mic hiss/thermal noise doesn't make the bar wobble.
+        if (rmsLinear < NoiseFloorThreshold)
+        {
+            AudioLevel = 0f;
+        }
+        else
+        {
+            var perceptual = Math.Sqrt(Math.Clamp(rmsLinear, 0f, 1f)) * DisplayGain;
+            AudioLevel = (float)Math.Clamp(perceptual, 0.0, 1.0);
+        }
 
         if (SignalDetected) return;
 
-        if (rms >= NoiseFloorThreshold)
+        if (rmsLinear >= NoiseFloorThreshold)
+            _sinceLastAboveThreshold = 0;
+        else
+            _sinceLastAboveThreshold += deltaSeconds;
+
+        // A frame counts as signal if it's above threshold, or if it fell below
+        // threshold recently enough that it's still within the release envelope
+        // (covers consonants and word trail-offs). Also require that we've had at
+        // least one above-threshold frame, so idle silence never counts.
+        bool countAsSignal = _sinceLastAboveThreshold < ReleaseHangSeconds;
+
+        if (countAsSignal)
         {
             _continuousSignalSeconds += deltaSeconds;
             _noSignalSeconds = 0;
@@ -77,9 +110,8 @@ public sealed partial class MicStepViewModel : ObservableObject
         }
         else
         {
-            _continuousSignalSeconds = 0;
             _noSignalSeconds += deltaSeconds;
-            if (_noSignalSeconds >= NoSignalTimeoutSeconds && !ShowNoSignalHint)
+            if (_noSignalSeconds >= NoSignalTimeoutSeconds && !ShowNoSignalHint && _continuousSignalSeconds <= 0)
                 ShowNoSignalHint = true;
         }
     }
@@ -152,6 +184,10 @@ public sealed partial class MicStepViewModel : ObservableObject
         try { await _capture.StopAsync(); } catch { }
     }
 
+    /// <summary>
+    /// Linear RMS of 16-bit PCM samples, normalized to [0..1]. The perceptual
+    /// display curve is applied later in OnAudioLevel.
+    /// </summary>
     private static float ComputeRms(byte[] data, int count)
     {
         int sampleCount = count / 2;
@@ -162,13 +198,8 @@ public sealed partial class MicStepViewModel : ObservableObject
             short sample = (short)(data[i] | (data[i + 1] << 8));
             sumSquares += sample * (double)sample;
         }
-        double rmsLinear = Math.Sqrt(sumSquares / sampleCount) / short.MaxValue;
-        // Perceptual (sqrt) curve: linear PCM RMS is compressed at the low end
-        // where voice actually lives. sqrt pushes typical speech into the visible
-        // half of the meter and flattens the loud tail. Matches the curve used by
-        // the recording indicator waveform.
-        double perceptual = Math.Sqrt(Math.Max(rmsLinear, 0.0));
-        return (float)Math.Min(perceptual, 1.0);
+        double rms = Math.Sqrt(sumSquares / sampleCount) / short.MaxValue;
+        return (float)Math.Min(rms, 1.0);
     }
 
 

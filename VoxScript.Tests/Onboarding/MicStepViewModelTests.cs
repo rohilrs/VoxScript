@@ -115,17 +115,18 @@ public class MicStepViewModelTests
     }
 
     [Fact]
-    public void OnAudioLevel_resets_accumulator_when_below_threshold()
+    public void OnAudioLevel_accumulates_across_silence_gaps()
     {
+        // Natural speech has brief gaps between syllables. The gate should
+        // treat total time above threshold as the signal accumulator, not
+        // strictly continuous time — otherwise "hello from VoxScript" never
+        // trips because of its inter-word dips.
         var (vm, _, _, _) = Build();
-        // Build up 1s of signal, then break
-        for (int i = 0; i < 10; i++)
-            vm.OnAudioLevel(0.1f, 0.1);
-        vm.OnAudioLevel(0.0f, 0.1); // resets
-        // Now need full 2s again — 10 × 0.1s = 1s is not enough
-        for (int i = 0; i < 10; i++)
-            vm.OnAudioLevel(0.1f, 0.1);
-        vm.SignalDetected.Should().BeFalse();
+        // 1s of signal, 0.5s silence, 1.1s more signal = 2.1s total above threshold
+        for (int i = 0; i < 10; i++) vm.OnAudioLevel(0.1f, 0.1);
+        for (int i = 0; i < 5; i++)  vm.OnAudioLevel(0.0f, 0.1);
+        for (int i = 0; i < 11; i++) vm.OnAudioLevel(0.1f, 0.1);
+        vm.SignalDetected.Should().BeTrue();
     }
 
     [Fact]

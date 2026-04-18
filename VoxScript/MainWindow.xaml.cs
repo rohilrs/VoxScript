@@ -72,6 +72,15 @@ public sealed partial class MainWindow : Window
     private void OnClosed(object sender, WindowEventArgs args)
     {
         var settings = ServiceLocator.Get<VoxScript.Core.Settings.AppSettings>();
+
+        // X-out during onboarding always exits fully — users haven't seen the tray
+        // yet and quietly hiding feels like the app vanished into the background.
+        if (settings.OnboardingCompleted != true)
+        {
+            App.ExitApp();
+            return;
+        }
+
         if (settings.MinimizeToTray)
         {
             args.Handled = true;

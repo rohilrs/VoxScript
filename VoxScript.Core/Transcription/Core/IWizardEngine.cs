@@ -9,8 +9,10 @@ namespace VoxScript.Core.Transcription.Core;
 public interface IWizardEngine
 {
     Task StartRecordingAsync(ITranscriptionModel model, bool suppressAutoPaste = false);
+    Task ToggleRecordAsync(ITranscriptionModel model, bool suppressAutoPaste = false);
     Task StopAndTranscribeAsync();
     Task CancelRecordingAsync();
     RecordingState State { get; }
+    bool IsToggleMode { get; set; }
     event EventHandler<string>? TranscriptionCompleted;
 }

@@ -58,7 +58,8 @@ public sealed partial class ModelStepView : UserControl
             card.Child = sp;
 
             int captured = i;
-            card.Tapped += (_, _) => { _vm.SelectedChoiceIndex = captured; ApplyCardSelection(); };
+            // PointerPressed fires on click-down, not release — feels snappier than Tapped.
+            card.PointerPressed += (_, _) => { _vm.SelectedChoiceIndex = captured; ApplyCardSelection(); };
             _cards[i] = card;
             CardsHost.Children.Add(card);
         }
