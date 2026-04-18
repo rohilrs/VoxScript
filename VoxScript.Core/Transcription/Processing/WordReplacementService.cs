@@ -116,7 +116,7 @@ public sealed partial class WordReplacementService
         return prev[b.Length];
     }
 
-    [GeneratedRegex(@"\b[a-zA-Z]+\b")]
+    [GeneratedRegex(@"\b[a-zA-Z0-9]+\b")]
     private static partial Regex WordTokenRegex();
 
     private static string ReplaceWholeWord(string input, string original,

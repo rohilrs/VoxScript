@@ -36,7 +36,7 @@ public class SmartTextFormatterTests
 
     // Spoken punctuation tests that also involve number conversion side effects
     [Theory]
-    [InlineData("first semicolon second", "First; 2nd")]
+    [InlineData("first semicolon second", "1st; 2nd")]
     [InlineData("line one new line line two", "Line one\nLine 2")]
     [InlineData("paragraph one new paragraph paragraph two", "Paragraph one\n\nParagraph 2")]
     public void SpokenPunctuation_with_number_interaction(string input, string expected)
@@ -90,6 +90,18 @@ public class SmartTextFormatterTests
     [InlineData("third row", "3rd row")]
     [InlineData("twenty first birthday", "21st birthday")]
     public void Ordinals_are_converted(string input, string expected)
+    {
+        _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
+    }
+
+    // ── Number conversion — With trailing punctuation ────────────────
+
+    [Theory]
+    [InlineData("one. Problem scoping", "1. Problem scoping")]
+    [InlineData("Two, the rest", "2, the rest")]
+    [InlineData("Three, evaluation", "3, evaluation")]
+    [InlineData("alright one. next two. done", "Alright 1. Next 2. Done")]
+    public void Numbers_with_trailing_punctuation_are_converted(string input, string expected)
     {
         _sut.Format(input, smartFormattingEnabled: true).Should().Be(expected);
     }

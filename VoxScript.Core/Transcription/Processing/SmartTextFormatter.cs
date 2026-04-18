@@ -264,7 +264,9 @@ public sealed partial class SmartTextFormatter
             int consumed = TryConsumeNumber(parts, i, out string? replacement);
             if (consumed > 0 && replacement != null)
             {
-                result.Add(replacement);
+                // Re-attach trailing punctuation from the last consumed token
+                var lastToken = parts[i + consumed - 1];
+                result.Add(replacement + lastToken.TrailingPunct);
                 i += consumed;
             }
             else
@@ -277,7 +279,7 @@ public sealed partial class SmartTextFormatter
         return string.Join(" ", result);
     }
 
-    private sealed record NumberToken(string Original, string Normalized, string? HyphenSecond = null);
+    private sealed record NumberToken(string Original, string Normalized, string TrailingPunct = "", string? HyphenSecond = null);
 
     private static List<NumberToken> TokenizeForNumbers(string text)
     {
@@ -287,17 +289,26 @@ public sealed partial class SmartTextFormatter
 
         foreach (var raw in rawTokens)
         {
-            // Check for hyphenated compound like "twenty-three"
-            int hyphen = raw.IndexOf('-');
-            if (hyphen > 0 && hyphen < raw.Length - 1)
+            // Strip trailing punctuation so "one." normalizes to "one" with TrailingPunct="."
+            string core = raw;
+            string trailing = "";
+            while (core.Length > 0 && char.IsPunctuation(core[^1]) && core[^1] != '-')
             {
-                string left = raw[..hyphen];
-                string right = raw[(hyphen + 1)..];
-                tokens.Add(new NumberToken(raw, left, right));
+                trailing = core[^1] + trailing;
+                core = core[..^1];
+            }
+
+            // Check for hyphenated compound like "twenty-three"
+            int hyphen = core.IndexOf('-');
+            if (hyphen > 0 && hyphen < core.Length - 1)
+            {
+                string left = core[..hyphen];
+                string right = core[(hyphen + 1)..];
+                tokens.Add(new NumberToken(raw, left, trailing, right));
             }
             else
             {
-                tokens.Add(new NumberToken(raw, raw));
+                tokens.Add(new NumberToken(raw, core, trailing));
             }
         }
 
