@@ -232,7 +232,13 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - NoteRecord entity in SQLite via EF Core, INoteRepository with full CRUD
     - Files: `NoteRecord.cs`, `INoteRepository.cs`, `NoteRepository.cs`, `NotesViewModel.cs`, `NotesPage.xaml/.cs`, `NoteEditorWindow.xaml/.cs`
 
-21. **Onboarding flow** — no first-run wizard
+21. **Onboarding flow** — DONE
+    - Blocking, one-shot, full-window-takeover wizard on first launch (6 steps)
+    - Welcome → Mic pick (level meter + signal detection) → Model pick (Fast/Balanced/Accurate cards with download/cancel/retry states) → Hotkeys (read-only teach) → Try-it (idle/recording/transcribing/success with auto-paste suppression) → You're set (feature teasers)
+    - Startup migration: existing installs with models already on disk are auto-marked complete; only fresh installs see the wizard
+    - New settings property: `OnboardingCompleted` (nullable bool); `VoxScriptEngine.StartRecordingAsync` gained `suppressAutoPaste` parameter
+    - New Core interfaces: `IGlobalHotkeyEvents`, `IWizardEngine`, `IWhisperModelManager` — narrow abstractions enabling unit tests of wizard VMs
+    - Files: `VoxScript/Onboarding/{OnboardingView,OnboardingViewModel}`, `Onboarding/Steps/*`, `Onboarding/Controls/{StepHeader,LevelMeter}`, `VoxScript/App.xaml.cs` (migration + conditional shell), `VoxScript/MainWindow.xaml{,.cs}` (ShowOnboarding/ShowShell swap)
 
 22. **Import/export** — DONE
     - Single JSON file with vocabulary, corrections, and expansions
