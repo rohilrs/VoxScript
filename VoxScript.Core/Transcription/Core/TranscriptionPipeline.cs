@@ -64,6 +64,7 @@ public sealed class TranscriptionPipeline
     {
         // 1. Transcribe — critical, let exceptions propagate
         var rawText = await session.TranscribeAsync(audioFilePath, ct);
+        Log.Information("Pipeline raw:              {Text}", TruncateForLog(rawText));
 
         // 2. Filter hallucinations
         string filtered;
@@ -78,6 +79,7 @@ public sealed class TranscriptionPipeline
             filtered = rawText;
             if (string.IsNullOrWhiteSpace(filtered)) return null;
         }
+        Log.Information("Pipeline after filter:     {Text}", TruncateForLog(filtered));
 
         // 3. Format
         string formatted;
@@ -90,6 +92,7 @@ public sealed class TranscriptionPipeline
             Log.Warning(ex, "Text formatter failed, using filtered text");
             formatted = filtered;
         }
+        Log.Information("Pipeline after format:     {Text}", TruncateForLog(formatted));
 
         // 3b. LLM-based structural formatting (lists, paragraphs, ordinals)
         if (_settings.StructuralFormattingEnabled && _structuralFormatting.IsConfigured)
@@ -98,7 +101,10 @@ public sealed class TranscriptionPipeline
             {
                 var structured = await _structuralFormatting.FormatAsync(formatted, ct);
                 if (structured is not null)
+                {
                     formatted = structured;
+                    Log.Information("Pipeline after structural: {Text}", TruncateForLog(formatted));
+                }
             }
             catch (Exception ex)
             {
@@ -117,6 +123,7 @@ public sealed class TranscriptionPipeline
             Log.Warning(ex, "Word replacement failed, skipping");
             replaced = formatted;
         }
+        Log.Information("Pipeline after word-rep:   {Text}", TruncateForLog(replaced));
 
         // 4b. Auto-add uncommon words to vocabulary
         if (_settings.AutoAddToDictionary)
@@ -157,6 +164,9 @@ public sealed class TranscriptionPipeline
             }
         }
 
+        if (enhancedText is not null)
+            Log.Information("Pipeline after AI enhance: {Text}", TruncateForLog(enhancedText));
+
         var finalText = enhancedText ?? replaced;
 
         // 6. Persist — failure should not lose the transcript
@@ -179,5 +189,16 @@ public sealed class TranscriptionPipeline
         }
 
         return finalText;
+    }
+
+    /// <summary>
+    /// Flattens newlines and truncates so per-stage transcript logs stay single-line
+    /// and readable in log tailers.
+    /// </summary>
+    private static string TruncateForLog(string text, int max = 200)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+        var flat = text.Replace("\r\n", "\\n").Replace("\n", "\\n");
+        return flat.Length <= max ? flat : flat[..max] + "...";
     }
 }
