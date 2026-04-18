@@ -1,7 +1,7 @@
 // VoxScript.Native/Whisper/WhisperModelManager.cs
 namespace VoxScript.Native.Whisper;
 
-public sealed class WhisperModelManager
+public sealed class WhisperModelManager : IWhisperModelManager
 {
     private static readonly Dictionary<string, string> KnownModels = new()
     {

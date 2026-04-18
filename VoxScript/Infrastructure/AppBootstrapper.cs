@@ -72,6 +72,7 @@ public static class AppBootstrapper
                 "VoxScript", "Models", "whisper");
             return new WhisperModelManager(modelsDir, new HttpClient());
         });
+        services.AddSingleton<IWhisperModelManager>(sp => sp.GetRequiredService<WhisperModelManager>());
 
         // Core services
         services.AddSingleton<AppSettings>();
