@@ -147,47 +147,35 @@ public sealed partial class HomePage : Page
 
         double w = GraphHost.ActualWidth;
         double h = GraphHost.ActualHeight;
-        if (w <= 0 || h <= 0) return; // Will be re-rendered on SizeChanged
+        if (w <= 0 || h <= 0) return;
 
         int max = buckets.Max();
-        if (max == 0) return; // Only baseline shows when no activity
+        if (max == 0) return;
 
         const double topPad = 4;
-        const double bottomPad = 1; // Sit just above the baseline rule when value = 0
+        const double bottomPad = 1;
         double usableHeight = Math.Max(1, h - topPad - bottomPad);
+        double baseline = h - bottomPad;
 
-        var linePoints = new PointCollection();
-        var fillPoints = new PointCollection
-        {
-            new Point(0, h - bottomPad), // Start at bottom-left
-        };
-
+        var pts = new Point[buckets.Count];
         for (int i = 0; i < buckets.Count; i++)
         {
             double x = (double)i / (buckets.Count - 1) * w;
             double ratio = (double)buckets[i] / max;
-            double y = (h - bottomPad) - ratio * usableHeight;
-
-            linePoints.Add(new Point(x, y));
-            fillPoints.Add(new Point(x, y));
+            double y = baseline - ratio * usableHeight;
+            pts[i] = new Point(x, y);
         }
-
-        fillPoints.Add(new Point(w, h - bottomPad)); // Close at bottom-right
 
         var brandBrush = (SolidColorBrush)Application.Current.Resources["BrandPrimaryBrush"];
         var fillColor = brandBrush.Color;
-        fillColor.A = 40; // Subtle fill
+        fillColor.A = 40;
 
-        var fill = new Polygon
+        // Line path
+        var lineFigure = new PathFigure { StartPoint = pts[0], IsClosed = false };
+        AppendSmoothSegments(lineFigure, pts, baseline);
+        var line = new Microsoft.UI.Xaml.Shapes.Path
         {
-            Points = fillPoints,
-            Fill = new SolidColorBrush(fillColor),
-            StrokeThickness = 0,
-        };
-
-        var line = new Polyline
-        {
-            Points = linePoints,
+            Data = new PathGeometry { Figures = { lineFigure } },
             Stroke = brandBrush,
             StrokeThickness = 2,
             StrokeLineJoin = PenLineJoin.Round,
@@ -195,8 +183,54 @@ public sealed partial class HomePage : Page
             StrokeEndLineCap = PenLineCap.Round,
         };
 
+        // Fill path: baseline-left → first point → smoothed curve → baseline-right → close
+        var fillFigure = new PathFigure { StartPoint = new Point(0, baseline), IsClosed = true };
+        fillFigure.Segments.Add(new LineSegment { Point = pts[0] });
+        AppendSmoothSegments(fillFigure, pts, baseline);
+        fillFigure.Segments.Add(new LineSegment { Point = new Point(w, baseline) });
+        var fill = new Microsoft.UI.Xaml.Shapes.Path
+        {
+            Data = new PathGeometry { Figures = { fillFigure } },
+            Fill = new SolidColorBrush(fillColor),
+        };
+
         GraphHost.Children.Add(fill);
         GraphHost.Children.Add(line);
+    }
+
+    /// <summary>
+    /// Append Catmull-Rom → cubic Bezier segments to the figure. The curve passes through
+    /// every point in <paramref name="pts"/>. <paramref name="baseline"/> is used to clamp
+    /// control points so the curve can't dip below the x-axis when data spikes.
+    /// </summary>
+    private static void AppendSmoothSegments(PathFigure figure, Point[] pts, double baseline)
+    {
+        // Tension 0.5 — softer than standard Catmull-Rom (1.0) to reduce overshoot on sparse data.
+        const double tension = 0.5;
+
+        for (int i = 0; i < pts.Length - 1; i++)
+        {
+            Point p0 = i > 0 ? pts[i - 1] : pts[i];
+            Point p1 = pts[i];
+            Point p2 = pts[i + 1];
+            Point p3 = i + 2 < pts.Length ? pts[i + 2] : pts[i + 1];
+
+            double c1x = p1.X + (p2.X - p0.X) * tension / 3.0;
+            double c1y = p1.Y + (p2.Y - p0.Y) * tension / 3.0;
+            double c2x = p2.X - (p3.X - p1.X) * tension / 3.0;
+            double c2y = p2.Y - (p3.Y - p1.Y) * tension / 3.0;
+
+            // Clamp control points so the curve never dips below the baseline.
+            if (c1y > baseline) c1y = baseline;
+            if (c2y > baseline) c2y = baseline;
+
+            figure.Segments.Add(new BezierSegment
+            {
+                Point1 = new Point(c1x, c1y),
+                Point2 = new Point(c2x, c2y),
+                Point3 = p2,
+            });
+        }
     }
 
     private void ApplyDot(Ellipse dot, StatusLevel level)
