@@ -21,4 +21,9 @@ public sealed class ApiKeyManager
     public string? GetDeepgramKey()          => _store.GetKey("Deepgram");
     public void SetElevenLabsKey(string key) => _store.StoreKey("ElevenLabs", key);
     public string? GetElevenLabsKey()        => _store.GetKey("ElevenLabs");
+
+    public void SetStructuralOpenAiKey(string key)     => _store.StoreKey("Structural.OpenAI", key);
+    public string? GetStructuralOpenAiKey()            => _store.GetKey("Structural.OpenAI");
+    public void SetStructuralAnthropicKey(string key)  => _store.StoreKey("Structural.Anthropic", key);
+    public string? GetStructuralAnthropicKey()         => _store.GetKey("Structural.Anthropic");
 }

@@ -139,6 +139,30 @@ public sealed class AppSettings
         set => _store.Set(nameof(AutoAddToDictionary), value);
     }
 
+    public bool StructuralFormattingEnabled
+    {
+        get => _store.Get<bool?>(nameof(StructuralFormattingEnabled)) ?? false;
+        set => _store.Set(nameof(StructuralFormattingEnabled), value);
+    }
+
+    public AiProvider StructuralAiProvider
+    {
+        get => _store.Get<AiProvider?>(nameof(StructuralAiProvider)) ?? AiProvider.Local;
+        set => _store.Set(nameof(StructuralAiProvider), value);
+    }
+
+    public string StructuralAiModel
+    {
+        get => _store.Get<string>(nameof(StructuralAiModel)) ?? "qwen2.5:3b";
+        set => _store.Set(nameof(StructuralAiModel), value);
+    }
+
+    public string StructuralOllamaEndpoint
+    {
+        get => _store.Get<string>(nameof(StructuralOllamaEndpoint)) ?? "http://localhost:11434";
+        set => _store.Set(nameof(StructuralOllamaEndpoint), value);
+    }
+
     public string HoldHotkey
     {
         get => _store.Get<string>(nameof(HoldHotkey)) ?? "Ctrl+Win";
