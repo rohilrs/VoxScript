@@ -94,18 +94,18 @@ public sealed partial class SettingsPage : Page
 
     private async void EditStructuralPromptButton_Click(object sender, RoutedEventArgs e)
     {
-        // TextWrapping.Wrap only wraps when there's a hard upper-bound width.
-        // MinWidth on the panel isn't enough — the TextBox measures its natural
-        // width (widest line) and the panel grows to fit it, so wrap never
-        // triggers. MaxWidth on both the TextBox and the panel gives wrap a
-        // concrete boundary. The ScrollViewer attached properties explicitly
-        // disable horizontal scrolling inside the TextBox's internal template.
+        // ContentDialog's default ContentDialogMaxWidth theme resource is 456 DIPs —
+        // anything wider than that gets clipped on the right, which was what made
+        // text like "The text has" appear cut off mid-word regardless of our
+        // TextBox MaxWidth. We override the resource on this dialog instance below.
+        // MinHeight is kept well below the 600-DIP window minimum so the dialog
+        // always fits with breathing room.
         var promptBox = new TextBox
         {
             Text = ViewModel.GetEffectiveStructuralPrompt(),
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            MinHeight = 380,
+            MinHeight = 240,
             MaxHeight = 520,
             MinWidth = 600,
             MaxWidth = 640,
@@ -130,6 +130,9 @@ public sealed partial class SettingsPage : Page
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot,
         };
+        // Widen the dialog beyond the default 456 DIP theme max so the 640 DIP
+        // content area actually fits without horizontal clipping.
+        dialog.Resources["ContentDialogMaxWidth"] = 720.0;
 
         // Secondary button resets the textbox to the built-in default without closing.
         dialog.SecondaryButtonClick += (_, args) =>

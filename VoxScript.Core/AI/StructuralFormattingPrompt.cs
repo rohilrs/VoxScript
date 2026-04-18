@@ -51,6 +51,11 @@ public static class StructuralFormattingPrompt
           words ("first", "second", "third") that have been replaced by digit
           markers, but do not drop or rephrase any other content.
         - Do not fix grammar, do not change tone, do not rewrite sentences.
+        - Preserve every existing line break and blank line from the input
+          EXACTLY. If the input has a "\n" you must keep it — the speaker
+          explicitly asked for that break via spoken punctuation. You may ADD
+          additional blank lines between clearly separate topics (see above),
+          but never remove or merge existing lines.
         - If the text needs no structural changes, return it EXACTLY as-is.
 
         ## Example — valid list conversion
@@ -88,6 +93,11 @@ public static class StructuralFormattingPrompt
     ///  - List-marker safety: if the LLM inserted numbered list markers, the input must
     ///    contain at least one enumeration signal (ordinal word, existing list marker, or
     ///    a cue phrase). Prevents the model from turning plain prose into a numbered list.
+    ///  - Newline preservation: the output must have at least as many "\n" characters as
+    ///    the input. The smart formatter inserts "\n" for spoken "new line" / "new paragraph"
+    ///    cues, and the LLM was silently dropping them — word count stayed intact so the
+    ///    ratio check didn't catch it. The LLM can still add blank lines between topics
+    ///    (that only increases the count); it just can't remove existing ones.
     /// </summary>
     public static string? ValidateOutput(string? result, string original)
     {
@@ -105,6 +115,10 @@ public static class StructuralFormattingPrompt
         if (CountListMarkers(result) > 0 && !HasEnumerationSignal(original))
             return null;
 
+        // Newline-preservation safety net.
+        if (CountNewlines(result) < CountNewlines(original))
+            return null;
+
         return result.Trim();
     }
 
@@ -115,6 +129,20 @@ public static class StructuralFormattingPrompt
     /// <summary>Count of lines that begin with a "N. " numbered list marker.</summary>
     private static int CountListMarkers(string text) =>
         Regex.Matches(text, @"(?m)^\s*\d+\.\s").Count;
+
+    /// <summary>
+    /// Counts LF characters. Treats CRLF as a single newline (since the LF is
+    /// always present). Used to verify the LLM didn't drop any line breaks
+    /// the smart formatter or the user explicitly inserted.
+    /// </summary>
+    private static int CountNewlines(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return 0;
+        int count = 0;
+        foreach (var c in text)
+            if (c == '\n') count++;
+        return count;
+    }
 
     /// <summary>
     /// True if the input contains an ordinal enumeration word, an existing list marker,

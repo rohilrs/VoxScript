@@ -103,7 +103,7 @@ public sealed partial class SmartTextFormatter
     [GeneratedRegex(@"\s*\bnew\s+paragraph\b\s*", RegexOptions.IgnoreCase)]
     private static partial Regex NewParagraphRegex();
 
-    [GeneratedRegex(@"\s*\bnew\s+line\b\s*", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"\s*\bnew\s+lines?\b\s*", RegexOptions.IgnoreCase)]
     private static partial Regex NewLineRegex();
 
     [GeneratedRegex(@"\s*\bfull\s+stop\b\s*", RegexOptions.IgnoreCase)]

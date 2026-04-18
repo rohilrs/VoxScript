@@ -137,6 +137,36 @@ public class StructuralFormattingPromptTests
         StructuralFormattingPrompt.ValidateOutput(result, original).Should().BeNull();
     }
 
+    // ── Newline-preservation safety net ────────────────────────────────────
+
+    [Fact]
+    public void ValidateOutput_rejects_output_that_drops_existing_newlines()
+    {
+        // Regression: smart formatter inserts "\n" for spoken "new line" / "new paragraph",
+        // the LLM was silently merging the lines back together, word count stayed intact
+        // so the ratio check didn't catch it.
+        const string original = "I finished the first task.\nNow I'm starting the second one immediately";
+        const string result   = "I finished the first task. Now I'm starting the second one immediately";
+        StructuralFormattingPrompt.ValidateOutput(result, original).Should().BeNull();
+    }
+
+    [Fact]
+    public void ValidateOutput_allows_output_that_preserves_newlines()
+    {
+        const string original = "First point here.\nSecond point there with more content to meet ratio";
+        const string result   = "First point here.\nSecond point there with more content to meet ratio";
+        StructuralFormattingPrompt.ValidateOutput(result, original).Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ValidateOutput_allows_output_that_adds_newlines()
+    {
+        // LLM adding a blank line between topics is fine — only REMOVING is banned.
+        const string original = "Topic A with enough words here. Topic B with enough words too";
+        const string result   = "Topic A with enough words here.\n\nTopic B with enough words too";
+        StructuralFormattingPrompt.ValidateOutput(result, original).Should().NotBeNull();
+    }
+
     // ── Result is trimmed ──────────────────────────────────────────────────
 
     [Fact]

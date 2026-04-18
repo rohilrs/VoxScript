@@ -119,7 +119,14 @@ public sealed partial class HomePage : Page
         if (_vm.HasLatestTranscript)
         {
             _fullLatestText = _vm.LatestTranscriptText;
-            TranscriptText.Text = _vm.LatestTranscriptText;
+            // Flatten paragraph breaks for display so TextTrimming="CharacterEllipsis"
+            // produces a trailing "…" when the card clips. WinUI only appends the
+            // ellipsis when the LAST visible LINE was cut mid-line; embedded "\n"
+            // makes each paragraph measure separately, and if a paragraph ends
+            // cleanly at the clip boundary the trimmer considers content complete.
+            // Copy still uses _fullLatestText, so clipboard output keeps the breaks.
+            TranscriptText.Text = System.Text.RegularExpressions.Regex.Replace(
+                _vm.LatestTranscriptText, @"\s*\r?\n\s*", " ").Trim();
             TranscriptText.Visibility = Visibility.Visible;
             EmptyText.Visibility = Visibility.Collapsed;
 

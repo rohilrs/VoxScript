@@ -174,6 +174,16 @@ public class SmartTextFormatterTests
     }
 
     [Fact]
+    public void NewLines_plural_inserts_linebreak()
+    {
+        // Regression: "new lines" (plural) wasn't being matched by the spoken-punctuation
+        // regex — only the singular "new line" was handled. Whisper sometimes transcribes
+        // "new line" as "new lines" when the user runs the words together.
+        _sut.Format("hello new lines world", true)
+            .Should().Be("Hello\nWorld");
+    }
+
+    [Fact]
     public void One_other_thing_is_not_converted_to_digit()
     {
         // Regression: "one other thing" / "one good thing" / "one more thing"
