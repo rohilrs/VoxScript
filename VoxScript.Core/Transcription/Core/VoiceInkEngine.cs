@@ -28,6 +28,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
     private FileStream? _wavStream;
     private bool _startingUp; // true while StartRecordingAsync is setting up the pipeline
     private bool _stopRequestedDuringStartup; // set if StopAndTranscribeAsync called during startup
+    private bool _suppressAutoPaste; // set by onboarding try-it; cleared in StopAndTranscribeAsync finally
 
     [ObservableProperty]
     private RecordingState _state = RecordingState.Idle;
@@ -69,11 +70,12 @@ public sealed partial class VoxScriptEngine : ObservableObject
             await StartRecordingAsync(model);
     }
 
-    public async Task StartRecordingAsync(ITranscriptionModel model)
+    public async Task StartRecordingAsync(ITranscriptionModel model, bool suppressAutoPaste = false)
     {
         if (State != RecordingState.Idle || _startingUp) return;
         _startingUp = true;
         _stopRequestedDuringStartup = false;
+        _suppressAutoPaste = suppressAutoPaste;
 
         try
         {
@@ -223,7 +225,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             {
                 LastTranscription = text;
 
-                if (_settings.AutoPasteEnabled)
+                if (_settings.AutoPasteEnabled && !_suppressAutoPaste)
                 {
                     try
                     {
@@ -252,6 +254,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             _activeSession = null;
             _cts?.Dispose();
             _cts = null;
+            _suppressAutoPaste = false;
         }
     }
 
