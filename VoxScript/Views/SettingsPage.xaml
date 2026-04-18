@@ -470,6 +470,30 @@
                                     FontSize="13" CornerRadius="8" Padding="8,8" />
                         </StackPanel>
                     </Grid>
+
+                    <!-- System prompt editor -->
+                    <Grid ColumnSpacing="32">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="System prompt"
+                                       FontSize="15" Foreground="{StaticResource BrandForegroundBrush}" />
+                            <TextBlock Text="Edit the instructions sent to the LLM — the built-in safety net still applies"
+                                       FontSize="13" Foreground="{StaticResource BrandMutedBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="Edit prompt"
+                                Click="EditStructuralPromptButton_Click"
+                                Background="{StaticResource BrandBackgroundBrush}"
+                                Foreground="{StaticResource BrandForegroundBrush}"
+                                FontSize="13" CornerRadius="8" Padding="12,8"
+                                BorderBrush="{StaticResource BrandPrimaryLightBrush}"
+                                BorderThickness="1"
+                                VerticalAlignment="Center" />
+                    </Grid>
                 </StackPanel>
             </Border>
 

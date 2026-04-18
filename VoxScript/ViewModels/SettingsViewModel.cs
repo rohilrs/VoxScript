@@ -229,6 +229,30 @@ public sealed partial class SettingsViewModel : ObservableObject
         UpdateStructuralStatus();
     }
 
+    /// <summary>
+    /// Returns the current structural-formatting system prompt — the user's
+    /// override if set, otherwise the built-in default.
+    /// </summary>
+    public string GetEffectiveStructuralPrompt() =>
+        string.IsNullOrWhiteSpace(_settings.StructuralFormattingPromptOverride)
+            ? VoxScript.Core.AI.StructuralFormattingPrompt.System
+            : _settings.StructuralFormattingPromptOverride!;
+
+    /// <summary>
+    /// Save a custom system prompt. Whitespace/empty input clears the override
+    /// so the built-in default is used.
+    /// </summary>
+    public void SaveStructuralPromptOverride(string prompt)
+    {
+        _settings.StructuralFormattingPromptOverride =
+            string.IsNullOrWhiteSpace(prompt) ? null : prompt;
+    }
+
+    public void ResetStructuralPromptToDefault()
+    {
+        _settings.StructuralFormattingPromptOverride = null;
+    }
+
     private void UpdateStructuralApiKeyDisplay()
     {
         var key = _settings.StructuralAiProvider switch

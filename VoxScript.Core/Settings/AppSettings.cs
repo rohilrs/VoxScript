@@ -163,6 +163,17 @@ public sealed class AppSettings
         set => _store.Set(nameof(StructuralOllamaEndpoint), value);
     }
 
+    /// <summary>
+    /// User-defined system prompt that overrides the built-in
+    /// <see cref="VoxScript.Core.AI.StructuralFormattingPrompt.System"/> when set.
+    /// Null/whitespace means "use the built-in default".
+    /// </summary>
+    public string? StructuralFormattingPromptOverride
+    {
+        get => _store.Get<string>(nameof(StructuralFormattingPromptOverride));
+        set => _store.Set(nameof(StructuralFormattingPromptOverride), value);
+    }
+
     public string HoldHotkey
     {
         get => _store.Get<string>(nameof(HoldHotkey)) ?? "Ctrl+Win";
