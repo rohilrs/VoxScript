@@ -2,6 +2,7 @@ using Serilog;
 using VoxScript.Core.AI;
 using VoxScript.Core.Dictionary;
 using VoxScript.Core.History;
+using VoxScript.Core.Home;
 using VoxScript.Core.Persistence;
 using VoxScript.Core.PowerMode;
 using VoxScript.Core.Settings;
@@ -169,6 +170,7 @@ public sealed class TranscriptionPipeline
                 DurationSeconds = durationSeconds,
                 ModelName = session.Model.Name,
                 WasAiEnhanced = enhancedText is not null,
+                WordCount = TextUtil.CountWords(finalText),
             }, ct);
         }
         catch (Exception ex)
