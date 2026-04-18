@@ -131,6 +131,21 @@ public class AiCompleterTests
 
         captured[0].RequestUri!.ToString().Should().Be("http://localhost:11434/api/chat");
     }
+
+    [Fact]
+    public async Task CompleteAsync_Ollama_sends_keep_alive_negative_one()
+    {
+        var body = """{"message":{"content":"ok"}}""";
+        var (sut, captured) = BuildSut(HttpStatusCode.OK, body);
+        var config = new AiCompletionConfig(AiProvider.Local, "qwen2.5:3b",
+            "http://localhost:11434", null);
+
+        await sut.CompleteAsync(config, "sys", "user", CancellationToken.None);
+
+        var requestBody = await captured[0].Content!.ReadAsStringAsync();
+        // -1 tells Ollama to keep the model loaded for the rest of the process
+        requestBody.Should().Contain("\"keep_alive\":-1");
+    }
 }
 
 // ── Test infrastructure ───────────────────────────────────────────────────

@@ -142,8 +142,14 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool StructuralFormattingEnabled { get; set; }
-    partial void OnStructuralFormattingEnabledChanged(bool value) =>
+    partial void OnStructuralFormattingEnabledChanged(bool value)
+    {
         _settings.StructuralFormattingEnabled = value;
+        // Off → on: warm the model so the user's first dictation isn't slow.
+        // No-op for cloud providers and when not configured.
+        if (value)
+            _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
+    }
 
     public IReadOnlyList<string> StructuralAiProviders { get; } = ["Local (Ollama)", "OpenAI", "Anthropic"];
 

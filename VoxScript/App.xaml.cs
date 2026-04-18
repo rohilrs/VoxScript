@@ -218,6 +218,11 @@ public partial class App : Application
 
         // First-run model download (after window is visible so user sees progress)
         await EnsureDefaultModelAsync(services);
+
+        // Warm up the structural formatting LLM (no-op if disabled or cloud).
+        // Fire-and-forget: we don't want to block startup if Ollama is down.
+        if (settings.StructuralFormattingEnabled)
+            _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
     }
 
     private static ITranscriptionModel ResolveModel()

@@ -34,18 +34,7 @@ public sealed class StructuralFormattingService(
 
         try
         {
-            var config = new AiCompletionConfig(
-                settings.StructuralAiProvider,
-                settings.StructuralAiModel,
-                settings.StructuralOllamaEndpoint,
-                settings.StructuralAiProvider switch
-                {
-                    AiProvider.OpenAI    => keyManager.GetStructuralOpenAiKey(),
-                    AiProvider.Anthropic => keyManager.GetStructuralAnthropicKey(),
-                    _                    => null,
-                });
-
-            var raw       = await completer.CompleteAsync(config, StructuralFormattingPrompt.System, text, linked.Token);
+            var raw       = await completer.CompleteAsync(BuildConfig(), StructuralFormattingPrompt.System, text, linked.Token);
             var validated = StructuralFormattingPrompt.ValidateOutput(raw, text);
 
             int origWords   = CountContentWords(text);
@@ -87,6 +76,40 @@ public sealed class StructuralFormattingService(
             return null;
         }
     }
+
+    public Task WarmupAsync()
+    {
+        // Cloud providers are always warm; only Local needs a wake-up.
+        if (!IsConfigured || settings.StructuralAiProvider != AiProvider.Local)
+            return Task.CompletedTask;
+
+        return Task.Run(async () =>
+        {
+            try
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                // Tiny request just to force model load. Output is discarded.
+                await completer.CompleteAsync(BuildConfig(), "Reply with: ok", "ok", CancellationToken.None);
+                Log.Information("Structural formatting model warmed up in {Elapsed}ms",
+                    sw.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                Log.Debug(ex, "Structural formatting warmup failed (Ollama not reachable?)");
+            }
+        });
+    }
+
+    private AiCompletionConfig BuildConfig() => new(
+        settings.StructuralAiProvider,
+        settings.StructuralAiModel,
+        settings.StructuralOllamaEndpoint,
+        settings.StructuralAiProvider switch
+        {
+            AiProvider.OpenAI    => keyManager.GetStructuralOpenAiKey(),
+            AiProvider.Anthropic => keyManager.GetStructuralAnthropicKey(),
+            _                    => null,
+        });
 
     private static int CountContentWords(string? text) =>
         string.IsNullOrWhiteSpace(text)

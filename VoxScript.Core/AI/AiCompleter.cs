@@ -87,6 +87,7 @@ public sealed class AiCompleter(HttpClient http) : IAiCompleter
         {
             model,
             stream = false,
+            keep_alive = -1, // keep model resident in VRAM for the rest of the process
             messages = new[]
             {
                 new { role = "system", content = systemPrompt },

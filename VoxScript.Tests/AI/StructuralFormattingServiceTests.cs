@@ -194,6 +194,59 @@ public class StructuralFormattingServiceTests
 
         result.Should().BeNull();
     }
+
+    // ── WarmupAsync ────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task WarmupAsync_does_nothing_when_not_configured()
+    {
+        var (sut, completer) = BuildSut(AiProvider.OpenAI, apiKey: null);
+
+        await sut.WarmupAsync();
+
+        await completer.DidNotReceive().CompleteAsync(
+            Arg.Any<AiCompletionConfig>(), Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WarmupAsync_skips_cloud_providers()
+    {
+        var (sut, completer) = BuildSut(AiProvider.OpenAI, apiKey: "sk-test");
+
+        await sut.WarmupAsync();
+
+        await completer.DidNotReceive().CompleteAsync(
+            Arg.Any<AiCompletionConfig>(), Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WarmupAsync_calls_completer_for_local_provider()
+    {
+        var (sut, completer) = BuildSut(AiProvider.Local);
+        completer.CompleteAsync(Arg.Any<AiCompletionConfig>(), Arg.Any<string>(),
+            Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns("ok");
+
+        await sut.WarmupAsync();
+
+        await completer.Received(1).CompleteAsync(
+            Arg.Is<AiCompletionConfig>(c => c.Provider == AiProvider.Local),
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task WarmupAsync_swallows_completer_errors()
+    {
+        var (sut, completer) = BuildSut(AiProvider.Local);
+        completer.CompleteAsync(Arg.Any<AiCompletionConfig>(), Arg.Any<string>(),
+            Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("connection refused"));
+
+        var act = () => sut.WarmupAsync();
+
+        await act.Should().NotThrowAsync();
+    }
 }
 
 // ── In-memory settings store for tests ───────────────────────────────────
