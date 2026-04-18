@@ -11,8 +11,22 @@
     </Window.SystemBackdrop>
 
     <Grid Background="{StaticResource BrandBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar drag region. Invisible (Mica shows through) but reserves
+             vertical space so page content cannot scroll under the system
+             min/max/close buttons in the top-right. Wired via SetTitleBar in
+             code-behind. -->
+        <Grid x:Name="AppTitleBar"
+              Grid.Row="0"
+              Background="Transparent" />
+
         <NavigationView
             x:Name="NavView"
+            Grid.Row="1"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="True"
             PaneDisplayMode="Left"

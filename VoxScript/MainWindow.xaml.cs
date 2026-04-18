@@ -18,6 +18,7 @@ public sealed partial class MainWindow : Window
     {
         this.InitializeComponent();
         ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
         this.Closed += OnClosed;
 
         // Set window icon (absolute path so it works regardless of working directory)
