@@ -12,7 +12,7 @@ namespace VoxScript.Shell;
 public sealed partial class MainWindow : Window
 {
     // Device-independent pixels (WinUIEx.WindowManager units).
-    private const int MinWindowWidth = 950;
+    private const int MinWindowWidth = 975;
     private const int MinWindowHeight = 600;
 
     public MainWindow()
