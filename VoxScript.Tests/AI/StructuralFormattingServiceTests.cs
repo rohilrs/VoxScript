@@ -158,7 +158,7 @@ public class StructuralFormattingServiceTests
     public async Task FormatAsync_returns_null_on_internal_timeout()
     {
         var (sut, completer) = BuildSut(AiProvider.Local);
-        // Simulate the internal 5s timer firing: throw OCE with a token that is NOT
+        // Simulate the internal timeout timer firing: throw OCE with a token that is NOT
         // the external token. The service must distinguish this from a user cancel.
         using var externalCts = new CancellationTokenSource();
         using var internalCts = new CancellationTokenSource();

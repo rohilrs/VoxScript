@@ -8,7 +8,7 @@ public sealed class StructuralFormattingService(
     ApiKeyManager keyManager,
     AppSettings settings) : IStructuralFormattingService
 {
-    private static readonly TimeSpan InternalTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan InternalTimeout = TimeSpan.FromSeconds(30);
 
     public bool IsConfigured => settings.StructuralAiProvider switch
     {
@@ -42,13 +42,20 @@ public sealed class StructuralFormattingService(
             var raw       = await completer.CompleteAsync(config, StructuralFormattingPrompt.System, text, linked.Token);
             var validated = StructuralFormattingPrompt.ValidateOutput(raw, text);
 
+            int origWords   = CountContentWords(text);
+            int resultWords = CountContentWords(raw);
+
             if (validated is null)
-                Log.Debug("Structural formatting: validator rejected LLM output " +
-                          "(orig={OrigWords}, result={ResultWords})",
-                    text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
-                        .Count(t => t.Any(char.IsLetter)),
-                    raw?.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
-                        .Count(t => t.Any(char.IsLetter)));
+                Log.Information(
+                    "Structural formatting: validator REJECTED (orig={OrigWords} result={ResultWords} ratio={Ratio:F2}). LLM output was: {Raw}",
+                    origWords, resultWords,
+                    origWords == 0 ? 0.0 : (double)resultWords / origWords,
+                    raw);
+            else
+                Log.Information(
+                    "Structural formatting: validator ACCEPTED (orig={OrigWords} result={ResultWords} ratio={Ratio:F2})",
+                    origWords, resultWords,
+                    origWords == 0 ? 0.0 : (double)resultWords / origWords);
 
             return validated;
         }
@@ -74,4 +81,10 @@ public sealed class StructuralFormattingService(
             return null;
         }
     }
+
+    private static int CountContentWords(string? text) =>
+        string.IsNullOrWhiteSpace(text)
+            ? 0
+            : text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
+                  .Count(t => t.Any(char.IsLetter));
 }

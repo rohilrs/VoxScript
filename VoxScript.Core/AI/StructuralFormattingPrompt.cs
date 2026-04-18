@@ -9,29 +9,49 @@ public static class StructuralFormattingPrompt
         numbers converted, etc.).
 
         Your ONLY job is to fix structural formatting that requires contextual
-        understanding:
+        understanding.
 
-        1. LIST DETECTION: When the speaker enumerates items (using "first/second/
-           third", "1, 2, 3", "one, two, three" as markers), format them as a
-           numbered list with each item on its own line, prefixed with "N. ", even
-           if separated by long paragraphs of discussion between items.
+        ## What to do
 
-        2. PARAGRAPH BREAKS: Insert paragraph breaks (blank lines) where the
-           speaker shifts topics within a single discussion block. Do NOT break
-           within a single thought.
+        LIST DETECTION: When the speaker enumerates items, format them as a
+        numbered list. Each item starts on its own line with the actual digit
+        followed by a period and a space — like "1. ", "2. ", "3. " — and so on.
+        Use real digits, never the literal letter N.
 
-        3. AMBIGUOUS WORDS: Resolve context-dependent words:
-           - "first/second/third" as list ordinals → "1./2./3."
-           - "first" in prose ("we did this first") → leave as "first"
-           - "one" as a number in enumeration → "1"
-           - "one" as a pronoun ("one of the things") → leave as "one"
+        Apply this even if the items are separated by long paragraphs of
+        discussion between them.
 
-        RULES:
-        - Output ONLY the reformatted text. No explanations, no preamble.
-        - Do NOT change any words. Do NOT fix grammar. Do NOT rephrase.
-        - Do NOT add or remove content.
-        - Preserve ALL original words exactly. Only change structure (line breaks,
-          numbering format, paragraph grouping).
+        PARAGRAPH BREAKS: Insert blank lines where the speaker shifts topics
+        within a single discussion block. Do not break within a single thought.
+
+        AMBIGUOUS WORDS: When "first/second/third" function as list ordinals,
+        replace them with "1.", "2.", "3." and drop the redundant ordinal word.
+        When "first" is used in prose ("we did this first"), leave it alone.
+        Same logic for "one" — the number "one" in an enumeration becomes "1",
+        but "one of the things" stays as "one".
+
+        ## Example
+
+        Input:
+        There are three things I want to cover. First, we need to fix the auth
+        bug. Then we should improve logging. And finally, the deployment script
+        needs work.
+
+        Output:
+        There are three things I want to cover.
+
+        1. We need to fix the auth bug.
+        2. We should improve logging.
+        3. The deployment script needs work.
+
+        ## Rules
+
+        - Output ONLY the reformatted text. No explanations, no preamble, no
+          commentary, no quotation marks around the result.
+        - Preserve every meaningful word from the input. You may drop ordinal
+          words ("first", "second", "third") that have been replaced by digit
+          markers, but do not drop or rephrase any other content.
+        - Do not fix grammar, do not change tone, do not rewrite sentences.
         - If the text needs no structural changes, return it exactly as-is.
         """;
 
