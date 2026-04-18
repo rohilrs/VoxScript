@@ -31,7 +31,12 @@ public sealed class SystemTrayManager : IDisposable
         _trayIcon = new TaskbarIcon
         {
             ToolTipText = "VoxScript",
-            ContextMenuMode = ContextMenuMode.SecondWindow,
+            // PopupMenu uses Win32 TrackPopupMenu under the hood, which natively
+            // handles edge collision (auto-flips up/left near the screen corner).
+            // SecondWindow mode would sometimes get clipped below the screen edge
+            // because the XAML window doesn't reposition itself. Visual styling
+            // loss is minimal for a tray menu.
+            ContextMenuMode = ContextMenuMode.PopupMenu,
         };
 
         // Load icon from .ico file via Win32 LoadImage
