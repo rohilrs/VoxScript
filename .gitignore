@@ -2,3 +2,14 @@
 
 # Git worktrees
 .worktrees/
+
+# Build outputs
+**/bin/
+**/obj/
+
+# Visual Studio user-specific files
+*.user
+*.suo
+
+# Brainstorm artifacts (local skill state)
+.superpowers/
