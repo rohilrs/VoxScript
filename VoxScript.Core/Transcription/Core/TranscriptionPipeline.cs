@@ -19,6 +19,7 @@ public sealed class TranscriptionPipeline
     private readonly PowerModeSessionManager _powerMode;
     private readonly IAutoVocabularyService _autoVocabulary;
     private readonly AppSettings _settings;
+    private readonly IStructuralFormattingService _structuralFormatting;
 
     /// <summary>
     /// After the last transcription, holds the matched Power Mode config name
@@ -35,7 +36,8 @@ public sealed class TranscriptionPipeline
         ITranscriptionRepository repository,
         PowerModeSessionManager powerMode,
         IAutoVocabularyService autoVocabulary,
-        AppSettings settings)
+        AppSettings settings,
+        IStructuralFormattingService structuralFormatting)
     {
         _filter = filter;
         _formatter = formatter;
@@ -45,6 +47,7 @@ public sealed class TranscriptionPipeline
         _powerMode = powerMode;
         _autoVocabulary = autoVocabulary;
         _settings = settings;
+        _structuralFormatting = structuralFormatting;
     }
 
     /// <summary>
@@ -85,6 +88,21 @@ public sealed class TranscriptionPipeline
         {
             Log.Warning(ex, "Text formatter failed, using filtered text");
             formatted = filtered;
+        }
+
+        // 3b. LLM-based structural formatting (lists, paragraphs, ordinals)
+        if (_settings.StructuralFormattingEnabled && _structuralFormatting.IsConfigured)
+        {
+            try
+            {
+                var structured = await _structuralFormatting.FormatAsync(formatted, ct);
+                if (structured is not null)
+                    formatted = structured;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Structural formatting failed, using rule-based output");
+            }
         }
 
         // 4. Word replacement

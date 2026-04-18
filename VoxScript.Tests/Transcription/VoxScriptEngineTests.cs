@@ -39,7 +39,8 @@ public class VoxScriptEngineTests
             Substitute.For<VoxScript.Core.History.ITranscriptionRepository>(),
             powerModeSession,
             Substitute.For<IAutoVocabularyService>(),
-            settings);
+            settings,
+            Substitute.For<VoxScript.Core.AI.IStructuralFormattingService>());
         var paste = Substitute.For<IPasteService>();
         var sounds = Substitute.For<ISoundEffectsService>();
         var media = Substitute.For<IMediaControlService>();
