@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VoxScript.Onboarding.Steps.MicStepView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:VoxScript.Onboarding.Controls">
+    <StackPanel MaxWidth="520" HorizontalAlignment="Center" Spacing="10" VerticalAlignment="Center">
+        <TextBlock Text="Pick your microphone"
+                   FontFamily="Georgia" FontSize="24" FontWeight="SemiBold" />
+        <TextBlock Text="Speak normally — the bar should move into the green."
+                   FontSize="12" Foreground="{StaticResource BrandMutedBrush}"
+                   Margin="0,0,0,12" />
+
+        <TextBlock Text="INPUT DEVICE"
+                   FontSize="10" Foreground="{StaticResource BrandMutedBrush}"
+                   CharacterSpacing="50" />
+        <ComboBox x:Name="DeviceDropdown"
+                  DisplayMemberPath="DisplayName"
+                  SelectedValuePath="Id"
+                  HorizontalAlignment="Stretch"
+                  SelectionChanged="DeviceDropdown_SelectionChanged"
+                  Margin="0,0,0,16" />
+
+        <StackPanel x:Name="NoDeviceBox" Visibility="Collapsed" Spacing="6">
+            <TextBlock Text="No microphone detected. Plug one in and click Retry." FontSize="13" />
+            <Button Content="Retry" Click="Retry_Click" />
+        </StackPanel>
+
+        <StackPanel x:Name="MeterBox" Spacing="8">
+            <TextBlock Text="INPUT LEVEL"
+                       FontSize="10" Foreground="{StaticResource BrandMutedBrush}"
+                       CharacterSpacing="50" />
+            <controls:LevelMeter x:Name="Meter" />
+            <TextBlock x:Name="SignalChip"
+                       Text="✓ Signal detected"
+                       FontSize="11" FontWeight="SemiBold"
+                       Foreground="#5A7D4E"
+                       Visibility="Collapsed"
+                       Margin="0,4,0,0" />
+            <StackPanel x:Name="NoSignalHint" Visibility="Collapsed" Spacing="4" Margin="0,4,0,0">
+                <TextBlock Text="Speak into your mic — we need to hear you to continue"
+                           FontSize="11"
+                           Foreground="{StaticResource BrandMutedBrush}" />
+                <HyperlinkButton Content="Skip check" Padding="0" Click="SkipCheck_Click" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

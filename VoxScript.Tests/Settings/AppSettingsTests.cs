@@ -87,4 +87,38 @@ public class AppSettingsTests
         settings.ToggleHotkey = "Alt+T";
         settings.ToggleHotkey.Should().Be("Alt+T");
     }
+
+    [Fact]
+    public void AppSettings_OnboardingCompleted_is_null_when_key_absent()
+    {
+        var settings = new AppSettings(new InMemorySettingsStore());
+        settings.OnboardingCompleted.Should().BeNull();
+    }
+
+    [Fact]
+    public void AppSettings_OnboardingCompleted_roundtrips_true()
+    {
+        var settings = new AppSettings(new InMemorySettingsStore());
+        settings.OnboardingCompleted = true;
+        settings.OnboardingCompleted.Should().BeTrue();
+    }
+
+    [Fact]
+    public void AppSettings_OnboardingCompleted_roundtrips_false()
+    {
+        var settings = new AppSettings(new InMemorySettingsStore());
+        settings.OnboardingCompleted = false;
+        settings.OnboardingCompleted.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AppSettings_OnboardingCompleted_set_null_removes_key()
+    {
+        var store = new InMemorySettingsStore();
+        var settings = new AppSettings(store);
+        settings.OnboardingCompleted = true;
+        settings.OnboardingCompleted = null;
+        settings.OnboardingCompleted.Should().BeNull();
+        store.Contains(nameof(AppSettings.OnboardingCompleted)).Should().BeFalse();
+    }
 }

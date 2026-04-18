@@ -197,6 +197,22 @@ public sealed class AppSettings
         get => _store.Get<string>(nameof(CancelHotkey)) ?? "Esc";
         set => _store.Set(nameof(CancelHotkey), value);
     }
+
+    /// <summary>
+    /// Null = key absent (unknown / pre-migration). True = wizard completed.
+    /// False = wizard not yet completed (resolved by the startup migration).
+    /// </summary>
+    public bool? OnboardingCompleted
+    {
+        get => _store.Get<bool?>(nameof(OnboardingCompleted));
+        set
+        {
+            if (value is null)
+                _store.Remove(nameof(OnboardingCompleted));
+            else
+                _store.Set(nameof(OnboardingCompleted), value);
+        }
+    }
 }
 
 public enum HotkeyMode { Toggle, PushToTalk, Hybrid }

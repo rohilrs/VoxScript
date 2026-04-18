@@ -1,7 +1,7 @@
 // VoxScript.Native/Whisper/WhisperModelManager.cs
 namespace VoxScript.Native.Whisper;
 
-public sealed class WhisperModelManager
+public sealed class WhisperModelManager : IWhisperModelManager
 {
     private static readonly Dictionary<string, string> KnownModels = new()
     {
@@ -51,25 +51,35 @@ public sealed class WhisperModelManager
         var dest = GetModelPath(modelName);
         var tmp = dest + ".tmp";
 
-        using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
-        response.EnsureSuccessStatusCode();
-
-        var total = response.Content.Headers.ContentLength ?? -1L;
-        await using (var src = await response.Content.ReadAsStreamAsync(ct))
-        await using (var dst = File.Create(tmp))
+        try
         {
-            var buffer = new byte[81920];
-            long downloaded = 0;
-            int read;
-            while ((read = await src.ReadAsync(buffer, ct)) > 0)
-            {
-                await dst.WriteAsync(buffer.AsMemory(0, read), ct);
-                downloaded += read;
-                if (total > 0) progress?.Report((double)downloaded / total);
-            }
-        } // dst is closed here before the move
+            using var response = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+            response.EnsureSuccessStatusCode();
 
-        File.Move(tmp, dest, overwrite: true);
+            var total = response.Content.Headers.ContentLength ?? -1L;
+            await using (var src = await response.Content.ReadAsStreamAsync(ct))
+            await using (var dst = File.Create(tmp))
+            {
+                var buffer = new byte[81920];
+                long downloaded = 0;
+                int read;
+                while ((read = await src.ReadAsync(buffer, ct)) > 0)
+                {
+                    await dst.WriteAsync(buffer.AsMemory(0, read), ct);
+                    downloaded += read;
+                    if (total > 0) progress?.Report((double)downloaded / total);
+                }
+            } // dst is closed here before the move
+
+            File.Move(tmp, dest, overwrite: true);
+        }
+        catch
+        {
+            // On cancel or any error, clean up the partial .tmp so it doesn't linger
+            // in the models folder forever. Best-effort — swallow IO errors during cleanup.
+            try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+            throw;
+        }
     }
 
     public void DeleteModel(string modelName)

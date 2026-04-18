@@ -25,6 +25,7 @@ public partial class App : Application
     private GlobalHotkeyService? _hotkey;
     private RecordingIndicatorWindow? _indicatorWindow;
     private RecordingIndicatorViewModel? _indicatorViewModel;
+    private bool _onboardingActive; // when true, App's hotkey handlers stand down so the wizard's handlers own the engine
 
     public static Window? MainWindow { get; private set; }
 
@@ -105,6 +106,7 @@ public partial class App : Application
 
         _hotkey.RecordingToggleRequested += (_, _) =>
         {
+            if (_onboardingActive) return; // wizard owns the engine during onboarding
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 var model = ResolveModel();
@@ -115,6 +117,7 @@ public partial class App : Application
         };
         _hotkey.RecordingStartRequested += (_, _) =>
         {
+            if (_onboardingActive) return;
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 if (engine.State == VoxScript.Core.Transcription.Core.RecordingState.Idle)
@@ -141,6 +144,7 @@ public partial class App : Application
         };
         _hotkey.RecordingStopRequested += (_, _) =>
         {
+            if (_onboardingActive) return;
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 // StopAndTranscribeAsync handles its own state guards, including
@@ -150,6 +154,7 @@ public partial class App : Application
         };
         _hotkey.RecordingCancelRequested += (_, _) =>
         {
+            if (_onboardingActive) return;
             _mainWindow.DispatcherQueue.TryEnqueue(async () =>
             {
                 // CancelRecordingAsync handles startup-in-progress internally.
@@ -159,6 +164,7 @@ public partial class App : Application
         var soundService = ServiceLocator.Get<ISoundEffectsService>();
         _hotkey.ToggleLockActivated += () =>
         {
+            if (_onboardingActive) return; // wizard owns the session + sound during onboarding
             soundService.PlayToggle();
         };
 
@@ -198,13 +204,75 @@ public partial class App : Application
 
         _mainWindow.Activate();
 
-        // First-run model download (after window is visible so user sees progress)
-        await EnsureDefaultModelAsync(services);
+        // Resolve onboarding state and either show the wizard or proceed to
+        // normal startup (including model download).
+        var modelManager = ServiceLocator.Get<WhisperModelManager>();
+        bool shouldShowOnboarding = ResolveOnboardingState(settings, modelManager);
 
-        // Warm up the structural formatting LLM (no-op if disabled or cloud).
-        // Fire-and-forget: we don't want to block startup if Ollama is down.
-        if (settings.StructuralFormattingEnabled)
-            _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
+        if (shouldShowOnboarding)
+        {
+            var onboardingVm = new VoxScript.Onboarding.OnboardingViewModel(settings);
+            var micVm = new VoxScript.Onboarding.Steps.MicStepViewModel(
+                ServiceLocator.Get<IAudioCaptureService>(), settings, onboardingVm);
+            var modelVm = new VoxScript.Onboarding.Steps.ModelStepViewModel(
+                ServiceLocator.Get<IWhisperModelManager>(),
+                ServiceLocator.Get<ILocalTranscriptionBackend>(),
+                settings, onboardingVm);
+            var tryItVm = new VoxScript.Onboarding.Steps.TryItStepViewModel(
+                ServiceLocator.Get<IGlobalHotkeyEvents>(),
+                ServiceLocator.Get<IWizardEngine>(),
+                settings, onboardingVm);
+
+            var onboardingView = new VoxScript.Onboarding.OnboardingView(onboardingVm, micVm, modelVm, tryItVm);
+
+            onboardingVm.WizardCompleted += () =>
+            {
+                _mainWindow.DispatcherQueue.TryEnqueue(async () =>
+                {
+                    _onboardingActive = false; // release hotkey handlers back to the main app
+                    tryItVm.Dispose();
+                    await micVm.StopMonitoringAsync(); // in case finish was pressed from MicPick
+                    _mainWindow.ShowShell();
+                    // Ensure VAD is present even if the wizard skipped it
+                    await EnsureVadModelAsync(services, modelManager);
+                    if (settings.StructuralFormattingEnabled)
+                        _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
+                });
+            };
+
+            _onboardingActive = true;
+            _mainWindow.ShowOnboarding(onboardingView);
+        }
+        else
+        {
+            // First-run model download (after window is visible so user sees progress)
+            await EnsureDefaultModelAsync(services);
+
+            if (settings.StructuralFormattingEnabled)
+                _ = ServiceLocator.Get<IStructuralFormattingService>().WarmupAsync();
+        }
+    }
+
+    private static bool ResolveOnboardingState(AppSettings settings, WhisperModelManager modelManager)
+    {
+        var completed = settings.OnboardingCompleted;
+        if (completed.HasValue)
+            return !completed.Value;
+
+        // Key absent — one-time migration
+        var hasModels = modelManager.ListDownloaded().Count > 0;
+        if (hasModels)
+        {
+            settings.OnboardingCompleted = true;
+            Serilog.Log.Information(
+                "Onboarding: existing install detected ({Count} models on disk), skipping wizard",
+                modelManager.ListDownloaded().Count);
+            return false;
+        }
+
+        settings.OnboardingCompleted = false;
+        Serilog.Log.Information("Onboarding: no models found, starting wizard");
+        return true;
     }
 
     private static ITranscriptionModel ResolveModel()

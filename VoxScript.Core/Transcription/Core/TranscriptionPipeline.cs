@@ -60,7 +60,8 @@ public sealed class TranscriptionPipeline
         string audioFilePath,
         double durationSeconds,
         bool aiEnhancementEnabled,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool suppressPersist = false)
     {
         // 1. Transcribe — critical, let exceptions propagate
         var rawText = await session.TranscribeAsync(audioFilePath, ct);
@@ -169,23 +170,27 @@ public sealed class TranscriptionPipeline
 
         var finalText = enhancedText ?? replaced;
 
-        // 6. Persist — failure should not lose the transcript
-        try
+        // 6. Persist — failure should not lose the transcript.
+        // Ephemeral sessions (e.g. onboarding try-it clips) skip the history write.
+        if (!suppressPersist)
         {
-            await _repository.AddAsync(new TranscriptionRecord
+            try
             {
-                Text = replaced,
-                EnhancedText = enhancedText,
-                AudioFilePath = audioFilePath,
-                DurationSeconds = durationSeconds,
-                ModelName = session.Model.Name,
-                WasAiEnhanced = enhancedText is not null,
-                WordCount = TextUtil.CountWords(finalText),
-            }, ct);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Failed to persist transcription record");
+                await _repository.AddAsync(new TranscriptionRecord
+                {
+                    Text = replaced,
+                    EnhancedText = enhancedText,
+                    AudioFilePath = audioFilePath,
+                    DurationSeconds = durationSeconds,
+                    ModelName = session.Model.Name,
+                    WasAiEnhanced = enhancedText is not null,
+                    WordCount = TextUtil.CountWords(finalText),
+                }, ct);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to persist transcription record");
+            }
         }
 
         return finalText;
