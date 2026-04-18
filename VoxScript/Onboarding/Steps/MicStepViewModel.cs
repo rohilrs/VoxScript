@@ -11,7 +11,10 @@ public sealed partial class MicStepViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly OnboardingViewModel _onboarding;
 
-    private const float NoiseFloorThreshold = 0.01f;
+    // Noise floor on the sqrt-scaled RMS (so thresholds line up with what
+    // the user sees on the meter). ~0.08 clears quiet-room rustle but trips
+    // almost immediately on any actual speech.
+    private const float NoiseFloorThreshold = 0.08f;
     private const double SignalRequiredSeconds = 2.0;
     private const double NoSignalTimeoutSeconds = 8.0;
 
@@ -159,8 +162,13 @@ public sealed partial class MicStepViewModel : ObservableObject
             short sample = (short)(data[i] | (data[i + 1] << 8));
             sumSquares += sample * (double)sample;
         }
-        double rms = Math.Sqrt(sumSquares / sampleCount);
-        return (float)Math.Min(rms / short.MaxValue, 1.0);
+        double rmsLinear = Math.Sqrt(sumSquares / sampleCount) / short.MaxValue;
+        // Perceptual (sqrt) curve: linear PCM RMS is compressed at the low end
+        // where voice actually lives. sqrt pushes typical speech into the visible
+        // half of the meter and flattens the loud tail. Matches the curve used by
+        // the recording indicator waveform.
+        double perceptual = Math.Sqrt(Math.Max(rmsLinear, 0.0));
+        return (float)Math.Min(perceptual, 1.0);
     }
 
 
