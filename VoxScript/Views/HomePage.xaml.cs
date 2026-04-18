@@ -149,6 +149,10 @@ public sealed partial class HomePage : Page
         double h = GraphHost.ActualHeight;
         if (w <= 0 || h <= 0) return;
 
+        // Belt-and-suspenders: clip any drawing to the host's bounds so a Bezier
+        // curve that overshoots the top can't paint into the card's header area.
+        GraphHost.Clip = new RectangleGeometry { Rect = new Rect(0, 0, w, h) };
+
         int max = buckets.Max();
         if (max == 0) return;
 
@@ -172,7 +176,7 @@ public sealed partial class HomePage : Page
 
         // Line path
         var lineFigure = new PathFigure { StartPoint = pts[0], IsClosed = false };
-        AppendSmoothSegments(lineFigure, pts, baseline);
+        AppendSmoothSegments(lineFigure, pts, topPad, baseline);
         var line = new Microsoft.UI.Xaml.Shapes.Path
         {
             Data = new PathGeometry { Figures = { lineFigure } },
@@ -186,7 +190,7 @@ public sealed partial class HomePage : Page
         // Fill path: baseline-left → first point → smoothed curve → baseline-right → close
         var fillFigure = new PathFigure { StartPoint = new Point(0, baseline), IsClosed = true };
         fillFigure.Segments.Add(new LineSegment { Point = pts[0] });
-        AppendSmoothSegments(fillFigure, pts, baseline);
+        AppendSmoothSegments(fillFigure, pts, topPad, baseline);
         fillFigure.Segments.Add(new LineSegment { Point = new Point(w, baseline) });
         var fill = new Microsoft.UI.Xaml.Shapes.Path
         {
@@ -200,10 +204,13 @@ public sealed partial class HomePage : Page
 
     /// <summary>
     /// Append Catmull-Rom → cubic Bezier segments to the figure. The curve passes through
-    /// every point in <paramref name="pts"/>. <paramref name="baseline"/> is used to clamp
-    /// control points so the curve can't dip below the x-axis when data spikes.
+    /// every point in <paramref name="pts"/>. Control-point Y is clamped to
+    /// [<paramref name="topPad"/>, <paramref name="baseline"/>] so the curve can't overshoot
+    /// above the top of the chart or dip below the baseline between sharp data spikes —
+    /// a cubic Bezier is contained in the convex hull of its 4 control points, so clamping
+    /// all 4 into the band keeps the whole curve in.
     /// </summary>
-    private static void AppendSmoothSegments(PathFigure figure, Point[] pts, double baseline)
+    private static void AppendSmoothSegments(PathFigure figure, Point[] pts, double topPad, double baseline)
     {
         // Tension 0.5 — softer than standard Catmull-Rom (1.0) to reduce overshoot on sparse data.
         const double tension = 0.5;
@@ -220,9 +227,13 @@ public sealed partial class HomePage : Page
             double c2x = p2.X - (p3.X - p1.X) * tension / 3.0;
             double c2y = p2.Y - (p3.Y - p1.Y) * tension / 3.0;
 
-            // Clamp control points so the curve never dips below the baseline.
+            // Clamp control points into the chart band so the curve can't
+            // overshoot above the top (cuts into the card header) or dip
+            // below the baseline.
             if (c1y > baseline) c1y = baseline;
+            if (c1y < topPad) c1y = topPad;
             if (c2y > baseline) c2y = baseline;
+            if (c2y < topPad) c2y = topPad;
 
             figure.Segments.Add(new BezierSegment
             {

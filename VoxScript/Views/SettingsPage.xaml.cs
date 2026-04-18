@@ -94,27 +94,29 @@ public sealed partial class SettingsPage : Page
 
     private async void EditStructuralPromptButton_Click(object sender, RoutedEventArgs e)
     {
+        // Pattern mirrors ExpansionsPage/PowerModeEditDialog: no fixed Width on the
+        // TextBox, use MinHeight/MaxHeight instead of Height, and let a surrounding
+        // panel dictate horizontal size via MinWidth. TextWrapping.Wrap then wraps
+        // against the StackPanel's stretch width.
         var promptBox = new TextBox
         {
             Text = ViewModel.GetEffectiveStructuralPrompt(),
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            Width = 640,
-            Height = 380,
+            MinHeight = 380,
+            MaxHeight = 520,
             FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas, Cascadia Mono, Courier New"),
             FontSize = 13,
             VerticalContentAlignment = VerticalAlignment.Top,
         };
-        // TextBox has its own internal ScrollViewer — force vertical-only so
-        // TextWrapping.Wrap actually wraps against the fixed Width instead of
-        // letting the box scroll horizontally.
-        ScrollViewer.SetVerticalScrollBarVisibility(promptBox, ScrollBarVisibility.Auto);
-        ScrollViewer.SetHorizontalScrollBarVisibility(promptBox, ScrollBarVisibility.Disabled);
+
+        var panel = new StackPanel { MinWidth = 600 };
+        panel.Children.Add(promptBox);
 
         var dialog = new ContentDialog
         {
             Title = "Edit Structural Formatting Prompt",
-            Content = promptBox,
+            Content = panel,
             PrimaryButtonText = "Save",
             SecondaryButtonText = "Reset to default",
             CloseButtonText = "Cancel",
