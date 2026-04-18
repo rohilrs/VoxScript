@@ -11,6 +11,7 @@ namespace VoxScript.Shell;
 
 public sealed partial class MainWindow : Window
 {
+    // Device-independent pixels (WinUIEx.WindowManager units).
     private const int MinWindowWidth = 950;
     private const int MinWindowHeight = 600;
 
@@ -24,19 +25,14 @@ public sealed partial class MainWindow : Window
         // Set window icon (absolute path so it works regardless of working directory)
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico"));
 
-        // Enforce minimum window size
-        AppWindow.Changed += (s, e) =>
-        {
-            if (e.DidSizeChange)
-            {
-                var size = AppWindow.Size;
-                bool changed = false;
-                int w = size.Width, h = size.Height;
-                if (w < MinWindowWidth) { w = MinWindowWidth; changed = true; }
-                if (h < MinWindowHeight) { h = MinWindowHeight; changed = true; }
-                if (changed) AppWindow.Resize(new Windows.Graphics.SizeInt32(w, h));
-            }
-        };
+        // Enforce minimum window size through WinUIEx's WindowManager, which
+        // hooks WM_GETMINMAXINFO under the hood so the OS itself caps the drag.
+        // The reactive AppWindow.Changed + Resize approach caused visible
+        // flashing because the window was briefly drawn at the under-sized
+        // dimensions before being snapped back.
+        var manager = WindowManager.Get(this);
+        manager.MinWidth = MinWindowWidth;
+        manager.MinHeight = MinWindowHeight;
 
         // Style caption buttons (min/max/close) for light background
         if (AppWindow?.TitleBar is { } titleBar)

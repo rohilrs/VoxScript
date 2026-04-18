@@ -94,10 +94,12 @@ public sealed partial class SettingsPage : Page
 
     private async void EditStructuralPromptButton_Click(object sender, RoutedEventArgs e)
     {
-        // Pattern mirrors ExpansionsPage/PowerModeEditDialog: no fixed Width on the
-        // TextBox, use MinHeight/MaxHeight instead of Height, and let a surrounding
-        // panel dictate horizontal size via MinWidth. TextWrapping.Wrap then wraps
-        // against the StackPanel's stretch width.
+        // TextWrapping.Wrap only wraps when there's a hard upper-bound width.
+        // MinWidth on the panel isn't enough — the TextBox measures its natural
+        // width (widest line) and the panel grows to fit it, so wrap never
+        // triggers. MaxWidth on both the TextBox and the panel gives wrap a
+        // concrete boundary. The ScrollViewer attached properties explicitly
+        // disable horizontal scrolling inside the TextBox's internal template.
         var promptBox = new TextBox
         {
             Text = ViewModel.GetEffectiveStructuralPrompt(),
@@ -105,12 +107,17 @@ public sealed partial class SettingsPage : Page
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 380,
             MaxHeight = 520,
+            MinWidth = 600,
+            MaxWidth = 640,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
             FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas, Cascadia Mono, Courier New"),
             FontSize = 13,
             VerticalContentAlignment = VerticalAlignment.Top,
         };
+        ScrollViewer.SetVerticalScrollBarVisibility(promptBox, ScrollBarVisibility.Auto);
+        ScrollViewer.SetHorizontalScrollBarVisibility(promptBox, ScrollBarVisibility.Disabled);
 
-        var panel = new StackPanel { MinWidth = 600 };
+        var panel = new StackPanel { MinWidth = 600, MaxWidth = 640 };
         panel.Children.Add(promptBox);
 
         var dialog = new ContentDialog
