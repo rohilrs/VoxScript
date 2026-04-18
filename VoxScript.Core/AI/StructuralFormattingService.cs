@@ -9,6 +9,7 @@ public sealed class StructuralFormattingService(
     AppSettings settings) : IStructuralFormattingService
 {
     private static readonly TimeSpan InternalTimeout = TimeSpan.FromSeconds(30);
+    private const int MinContentWords = 10;
 
     public bool IsConfigured => settings.StructuralAiProvider switch
     {
@@ -22,6 +23,11 @@ public sealed class StructuralFormattingService(
     {
         if (!IsConfigured) return null;
         if (string.IsNullOrWhiteSpace(text)) return null;
+
+        // Skip the LLM entirely for short input. Lists need multiple items —
+        // short utterances never benefit from structural reformatting and just
+        // burn API cost / Ollama warmup time.
+        if (CountContentWords(text) < MinContentWords) return null;
 
         using var internalCts = new CancellationTokenSource(InternalTimeout);
         using var linked      = CancellationTokenSource.CreateLinkedTokenSource(ct, internalCts.Token);

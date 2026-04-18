@@ -84,16 +84,36 @@ public class StructuralFormattingServiceTests
             Arg.Any<CancellationToken>());
     }
 
+    // ── FormatAsync: short input is skipped without calling LLM ───────────
+
+    [Theory]
+    [InlineData("hi")]                                      // 1 word
+    [InlineData("turn the lights on")]                      // 4 words
+    [InlineData("send a message to alice about lunch")]     // 7 words — still under 10
+    public async Task FormatAsync_skips_LLM_for_short_input(string input)
+    {
+        var (sut, completer) = BuildSut(AiProvider.Local);
+
+        var result = await sut.FormatAsync(input, CancellationToken.None);
+
+        result.Should().BeNull();
+        await completer.DidNotReceive().CompleteAsync(
+            Arg.Any<AiCompletionConfig>(), Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
     // ── FormatAsync: success path ──────────────────────────────────────────
 
     [Fact]
     public async Task FormatAsync_returns_LLM_output_when_validator_accepts()
     {
         var (sut, completer) = BuildSut(AiProvider.Local);
-        // Input and output have the same content words; the LLM only added "1." "2." "3."
-        // list markers, which the validator excludes from its ratio check.
-        const string input     = "fix auth improve logging deployment script";
-        const string llmOutput = "1. fix auth\n2. improve logging\n3. deployment script";
+        // Input has 14 content words. LLM output preserves all 14 and only adds
+        // "1." "2." "3." list markers (which the validator excludes from its
+        // ratio check). Result: ratio = 1.0, validator accepts.
+        // Input length (14) clears the short-input skip threshold (10).
+        const string input     = "first we fix the bug second we improve logging third we deploy the script";
+        const string llmOutput = "1. first we fix the bug\n2. second we improve logging\n3. third we deploy the script";
         completer.CompleteAsync(Arg.Any<AiCompletionConfig>(), Arg.Any<string>(),
             Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(llmOutput);
 
@@ -108,8 +128,12 @@ public class StructuralFormattingServiceTests
     public async Task FormatAsync_returns_null_when_validator_rejects_output()
     {
         var (sut, completer) = BuildSut(AiProvider.Local);
-        const string input     = "hello world foo bar baz";         // 5 content words
-        const string llmOutput = "completely different hallucinated words added added added added added added added"; // >> 1.15 ratio
+        // 10 content words — clears the short-input skip — so we exercise the validator path.
+        const string input     = "hello world foo bar baz qux quux corge grault garply";
+        // ~30 words — ratio ~3.0, well above the 1.15 upper bound.
+        const string llmOutput = "completely different hallucinated words added added added added added added added "
+                               + "added added added added added added added added added added added added added "
+                               + "added added added added added";
         completer.CompleteAsync(Arg.Any<AiCompletionConfig>(), Arg.Any<string>(),
             Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(llmOutput);
 
@@ -128,7 +152,7 @@ public class StructuralFormattingServiceTests
             Arg.Any<string>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(new HttpRequestException("connection refused"));
 
-        var result = await sut.FormatAsync("some text here", CancellationToken.None);
+        var result = await sut.FormatAsync("this is a long enough piece of text with at least ten content words", CancellationToken.None);
 
         result.Should().BeNull();
     }
@@ -147,7 +171,7 @@ public class StructuralFormattingServiceTests
             Arg.Any<string>(), Arg.Is<CancellationToken>(t => t.IsCancellationRequested))
             .ThrowsAsync(new OperationCanceledException(cts.Token));
 
-        var act = () => sut.FormatAsync("some text here", cts.Token);
+        var act = () => sut.FormatAsync("this is a long enough piece of text with at least ten content words", cts.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
@@ -166,7 +190,7 @@ public class StructuralFormattingServiceTests
             Arg.Any<string>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(new OperationCanceledException(internalCts.Token));
 
-        var result = await sut.FormatAsync("some text here", externalCts.Token);
+        var result = await sut.FormatAsync("this is a long enough piece of text with at least ten content words", externalCts.Token);
 
         result.Should().BeNull();
     }
