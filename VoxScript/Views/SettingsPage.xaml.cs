@@ -94,22 +94,18 @@ public sealed partial class SettingsPage : Page
 
     private async void EditStructuralPromptButton_Click(object sender, RoutedEventArgs e)
     {
-        // ContentDialog's default ContentDialogMaxWidth theme resource is 456 DIPs —
-        // anything wider than that gets clipped on the right, which was what made
-        // text like "The text has" appear cut off mid-word regardless of our
-        // TextBox MaxWidth. We override the resource on this dialog instance below.
-        // MinHeight is kept well below the 600-DIP window minimum so the dialog
-        // always fits with breathing room.
+        // Fixed Width (not MaxWidth) gives the TextBox a definite horizontal
+        // constraint from the first measure pass — TextWrapping.Wrap needs
+        // that to compute correct height. ContentDialogMaxWidth override below
+        // makes the dialog wide enough to contain the 640-DIP TextBox.
         var promptBox = new TextBox
         {
-            Text = ViewModel.GetEffectiveStructuralPrompt(),
+            // Text assigned in dialog.Opened below, NOT here at construction.
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
+            Width = 640,
             MinHeight = 240,
             MaxHeight = 520,
-            MinWidth = 600,
-            MaxWidth = 640,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
             FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas, Cascadia Mono, Courier New"),
             FontSize = 13,
             VerticalContentAlignment = VerticalAlignment.Top,
@@ -117,7 +113,7 @@ public sealed partial class SettingsPage : Page
         ScrollViewer.SetVerticalScrollBarVisibility(promptBox, ScrollBarVisibility.Auto);
         ScrollViewer.SetHorizontalScrollBarVisibility(promptBox, ScrollBarVisibility.Disabled);
 
-        var panel = new StackPanel { MinWidth = 600, MaxWidth = 640 };
+        var panel = new StackPanel { Width = 640 };
         panel.Children.Add(promptBox);
 
         var dialog = new ContentDialog
@@ -130,9 +126,23 @@ public sealed partial class SettingsPage : Page
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = this.XamlRoot,
         };
-        // Widen the dialog beyond the default 456 DIP theme max so the 640 DIP
-        // content area actually fits without horizontal clipping.
+        // Widen the dialog past the default 456-DIP theme max so the 640-DIP
+        // content fits horizontally; cap the height so Reset-expansion can't
+        // push the dialog past the window.
         dialog.Resources["ContentDialogMaxWidth"] = 720.0;
+        dialog.Resources["ContentDialogMaxHeight"] = 540.0;
+
+        // Populate Text AFTER the dialog has been arranged. Assigning multi-line
+        // content at construction (before any parent bounds exist) caused the
+        // initial layout to collapse the TextBox to ~1 line — the wrap measure
+        // needs a definite arranged width to compute height. Clicking Reset
+        // used to "fix" it because it triggered a fresh measure against the
+        // now-arranged dialog. Setting Text here guarantees that first measure
+        // happens with the real bounds.
+        dialog.Opened += (_, _) =>
+        {
+            promptBox.Text = ViewModel.GetEffectiveStructuralPrompt();
+        };
 
         // Secondary button resets the textbox to the built-in default without closing.
         dialog.SecondaryButtonClick += (_, args) =>
