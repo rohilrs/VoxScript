@@ -6,6 +6,7 @@ using VoxScript.Core.Audio;
 using VoxScript.Core.DataPort;
 using VoxScript.Core.Dictionary;
 using VoxScript.Core.History;
+using VoxScript.Core.Home;
 using VoxScript.Core.Persistence;
 using VoxScript.Core.Platform;
 using VoxScript.Core.PowerMode;
@@ -20,12 +21,19 @@ using VoxScript.Native.Platform;
 using VoxScript.Native.Storage;
 using VoxScript.Native.Whisper;
 using VoxScript.Native.Parakeet;
+using VoxScript.ViewModels;
 
 
 namespace VoxScript.Infrastructure;
 
 public static class AppBootstrapper
 {
+    public static async Task InitializeAsync(IServiceProvider sp)
+    {
+        var db = sp.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+    }
+
     public static IServiceProvider Build()
     {
         var services = new ServiceCollection();
@@ -108,6 +116,18 @@ public static class AppBootstrapper
 
         services.AddSingleton<TranscriptionServiceRegistry>();
         services.AddSingleton<VoxScriptEngine>();
+
+        // Home page services
+        services.AddSingleton<IModelManager>(sp =>
+            new ModelManagerAdapter(sp.GetRequiredService<WhisperModelManager>()));
+        services.AddSingleton<IHomeStatusService>(sp =>
+            new HomeStatusService(
+                sp.GetRequiredService<AppSettings>(),
+                sp.GetRequiredService<IModelManager>(),
+                sp.GetRequiredService<HttpClient>()));
+        services.AddSingleton<IHomeStatsService>(sp =>
+            new HomeStatsService(sp.GetRequiredService<ITranscriptionRepository>()));
+        services.AddTransient<HomeViewModel>();
 
         return services.BuildServiceProvider();
     }

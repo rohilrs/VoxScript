@@ -12,4 +12,5 @@ public interface ITranscriptionRepository
     Task DeleteAsync(int id, CancellationToken ct);
     Task DeleteOlderThanAsync(DateTimeOffset cutoff, CancellationToken ct);
     Task<int> CountAsync(CancellationToken ct);
+    Task<(int TotalWords, double TotalSeconds)> GetAggregateStatsAsync(CancellationToken ct);
 }

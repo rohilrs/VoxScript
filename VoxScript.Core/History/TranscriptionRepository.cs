@@ -55,4 +55,18 @@ public sealed class TranscriptionRepository : ITranscriptionRepository
 
     public Task<int> CountAsync(CancellationToken ct) =>
         _db.Transcriptions.CountAsync(ct);
+
+    public async Task<(int TotalWords, double TotalSeconds)> GetAggregateStatsAsync(CancellationToken ct)
+    {
+        var result = await _db.Transcriptions
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalWords   = g.Sum(r => r.WordCount),
+                TotalSeconds = g.Sum(r => r.DurationSeconds),
+            })
+            .FirstOrDefaultAsync(ct);
+
+        return result is null ? (0, 0.0) : (result.TotalWords, result.TotalSeconds);
+    }
 }

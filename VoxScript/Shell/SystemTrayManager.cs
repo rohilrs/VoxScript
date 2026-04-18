@@ -94,7 +94,7 @@ public sealed class SystemTrayManager : IDisposable
             if (_mainWindow is MainWindow mw)
             {
                 mw.BringToFront();
-                mw.NavigateTo(typeof(TranscribePage));
+                mw.NavigateTo(typeof(HomePage));
             }
         };
         menu.Items.Add(homeItem);
