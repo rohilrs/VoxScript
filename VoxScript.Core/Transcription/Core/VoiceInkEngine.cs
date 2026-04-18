@@ -165,6 +165,15 @@ public sealed partial class VoxScriptEngine : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Recordings shorter than this are treated as accidental hotkey taps (e.g.
+    /// a user bumping Ctrl+Win for a fraction of a second). The audio is dropped
+    /// without running through the transcription pipeline, because short captures
+    /// are almost always mechanical keyboard clicks, pops, or ambient thuds that
+    /// Whisper hallucinates into spurious words.
+    /// </summary>
+    private const double MinRecordingSeconds = 0.5;
+
     public async Task StopAndTranscribeAsync()
     {
         // If startup is still in progress, flag the deferred stop so
@@ -180,6 +189,22 @@ public sealed partial class VoxScriptEngine : ObservableObject
         await _audio.StopAsync();
         FinalizeWav();
         var duration = (DateTime.UtcNow - _recordingStartTime).TotalSeconds;
+
+        // Short-noise gate: drop recordings below the threshold without transcribing.
+        if (duration < MinRecordingSeconds)
+        {
+            Log.Debug("Dropping short recording: {Duration:0.00}s < {Threshold:0.00}s threshold",
+                duration, MinRecordingSeconds);
+            _sounds.PlayCancel();
+            if (_settings.PauseMediaWhileDictating)
+                await _media.ResumeMediaAsync();
+            AudioLevel = 0f;
+            State = RecordingState.Idle;
+            _activeSession = null;
+            _cts?.Dispose();
+            _cts = null;
+            return;
+        }
 
         State = RecordingState.Transcribing;
         _sounds.PlayStop();
