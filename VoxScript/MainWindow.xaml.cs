@@ -82,8 +82,10 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            // Actually close — let the app exit
-            Application.Current.Exit();
+            // App.ExitApp guarantees process termination via Environment.Exit;
+            // Application.Current.Exit() can stall when background threads
+            // (keyboard hook, audio capture, native whisper, etc.) are alive.
+            App.ExitApp();
         }
     }
 

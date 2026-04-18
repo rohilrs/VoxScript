@@ -39,6 +39,29 @@ public partial class App : Application
         };
     }
 
+    /// <summary>
+    /// Terminates the process unconditionally. Use this for any user-initiated
+    /// "quit the app" gesture (tray Exit, X-button when MinimizeToTray is off).
+    ///
+    /// Application.Current.Exit() is only a graceful shutdown signal — it can
+    /// stall indefinitely when non-background threads (Win32 keyboard hook,
+    /// WASAPI capture, native whisper.dll, ONNX Runtime) are still alive,
+    /// leaving the process visible as a "Background process" in Task Manager.
+    /// Environment.Exit(0) bypasses that — Windows reclaims all handles and
+    /// threads when the process dies.
+    /// </summary>
+    public static void ExitApp()
+    {
+        try
+        {
+            Serilog.Log.Information("Application exit requested");
+            Serilog.Log.CloseAndFlush();
+        }
+        catch { /* we're exiting; swallow */ }
+
+        Environment.Exit(0);
+    }
+
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         AppLogger.Initialize();

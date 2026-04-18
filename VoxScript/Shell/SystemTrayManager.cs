@@ -178,7 +178,11 @@ public sealed class SystemTrayManager : IDisposable
             _mainWindow.DispatcherQueue.TryEnqueue(() =>
             {
                 Dispose();
-                Application.Current.Exit();
+                // App.ExitApp guarantees process termination via Environment.Exit.
+                // Application.Current.Exit() previously left the process lingering
+                // as a background process because the keyboard hook, WASAPI capture,
+                // and native whisper threads kept the runtime alive.
+                App.ExitApp();
             });
         };
         menu.Items.Add(exitItem);
