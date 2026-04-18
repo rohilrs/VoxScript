@@ -204,9 +204,7 @@ public sealed class AppSettings
     /// </summary>
     public bool? OnboardingCompleted
     {
-        get => _store.Contains(nameof(OnboardingCompleted))
-            ? _store.Get<bool?>(nameof(OnboardingCompleted))
-            : null;
+        get => _store.Get<bool?>(nameof(OnboardingCompleted));
         set
         {
             if (value is null)
