@@ -1,6 +1,6 @@
 # VoxScript — Development Status
 
-Last updated: 2026-04-17
+Last updated: 2026-04-17 (media pause: state-aware via SMTC)
 
 ## Overview
 
@@ -199,9 +199,10 @@ Windows voice-to-text application built in C# / WinUI 3 / .NET 10, ported from V
     - Files: `RecordingIndicatorWindow.xaml/.cs`, `RecordingIndicatorViewModel.cs`, `RecordingIndicatorMode.cs`
 
 17. **Pause media while dictating** — DONE
-    - Sends WM_APPCOMMAND(APPCOMMAND_MEDIA_PLAY_PAUSE) to shell window on recording start/stop
-    - Routes through system media transport pipeline (same as physical media keys); works with Spotify, browser, VLC
-    - `MediaControlService` tracks paused state to avoid double-toggle
+    - Uses `GlobalSystemMediaTransportControlsSessionManager` (WinRT) for state-aware pause/resume
+    - Queries `PlaybackStatus` before pausing — skips no-op if media isn't actively playing
+    - Stores the paused session and calls explicit `TryPlayAsync()` on resume (no toggle semantics, idempotent)
+    - Works with SMTC-aware apps: Spotify, all Chromium/Firefox tabs with MediaSession, VLC, Groove, iTunes, WMP
     - Respects `PauseMediaWhileDictating` setting; toggle enabled in Settings
     - Files: `IMediaControlService.cs`, `MediaControlService.cs`, `VoiceInkEngine.cs`
 

@@ -139,7 +139,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
             State = RecordingState.Recording;
             _sounds.PlayStart();
             if (_settings.PauseMediaWhileDictating)
-                _media.PauseMedia();
+                await _media.PauseMediaAsync();
 
             // If the user released the hotkey during startup, immediately stop.
             if (_stopRequestedDuringStartup)
@@ -184,7 +184,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
         State = RecordingState.Transcribing;
         _sounds.PlayStop();
         if (_settings.PauseMediaWhileDictating)
-            _media.ResumeMedia();
+            await _media.ResumeMediaAsync();
         AudioLevel = 0f;
 
         try
@@ -283,7 +283,7 @@ public sealed partial class VoxScriptEngine : ObservableObject
         State = RecordingState.Idle;
         _sounds.PlayCancel();
         if (_settings.PauseMediaWhileDictating)
-            _media.ResumeMedia();
+            await _media.ResumeMediaAsync();
         AudioLevel = 0f;
     }
 
