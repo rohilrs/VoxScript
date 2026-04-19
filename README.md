@@ -11,6 +11,10 @@
 
 **Status:** Early-adopter release (v0.x). Feature-complete for daily use, but unsigned and not yet battle-tested on every machine. x64 Windows only (ARM64 planned for a later release).
 
+## Background
+
+VoxScript started as a personal project — I wanted good local speech-to-text on Windows and couldn't find one that was polished, private, and hotkey-first the way I liked. It's open-sourced so others with the same itch can skip the ground-up build; expect a focused feature set that reflects one person's workflow rather than a fully general-purpose app.
+
 ## Features
 
 - **Dictate anywhere** — global hotkey (Ctrl+Win) pastes into any app
