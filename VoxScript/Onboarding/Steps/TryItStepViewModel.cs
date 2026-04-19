@@ -41,7 +41,11 @@ public sealed partial class TryItStepViewModel : ObservableObject, IDisposable
         // VoxScriptEngine fires TranscriptionCompleted on whatever thread the pipeline
         // resolved on — setting [ObservableProperty] values from those threads would
         // raise PropertyChanged synchronously and crash when the bound UI tries to update.
-        _dispatcher = DispatcherQueue.GetForCurrentThread();
+        // Under self-contained WinAppSDK (used for CI test runs with `-r win-x64`),
+        // this call throws COMException on threads without a registered dispatcher;
+        // fall through to null and let RunOnUi invoke actions directly.
+        try { _dispatcher = DispatcherQueue.GetForCurrentThread(); }
+        catch (System.Runtime.InteropServices.COMException) { _dispatcher = null; }
         SubState = TryItSubState.Idle;
         TranscriptText = string.Empty;
 

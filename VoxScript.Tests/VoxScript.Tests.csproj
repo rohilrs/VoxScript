@@ -8,6 +8,14 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
+  <!-- When invoked with a RID (e.g. `dotnet test -r win-x64` in CI), bundle the
+       WinApp SDK into the test output so the test host doesn't hang looking
+       for a system-installed WindowsAppSDK runtime that CI runners don't have.
+       Inner-loop `dotnet test` with no RID skips this and stays fast. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="*" />
