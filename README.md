@@ -26,10 +26,7 @@
 Requires Windows 10 20H1+ (build 19041+) or Windows 11.
 
 1. Download `VoxScript-Setup-v{latest}.exe` from the [latest release](https://github.com/rohilrs/VoxScript/releases/latest).
-2. Double-click to install. The installer is currently unsigned — Windows SmartScreen will warn you. Click **More info**, then **Run anyway**.
-
-   ![SmartScreen warning](docs/screenshots/smartscreen.png)
-
+2. Double-click to install. The installer is currently unsigned — Windows SmartScreen will show a **"Windows protected your PC"** warning. Click **More info**, then **Run anyway** to proceed.
 3. VoxScript launches, walks you through a one-time setup (mic check + model download ~140 MB), then lives in your system tray.
 
 **Prefer portable?** Grab `VoxScript-Portable-v{latest}.zip` from the same release, extract anywhere, run `VoxScript.exe`.
