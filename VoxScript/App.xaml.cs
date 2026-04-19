@@ -15,6 +15,8 @@ using VoxScript.Native.Platform;
 using VoxScript.Native.Whisper;
 using VoxScript.Shell;
 using VoxScript.ViewModels;
+using Velopack;
+using Velopack.Sources;
 
 namespace VoxScript;
 
@@ -31,6 +33,13 @@ public partial class App : Application
 
     public App()
     {
+        // MUST be first — Velopack re-invokes this binary with special argv flags
+        // during install/uninstall/update hook runs. Run() inspects argv, executes
+        // any matching hook, and calls Environment.Exit before returning. Placing
+        // this before InitializeComponent() avoids loading XAML resource
+        // dictionaries for hook subprocesses that never show UI.
+        VelopackApp.Build().Run();
+
         this.InitializeComponent();
 
         this.UnhandledException += (_, e) =>
@@ -204,6 +213,29 @@ public partial class App : Application
 
         _mainWindow.Activate();
 
+        // Fire-and-forget auto-update check. Runs after the window is visible so
+        // startup latency is unaffected; Velopack applies any downloaded update
+        // on next app launch (no forced restart mid-session).
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var source = new GithubSource("https://github.com/rohilrs/VoxScript", null, false);
+                var updateMgr = new UpdateManager(source);
+                var info = await updateMgr.CheckForUpdatesAsync();
+                if (info is null) return;
+                var currentVersion = typeof(App).Assembly.GetName().Version?.ToString() ?? "dev";
+                Serilog.Log.Information("Update available: {Current} -> {Target}",
+                    currentVersion, info.TargetFullRelease.Version);
+                await updateMgr.DownloadUpdatesAsync(info);
+                Serilog.Log.Information("Update downloaded; will apply on next app launch");
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Warning(ex, "Update check failed (non-fatal)");
+            }
+        });
+
         // Resolve onboarding state and either show the wizard or proceed to
         // normal startup (including model download).
         var modelManager = ServiceLocator.Get<WhisperModelManager>();
@@ -223,7 +255,7 @@ public partial class App : Application
                 ServiceLocator.Get<IWizardEngine>(),
                 settings, onboardingVm);
 
-            var onboardingView = new VoxScript.Onboarding.OnboardingView(onboardingVm, micVm, modelVm, tryItVm);
+            var onboardingView = new VoxScript.Onboarding.OnboardingView(onboardingVm, micVm, modelVm, tryItVm, settings);
 
             onboardingVm.WizardCompleted += () =>
             {
