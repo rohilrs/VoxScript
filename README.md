@@ -13,7 +13,7 @@
 
 ## Background
 
-VoxScript started as a personal project — I wanted good local speech-to-text on Windows and couldn't find one that was polished, private, and hotkey-first the way I liked. It's open-sourced so others with the same itch can skip the ground-up build; expect a focused feature set that reflects one person's workflow rather than a fully general-purpose app.
+VoxScript started as a personal project — I wanted premium speech-to-text on Windows and couldn't find one that was free to use. Slowly evolved to be more privacy-focused and hotkey-first the way I liked. It's open-sourced so others with the same itch can skip the ground-up build; expect a focused feature set that reflects one person's workflow rather than a fully general-purpose app.
 
 ## Features
 
