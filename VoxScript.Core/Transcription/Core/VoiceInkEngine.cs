@@ -207,6 +207,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         {
             Log.Debug("Dropping short recording: {Duration:0.00}s < {Threshold:0.00}s threshold",
                 duration, MinRecordingSeconds);
+            DeleteWavFile();
             _sounds.PlayCancel();
             if (_settings.PauseMediaWhileDictating)
                 await _media.ResumeMediaAsync();
@@ -304,6 +305,28 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         bw.Flush();
         _wavStream.Dispose();
         _wavStream = null;
+    }
+
+    /// <summary>
+    /// Deletes the WAV file recorded during the last session.
+    /// Safe to call when no file was written (streaming sessions or startup failures
+    /// before the WAV was opened): <see cref="_currentAudioPath"/> will be null.
+    /// </summary>
+    private void DeleteWavFile()
+    {
+        if (_currentAudioPath is null) return;
+        try
+        {
+            File.Delete(_currentAudioPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warning(ex, "Could not delete WAV file {Path}", _currentAudioPath);
+        }
+        finally
+        {
+            _currentAudioPath = null;
+        }
     }
 
     public async Task CancelRecordingAsync()
