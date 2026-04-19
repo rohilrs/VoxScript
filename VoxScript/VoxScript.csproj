@@ -15,6 +15,10 @@
     <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="*" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="*" />
@@ -27,6 +31,7 @@
     <PackageReference Include="H.NotifyIcon.WinUI" Version="*" />
     <PackageReference Include="Serilog.Sinks.File" Version="*" />
     <PackageReference Include="WinUIEx" Version="*" />
+    <PackageReference Include="Velopack" Version="*" />
   </ItemGroup>
 
   <ItemGroup>

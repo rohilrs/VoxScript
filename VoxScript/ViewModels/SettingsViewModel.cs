@@ -331,7 +331,21 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     public partial bool LaunchAtLogin { get; set; }
-    partial void OnLaunchAtLoginChanged(bool value) => _settings.LaunchAtLogin = value;
+    partial void OnLaunchAtLoginChanged(bool value)
+    {
+        _settings.LaunchAtLogin = value;
+        // Keep HKCU\...\Run in sync with the saved flag. Onboarding does the
+        // same thing on Finish; this path handles subsequent changes from Settings.
+        try
+        {
+            if (value) StartupRegistration.Register();
+            else StartupRegistration.Unregister();
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Failed to apply launch-at-login registry change");
+        }
+    }
 
     [ObservableProperty]
     public partial bool MinimizeToTray { get; set; }
