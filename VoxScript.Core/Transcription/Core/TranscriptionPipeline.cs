@@ -180,7 +180,6 @@ public sealed class TranscriptionPipeline
                 {
                     Text = replaced,
                     EnhancedText = enhancedText,
-                    AudioFilePath = audioFilePath,
                     DurationSeconds = durationSeconds,
                     ModelName = session.Model.Name,
                     WasAiEnhanced = enhancedText is not null,

@@ -164,6 +164,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
             await _audio.StopAsync();
             _wavStream?.Dispose();
             _wavStream = null;
+            DeleteWavFile();
             _activeSession = null;
             _cts?.Dispose();
             _cts = null;
@@ -207,6 +208,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         {
             Log.Debug("Dropping short recording: {Duration:0.00}s < {Threshold:0.00}s threshold",
                 duration, MinRecordingSeconds);
+            DeleteWavFile();
             _sounds.PlayCancel();
             if (_settings.PauseMediaWhileDictating)
                 await _media.ResumeMediaAsync();
@@ -264,6 +266,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         }
         finally
         {
+            DeleteWavFile();
             _activeSession = null;
             _cts?.Dispose();
             _cts = null;
@@ -306,6 +309,28 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         _wavStream = null;
     }
 
+    /// <summary>
+    /// Deletes the WAV file recorded during the last session.
+    /// Safe to call when no file was written (streaming sessions or startup failures
+    /// before the WAV was opened): <see cref="_currentAudioPath"/> will be null.
+    /// </summary>
+    private void DeleteWavFile()
+    {
+        if (_currentAudioPath is null) return;
+        try
+        {
+            File.Delete(_currentAudioPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Warning(ex, "Could not delete WAV file {Path}", _currentAudioPath);
+        }
+        finally
+        {
+            _currentAudioPath = null;
+        }
+    }
+
     public async Task CancelRecordingAsync()
     {
         // If startup is in progress, cancel the CTS so the pipeline setup
@@ -320,6 +345,11 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
 
         _cts?.Cancel();
         await _audio.StopAsync();
+        // Audio callbacks are stopped; safe to dispose the stream. We skip
+        // FinalizeWav() because we're deleting the file anyway.
+        _wavStream?.Dispose();
+        _wavStream = null;
+        DeleteWavFile();
         await (_activeSession?.CancelAsync() ?? Task.CompletedTask);
         _activeSession = null;
         State = RecordingState.Idle;
@@ -328,6 +358,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
             await _media.ResumeMediaAsync();
         AudioLevel = 0f;
         _suppressAutoPaste = false;
+        _suppressPersist = false;
     }
 
     /// <summary>

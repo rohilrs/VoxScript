@@ -9,7 +9,6 @@ public sealed class TranscriptionRecord
     public int Id { get; set; }
     [Required] public string Text { get; set; } = string.Empty;
     public string? EnhancedText { get; set; }
-    public string? AudioFilePath { get; set; }
     public double DurationSeconds { get; set; }
     public string? ModelName { get; set; }
     public string? Language { get; set; }
