@@ -65,4 +65,20 @@
     </Content>
   </ItemGroup>
 
+  <!-- WinUI 3 unpackaged apps need $(AssemblyName).pri next to the exe for
+       Application.LoadComponent() to resolve ms-appx:// XAML URIs. The default
+       publish targets copy WinAppSDK's own PRI files (Microsoft.UI.pri, etc.)
+       but not the app's. Without this, MainWindow.InitializeComponent() throws
+       XamlParseException at runtime on the installed binary (but works when
+       run from bin/ because the PRI sits there). -->
+  <Target Name="IncludeAppPriInPublish" BeforeTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(OutputPath)$(AssemblyName).pri"
+                             Condition="Exists('$(OutputPath)$(AssemblyName).pri')">
+        <RelativePath>$(AssemblyName).pri</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
 </Project>
