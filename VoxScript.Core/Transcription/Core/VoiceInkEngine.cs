@@ -345,6 +345,11 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
 
         _cts?.Cancel();
         await _audio.StopAsync();
+        // Audio callbacks are stopped; safe to dispose the stream. We skip
+        // FinalizeWav() because we're deleting the file anyway.
+        _wavStream?.Dispose();
+        _wavStream = null;
+        DeleteWavFile();
         await (_activeSession?.CancelAsync() ?? Task.CompletedTask);
         _activeSession = null;
         State = RecordingState.Idle;
@@ -353,6 +358,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
             await _media.ResumeMediaAsync();
         AudioLevel = 0f;
         _suppressAutoPaste = false;
+        _suppressPersist = false;
     }
 
     /// <summary>
