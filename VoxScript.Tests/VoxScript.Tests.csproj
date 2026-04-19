@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <!-- Declared so `dotnet restore` resolves win-x64 assets for the CI
+         `dotnet test -r win-x64` path; no effect on inner-loop test runs. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
