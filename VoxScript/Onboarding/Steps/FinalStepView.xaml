@@ -17,7 +17,28 @@
                    FontFamily="Georgia" FontSize="24" FontWeight="SemiBold" />
         <TextBlock Text="Try dictating anywhere — transcripts get pasted right where your cursor is. A few things you might want to set up next:"
                    FontSize="12" Foreground="{StaticResource BrandMutedBrush}"
-                   TextWrapping="Wrap" Margin="0,0,0,8" />
+                   TextWrapping="Wrap" Margin="0,0,0,4" />
+
+        <!-- Launch at login toggle — committed to settings on Finish -->
+        <Border Style="{StaticResource TeaserCardStyle}" Margin="0,0,0,4">
+            <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="Start VoxScript when Windows starts" FontWeight="SemiBold" />
+                    <TextBlock Text="VoxScript lives in your system tray, ready whenever you press Ctrl+Win."
+                               FontSize="11" Foreground="{StaticResource BrandMutedBrush}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <ToggleSwitch Grid.Column="1"
+                              x:Name="LaunchAtLoginToggle"
+                              VerticalAlignment="Center"
+                              OnContent="" OffContent=""
+                              MinWidth="0" />
+            </Grid>
+        </Border>
 
         <Border Style="{StaticResource TeaserCardStyle}">
             <StackPanel Orientation="Horizontal" Spacing="10">

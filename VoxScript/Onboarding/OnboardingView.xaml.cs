@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VoxScript.Core.Settings;
 using VoxScript.Onboarding.Steps;
 
 namespace VoxScript.Onboarding;
@@ -11,6 +12,7 @@ public sealed partial class OnboardingView : UserControl
     private readonly MicStepViewModel _micVm;
     private readonly ModelStepViewModel _modelVm;
     private readonly TryItStepViewModel _tryItVm;
+    private readonly AppSettings _settings;
 
     private readonly Dictionary<OnboardingStep, UserControl> _stepViews;
 
@@ -18,13 +20,15 @@ public sealed partial class OnboardingView : UserControl
         OnboardingViewModel vm,
         MicStepViewModel micVm,
         ModelStepViewModel modelVm,
-        TryItStepViewModel tryItVm)
+        TryItStepViewModel tryItVm,
+        AppSettings settings)
     {
         InitializeComponent();
         _vm = vm;
         _micVm = micVm;
         _modelVm = modelVm;
         _tryItVm = tryItVm;
+        _settings = settings;
 
         _stepViews = new Dictionary<OnboardingStep, UserControl>
         {
@@ -33,7 +37,7 @@ public sealed partial class OnboardingView : UserControl
             [OnboardingStep.ModelPick] = new ModelStepView(modelVm),
             [OnboardingStep.Hotkeys]   = new HotkeysStepView(),
             [OnboardingStep.TryIt]     = new TryItStepView(tryItVm),
-            [OnboardingStep.Final]     = new FinalStepView(),
+            [OnboardingStep.Final]     = new FinalStepView(settings),
         };
 
         _vm.PropertyChanged += OnVmChanged;
@@ -160,6 +164,9 @@ public sealed partial class OnboardingView : UserControl
                     _vm.GoNext();
                 break;
             case OnboardingStep.Final:
+                // Commit the launch-at-login toggle state to settings before
+                // Finish() reads it to apply the registry entry.
+                ((FinalStepView)_stepViews[OnboardingStep.Final]).CommitToggle();
                 _vm.Finish();
                 break;
             default:

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using VoxScript.Core.Settings;
+using VoxScript.Infrastructure;
 
 namespace VoxScript.Onboarding;
 
@@ -74,6 +75,22 @@ public sealed partial class OnboardingViewModel : ObservableObject
     public void Finish()
     {
         _settings.OnboardingCompleted = true;
+
+        // Apply the launch-at-login registry entry based on the toggle state
+        // committed by FinalStepView.CommitToggle() before this call.
+        try
+        {
+            if (_settings.LaunchAtLogin)
+                StartupRegistration.Register();
+            else
+                StartupRegistration.Unregister();
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal — user can adjust from Settings if the write fails.
+            Serilog.Log.Warning(ex, "Onboarding: failed to apply launch-at-login registry entry");
+        }
+
         WizardCompleted?.Invoke();
     }
 }
