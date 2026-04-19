@@ -22,10 +22,6 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "VoxScript", "Recordings");
 
-    // Paths the engine used during the test — tracked so Dispose can clean up
-    // leftover files if an assertion fails before the engine deletes them.
-    private readonly List<string> _touchedPaths = new();
-
     // Files that existed in the Recordings directory before the test ran, so
     // the short-recording test can diff before/after to detect leaked WAVs.
     private readonly HashSet<string> _preExistingFiles;
@@ -51,7 +47,6 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
 
         fakeService.CapturedPath.Should().NotBeNull(
             "engine must have reached the pipeline and invoked TranscribeAsync");
-        _touchedPaths.Add(fakeService.CapturedPath!);
 
         File.Exists(fakeService.CapturedPath!).Should().BeFalse(
             "engine must delete the WAV file after the pipeline completes");
@@ -64,7 +59,7 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
     {
         var fakeService = new CapturingTranscriptionService
         {
-            Throw = () => throw new InvalidOperationException("transcription backend down"),
+            ThrowOnCall = new InvalidOperationException("transcription backend unavailable"),
         };
         var engine = CreateEngine(fakeService);
         var model = CreateLocalModel();
@@ -78,7 +73,6 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
 
         fakeService.CapturedPath.Should().NotBeNull(
             "TranscribeAsync must have been invoked and captured the path before throwing");
-        _touchedPaths.Add(fakeService.CapturedPath!);
 
         File.Exists(fakeService.CapturedPath!).Should().BeFalse(
             "engine must delete the WAV even when the pipeline throws");
@@ -94,6 +88,14 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
         var model = CreateLocalModel();
 
         await engine.StartRecordingAsync(model);
+
+        // Snapshot files right after Start so we have tighter evidence that the
+        // engine both created the WAV and deleted it on the short-recording path.
+        var filesDuringRecording = Directory.GetFiles(_recordingsDir, "rec_*.wav");
+        filesDuringRecording.Length.Should().Be(
+            _preExistingFiles.Count + 1,
+            "StartRecordingAsync must open a new rec_*.wav file");
+
         // No Task.Delay — duration is well under MinRecordingSeconds (0.5s),
         // so the short-recording branch fires and TranscribeAsync is never called.
         await engine.StopAndTranscribeAsync();
@@ -105,7 +107,6 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
         // Recordings directory to confirm no rec_*.wav file leaked.
         var filesAfter = Directory.GetFiles(_recordingsDir, "rec_*.wav").ToHashSet();
         var newFiles = filesAfter.Except(_preExistingFiles).ToList();
-        foreach (var p in newFiles) _touchedPaths.Add(p);
 
         newFiles.Should().BeEmpty(
             "engine must delete the WAV immediately on the short-recording path");
@@ -113,15 +114,8 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
 
     // ── Engine construction helper ────────────────────────────────────────
 
-    /// <summary>
-    /// Builds a real <see cref="VoxScriptEngine"/> wired to a real
-    /// <see cref="TranscriptionPipeline"/> and <see cref="TranscriptionServiceRegistry"/>,
-    /// substituting only interfaces. Mirrors the pattern in
-    /// <c>VoxScriptEngineTests.CreateEngine()</c> because
-    /// <see cref="TranscriptionServiceRegistry"/>, <see cref="TranscriptionPipeline"/>,
-    /// <see cref="WordReplacementService"/>, and <see cref="PowerModeSessionManager"/>
-    /// are all sealed and cannot be mocked by NSubstitute.
-    /// </summary>
+    // Builds a real VoxScriptEngine; mirrors VoxScriptEngineTests.CreateEngine() because
+    // the registry/pipeline/word-replacement/power-mode types are sealed.
     private VoxScriptEngine CreateEngine(ITranscriptionService fakeService)
     {
         var audio = Substitute.For<IAudioCaptureService>();
@@ -170,50 +164,33 @@ public class VoxScriptEngineWavCleanupTests : IDisposable
 
     public void Dispose()
     {
-        // Clean up any WAV files the engine may have left behind on test failure.
-        foreach (var p in _touchedPaths)
+        // Sweep the Recordings dir for any rec_*.wav files that appeared
+        // during the test and are not in the pre-existing set.
+        foreach (var p in Directory.GetFiles(_recordingsDir, "rec_*.wav"))
         {
-            try { if (File.Exists(p)) File.Delete(p); } catch { /* best-effort */ }
+            if (_preExistingFiles.Contains(p)) continue;
+            try { File.Delete(p); } catch { /* best-effort */ }
         }
-
-        // Also sweep the Recordings dir for any rec_*.wav files that appeared
-        // during the test and are not in the pre-existing set (defensive — the
-        // short-recording test could fail before we appended to _touchedPaths).
-        try
-        {
-            foreach (var p in Directory.GetFiles(_recordingsDir, "rec_*.wav"))
-            {
-                if (_preExistingFiles.Contains(p)) continue;
-                try { File.Delete(p); } catch { /* best-effort */ }
-            }
-        }
-        catch { /* directory may not exist in degenerate cases */ }
     }
 
     // ── Test doubles ──────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Fake <see cref="ITranscriptionService"/> that captures the audio path
-    /// passed to <see cref="TranscribeAsync"/> and either returns
-    /// <see cref="Result"/> or invokes <see cref="Throw"/> to simulate failure.
-    /// </summary>
     private sealed class CapturingTranscriptionService : ITranscriptionService
     {
         public ModelProvider Provider => ModelProvider.Local;
         public string? CapturedPath { get; private set; }
         public string Result { get; set; } = string.Empty;
-        public Action? Throw { get; set; }
+        public Exception? ThrowOnCall { get; set; }
 
         public Task<string> TranscribeAsync(
             string audioPath, ITranscriptionModel model, string? language, CancellationToken ct)
         {
             CapturedPath = audioPath;
-            Throw?.Invoke();
+            if (ThrowOnCall is not null) throw ThrowOnCall;
             return Task.FromResult(Result);
         }
     }
 
-    /// <summary>Minimal in-memory <see cref="ISettingsStore"/> for tests.</summary>
     private sealed class InMemorySettingsStore : ISettingsStore
     {
         private readonly Dictionary<string, object?> _data = new();
