@@ -73,6 +73,19 @@ jobs:
           -p:Version=${{ steps.version.outputs.VERSION }}
           -o ./publish
 
+      - name: Verify publish output has VoxScript.pri
+        shell: pwsh
+        run: |
+          # Loud failure if the app's PRI is missing. Without it the installed
+          # WinUI 3 app throws XamlParseException at MainWindow construction.
+          $pri = Get-ChildItem ./publish/ -Filter 'VoxScript.pri' -Recurse -ErrorAction SilentlyContinue
+          if (-not $pri) {
+            Write-Error "VoxScript.pri not found in publish output. Listing all .pri files:"
+            Get-ChildItem ./publish/ -Filter '*.pri' -Recurse | Format-Table FullName, Length
+            exit 1
+          }
+          Write-Host "Found: $($pri.FullName) ($($pri.Length) bytes)"
+
       - name: Install vpk CLI
         run: dotnet tool install -g vpk
 
