@@ -265,6 +265,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
         }
         finally
         {
+            DeleteWavFile();
             _activeSession = null;
             _cts?.Dispose();
             _cts = null;
