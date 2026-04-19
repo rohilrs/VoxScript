@@ -65,4 +65,28 @@
     </Content>
   </ItemGroup>
 
+  <!-- WinUI 3 unpackaged apps need $(AssemblyName).pri next to the exe for
+       Application.LoadComponent() to resolve ms-appx:// XAML URIs. The default
+       publish targets copy WinAppSDK's own PRI files (Microsoft.UI.pri, etc.)
+       but not the app's own. Without this, MainWindow.InitializeComponent()
+       throws XamlParseException at runtime on the installed binary.
+       AfterTargets="Publish" runs after everything including XAML compilation
+       so the source file is guaranteed to exist. Error task forces a loud
+       failure if the PRI isn't found rather than silently shipping a broken
+       installer. -->
+  <Target Name="IncludeAppPriInPublish" AfterTargets="Publish">
+    <PropertyGroup>
+      <_AppPriSource>$(OutputPath)$(AssemblyName).pri</_AppPriSource>
+    </PropertyGroup>
+    <Message Importance="high" Text="[IncludeAppPriInPublish] OutputPath=$(OutputPath)" />
+    <Message Importance="high" Text="[IncludeAppPriInPublish] PublishDir=$(PublishDir)" />
+    <Message Importance="high" Text="[IncludeAppPriInPublish] Source=$(_AppPriSource)" />
+    <Error Text="[IncludeAppPriInPublish] $(_AppPriSource) not found. WinUI 3 unpackaged app will crash at MainWindow.InitializeComponent() without this file. Check that the XAML compiler ran before Publish."
+           Condition="!Exists('$(_AppPriSource)')" />
+    <Copy SourceFiles="$(_AppPriSource)"
+          DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="[IncludeAppPriInPublish] Copied $(AssemblyName).pri to $(PublishDir)" />
+  </Target>
+
 </Project>
