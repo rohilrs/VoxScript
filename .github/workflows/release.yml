@@ -51,7 +51,18 @@ jobs:
         run: dotnet restore VoxScript.slnx
 
       - name: Test (release gate)
-        run: dotnet test VoxScript.Tests --configuration Release --no-restore
+        # -r win-x64 triggers the RID-conditional WindowsAppSDKSelfContained
+        # property on VoxScript.Tests.csproj so the test host doesn't hang
+        # looking for a system-installed WinApp SDK runtime on the runner.
+        # --blame-hang-timeout fails the run in 5 min instead of silently
+        # hanging the whole workflow if a test deadlocks.
+        run: >
+          dotnet test VoxScript.Tests
+          --configuration Release
+          --no-restore
+          -r win-x64
+          --blame-hang-timeout 5min
+          --logger "console;verbosity=normal"
 
       - name: Publish
         run: >
