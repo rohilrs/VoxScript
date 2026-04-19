@@ -164,6 +164,7 @@ public sealed partial class VoxScriptEngine : ObservableObject, IWizardEngine
             await _audio.StopAsync();
             _wavStream?.Dispose();
             _wavStream = null;
+            DeleteWavFile();
             _activeSession = null;
             _cts?.Dispose();
             _cts = null;
