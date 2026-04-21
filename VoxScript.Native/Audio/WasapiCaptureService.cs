@@ -1,5 +1,6 @@
 // VoxScript.Native/Audio/WasapiCaptureService.cs
 using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
 using NAudio.Wave;
 using VoxScript.Core.Audio;
 
@@ -7,19 +8,26 @@ namespace VoxScript.Native.Audio;
 
 public sealed class WasapiCaptureService : IAudioCaptureService, IDisposable
 {
+    private readonly MMDeviceEnumerator _enumerator = new();
+    private readonly DeviceChangeNotificationClient _notificationClient;
     private WasapiCapture? _capture;
     private Action<byte[], int>? _onChunk;
     private CancellationToken _ct;
     private bool _disposed;
+
+    public WasapiCaptureService()
+    {
+        _notificationClient = new DeviceChangeNotificationClient(
+            () => DevicesChanged?.Invoke(this, EventArgs.Empty));
+        _enumerator.RegisterEndpointNotificationCallback(_notificationClient);
+    }
 
     public IReadOnlyList<AudioDeviceInfo> EnumerateDevices() =>
         AudioDeviceEnumerator.EnumerateCapture();
 
     public AudioDeviceInfo? DefaultDevice => AudioDeviceEnumerator.GetDefault();
 
-#pragma warning disable CS0067 // Required by IAudioCaptureService, raised when device detection is implemented
-    public event EventHandler<AudioDeviceInfo>? DeviceChanged;
-#pragma warning restore CS0067
+    public event EventHandler? DevicesChanged;
 
     public Task StartAsync(string? deviceId, Action<byte[], int> onChunk, CancellationToken ct)
     {
@@ -69,10 +77,42 @@ public sealed class WasapiCaptureService : IAudioCaptureService, IDisposable
 
     public void Dispose()
     {
-        if (!_disposed)
+        if (_disposed) return;
+        try
         {
-            _capture?.Dispose();
-            _disposed = true;
+            _enumerator.UnregisterEndpointNotificationCallback(_notificationClient);
         }
+        catch
+        {
+            // Swallow: registration/unregistration can throw during shutdown
+            // if the COM apartment is already torn down, and leaking the
+            // registration briefly is benign compared to crashing exit.
+        }
+        _capture?.Dispose();
+        _enumerator.Dispose();
+        _disposed = true;
+    }
+
+    /// <summary>
+    /// IMMNotificationClient that forwards every WASAPI endpoint event to a
+    /// single "something changed" callback. We don't distinguish between
+    /// add/remove/default-change because every consumer today just wants to
+    /// re-enumerate. Callbacks fire on a WASAPI MTA thread.
+    /// </summary>
+    private sealed class DeviceChangeNotificationClient : IMMNotificationClient
+    {
+        private readonly Action _onChange;
+
+        public DeviceChangeNotificationClient(Action onChange) => _onChange = onChange;
+
+        public void OnDeviceStateChanged(string deviceId, DeviceState newState) => _onChange();
+        public void OnDeviceAdded(string pwstrDeviceId) => _onChange();
+        public void OnDeviceRemoved(string deviceId) => _onChange();
+        public void OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId) => _onChange();
+
+        // Property changes fire rapidly (volume, format, etc.) and never
+        // affect the device list we care about, so we deliberately ignore
+        // them to avoid rebuilding the tray menu dozens of times per second.
+        public void OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
     }
 }
