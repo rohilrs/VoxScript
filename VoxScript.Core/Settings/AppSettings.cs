@@ -16,8 +16,20 @@ public sealed class AppSettings
     public string? AudioDeviceId
     {
         get => _store.Get<string>(nameof(AudioDeviceId));
-        set => _store.Set(nameof(AudioDeviceId), value);
+        set
+        {
+            _store.Set(nameof(AudioDeviceId), value);
+            AudioDeviceIdChanged?.Invoke(this, value);
+        }
     }
+
+    /// <summary>
+    /// Raised whenever <see cref="AudioDeviceId"/> is written, so every
+    /// surface that shows the current mic (settings page, tray menu, etc.)
+    /// can stay in sync regardless of which one initiated the change.
+    /// Invoked on the same thread that performed the write.
+    /// </summary>
+    public event EventHandler<string?>? AudioDeviceIdChanged;
 
     public string? TranscriptionLanguage
     {

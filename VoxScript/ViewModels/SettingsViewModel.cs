@@ -18,6 +18,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IAudioCaptureService _audioService;
     private readonly GlobalHotkeyService _hotkeyService;
     private readonly ApiKeyManager _keyManager;
+    private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcher;
+
+    // Prevents the write-back loop when an external AudioDeviceId change
+    // pushes a new SelectedAudioDevice into the combobox: without this, the
+    // partial OnSelectedAudioDeviceChanged would write the same id back to
+    // AppSettings, re-fire AudioDeviceIdChanged, and bounce once before
+    // settling.
+    private bool _syncingAudioDeviceFromExternal;
 
     public SettingsViewModel()
     {
@@ -26,8 +34,70 @@ public sealed partial class SettingsViewModel : ObservableObject
         _hotkeyService = ServiceLocator.Get<GlobalHotkeyService>();
         _keyManager = ServiceLocator.Get<ApiKeyManager>();
 
+        // Captured now so the WASAPI notification thread (which raises
+        // DevicesChanged) can marshal back to the UI thread — the VM is
+        // always constructed on the UI thread during page navigation.
+        _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+
         LoadAudioDevices();
         LoadSettings();
+
+        // Subscribe AFTER initial load so the direct assignments in
+        // LoadSettings don't double through the handlers.
+        _settings.AudioDeviceIdChanged += OnExternalAudioDeviceIdChanged;
+        _audioService.DevicesChanged += OnExternalDevicesChanged;
+    }
+
+    /// <summary>
+    /// Unsubscribes from external change events. Must be called when the
+    /// page is being torn down, otherwise the singleton AppSettings /
+    /// IAudioCaptureService instances keep every orphaned VM alive.
+    /// SettingsPage wires this to Page.Unloaded.
+    /// </summary>
+    public void Cleanup()
+    {
+        _settings.AudioDeviceIdChanged -= OnExternalAudioDeviceIdChanged;
+        _audioService.DevicesChanged -= OnExternalDevicesChanged;
+    }
+
+    private void OnExternalAudioDeviceIdChanged(object? sender, string? newId)
+    {
+        // Marshal defensively: every writer today is UI-thread, but this
+        // event only guarantees "whatever thread wrote AudioDeviceId".
+        _dispatcher?.TryEnqueue(() => SyncSelectedAudioDevice(newId));
+    }
+
+    private void OnExternalDevicesChanged(object? sender, EventArgs e)
+    {
+        // WASAPI fires this on an MTA notification thread — ObservableCollection
+        // mutations and ObservableProperty writes must happen on the UI thread.
+        _dispatcher?.TryEnqueue(() =>
+        {
+            LoadAudioDevices();
+            // Preserve the persisted selection, re-resolved against the new
+            // device list (in case the selected device was just removed).
+            SyncSelectedAudioDevice(_settings.AudioDeviceId);
+        });
+    }
+
+    private void SyncSelectedAudioDevice(string? deviceId)
+    {
+        var match = deviceId is null
+            ? AudioDevices.FirstOrDefault(d => d.IsDefault)
+            : AudioDevices.FirstOrDefault(d => d.Id == deviceId)
+              ?? AudioDevices.FirstOrDefault(d => d.IsDefault);
+
+        if (ReferenceEquals(match, SelectedAudioDevice)) return;
+
+        _syncingAudioDeviceFromExternal = true;
+        try
+        {
+            SelectedAudioDevice = match;
+        }
+        finally
+        {
+            _syncingAudioDeviceFromExternal = false;
+        }
     }
 
     // ── Current Model ─────────────────────────────────────────
@@ -293,6 +363,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnSelectedAudioDeviceChanged(AudioDeviceDisplay? value)
     {
+        if (_syncingAudioDeviceFromExternal) return;
         if (value is null) return;
         _settings.AudioDeviceId = value.IsDefault ? null : value.Id;
     }

@@ -17,6 +17,12 @@ public sealed partial class SettingsPage : Page
     {
         ViewModel = new SettingsViewModel();
         this.InitializeComponent();
+
+        // Unsubscribe the VM from AppSettings / IAudioCaptureService when the
+        // page leaves the visual tree. Those are singletons, so a missed
+        // unsubscribe would keep every navigated-away VM rooted in memory
+        // for the life of the process.
+        this.Unloaded += (_, _) => ViewModel.Cleanup();
     }
 
     // ── Keybind button click handlers ──────────────────────────

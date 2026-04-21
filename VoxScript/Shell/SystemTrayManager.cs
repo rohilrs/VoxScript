@@ -15,6 +15,9 @@ namespace VoxScript.Shell;
 public sealed class SystemTrayManager : IDisposable
 {
     private TaskbarIcon? _trayIcon;
+    private MenuFlyoutSubItem? _micSub;
+    private IAudioCaptureService? _audioService;
+    private AppSettings? _settings;
     private readonly VoxScriptEngine _engine;
     private readonly Window _mainWindow;
 
@@ -69,6 +72,25 @@ public sealed class SystemTrayManager : IDisposable
 
         // Right-click context menu
         _trayIcon.ContextFlyout = BuildContextMenu();
+
+        // H.NotifyIcon SecondWindow mode reparents our items into a separately
+        // constructed MenuFlyout ONCE (in PrepareContextMenuWindow), so the
+        // source MenuFlyout.Opening event we'd normally hook never fires and
+        // the version of H.NotifyIcon we ship with (2.4.1) doesn't expose an
+        // equivalent "about to show" event. Instead of waiting for a menu-open
+        // signal, we push-update the mic list whenever WASAPI reports a device
+        // change. The MenuFlyoutSubItem reference survives reparenting, so
+        // mutating `_micSub.Items` still updates what the user sees next time
+        // they open the tray menu.
+        _audioService = ServiceLocator.Get<IAudioCaptureService>();
+        _audioService.DevicesChanged += OnAudioDevicesChanged;
+
+        // Keep the tray's radio selection in sync with whoever else writes to
+        // AudioDeviceId (settings page, onboarding, future surfaces). The
+        // setter raises this on the writer's thread; rebuild is queued to the
+        // UI thread either way.
+        _settings = ServiceLocator.Get<AppSettings>();
+        _settings.AudioDeviceIdChanged += OnAudioDeviceIdChanged;
 
         // Left-click opens the window
         _trayIcon.LeftClickCommand = new RelayCommand(() =>
@@ -138,43 +160,13 @@ public sealed class SystemTrayManager : IDisposable
 
         menu.Items.Add(new MenuFlyoutSeparator());
 
-        // Microphone submenu
-        var micSub = new MenuFlyoutSubItem { Text = "Microphone", MinWidth = MenuItemMinWidth };
-        try
-        {
-            var audio = ServiceLocator.Get<IAudioCaptureService>();
-            var settings = ServiceLocator.Get<AppSettings>();
-            var devices = audio.EnumerateDevices();
-            var selectedId = settings.AudioDeviceId;
-
-            foreach (var device in devices)
-            {
-                var item = new ToggleMenuFlyoutItem { Text = device.DisplayName };
-
-                // Check the currently selected device (null = system default)
-                var isSelected = selectedId is null
-                    ? device.IsDefault
-                    : device.Id == selectedId;
-                item.IsChecked = isSelected;
-
-                var capturedDevice = device;
-                item.Click += (_, _) =>
-                {
-                    // null means "use system default"
-                    settings.AudioDeviceId = capturedDevice.IsDefault ? null : capturedDevice.Id;
-                    Serilog.Log.Information("Microphone changed via tray: {Device}", capturedDevice.DisplayName);
-                };
-
-                micSub.Items.Add(item);
-            }
-        }
-        catch (Exception ex)
-        {
-            Serilog.Log.Warning(ex, "Failed to enumerate microphones for tray menu");
-            var errorItem = new MenuFlyoutItem { Text = "No devices found", IsEnabled = false };
-            micSub.Items.Add(errorItem);
-        }
-        menu.Items.Add(micSub);
+        // Microphone submenu. Populated once here so items exist when
+        // H.NotifyIcon reparents them into its SecondWindow flyout at init
+        // time; refreshed on every right-click via SecondWindowContextMenuOpened
+        // so mics plugged in after launch show up without restarting the app.
+        _micSub = new MenuFlyoutSubItem { Text = "Microphone", MinWidth = MenuItemMinWidth };
+        PopulateMicrophoneSubMenu(_micSub);
+        menu.Items.Add(_micSub);
 
         // Settings
         var settingsItem = new MenuFlyoutItem { Text = "Settings", MinWidth = MenuItemMinWidth };
@@ -209,6 +201,114 @@ public sealed class SystemTrayManager : IDisposable
         return menu;
     }
 
+    // Shared GroupName so WinUI's RadioMenuFlyoutItem coordination auto-
+    // unchecks the previously-selected mic when the user picks a new one
+    // (ToggleMenuFlyoutItem gave checkbox semantics, letting several stay
+    // checked at once).
+    private const string MicRadioGroupName = "TrayMicrophone";
+
+    private static void PopulateMicrophoneSubMenu(MenuFlyoutSubItem micSub)
+    {
+        micSub.Items.Clear();
+        try
+        {
+            var audio = ServiceLocator.Get<IAudioCaptureService>();
+            var settings = ServiceLocator.Get<AppSettings>();
+            var devices = audio.EnumerateDevices();
+            var selectedId = settings.AudioDeviceId;
+
+            // "System default" entry mirrors the Settings page so auto-detect
+            // is always representable, even when the current default device
+            // is unplugged.
+            AddMicRadioItem(
+                micSub,
+                text: "System default (auto-detect)",
+                isChecked: selectedId is null,
+                onPicked: () =>
+                {
+                    settings.AudioDeviceId = null;
+                    Serilog.Log.Information("Microphone changed via tray: System default");
+                });
+
+            foreach (var device in devices)
+            {
+                var capturedDevice = device;
+                AddMicRadioItem(
+                    micSub,
+                    text: device.DisplayName,
+                    isChecked: selectedId is not null && device.Id == selectedId,
+                    onPicked: () =>
+                    {
+                        settings.AudioDeviceId = capturedDevice.Id;
+                        Serilog.Log.Information("Microphone changed via tray: {Device}", capturedDevice.DisplayName);
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Failed to enumerate microphones for tray menu");
+            var errorItem = new MenuFlyoutItem { Text = "No devices found", IsEnabled = false };
+            micSub.Items.Add(errorItem);
+        }
+    }
+
+    private static void AddMicRadioItem(
+        MenuFlyoutSubItem micSub,
+        string text,
+        bool isChecked,
+        Action onPicked)
+    {
+        var item = new RadioMenuFlyoutItem
+        {
+            Text = text,
+            GroupName = MicRadioGroupName,
+            IsChecked = isChecked,
+        };
+        micSub.Items.Add(item);
+
+        // Click is the primary signal, but MenuFlyoutSubItem children under
+        // H.NotifyIcon's SecondWindow host have been observed to swallow Click
+        // in some configurations while still toggling IsChecked. Listening to
+        // IsChecked directly is a resilient fallback that also picks up
+        // selections driven by the group-name coordination itself.
+        // Registered after setting IsChecked above so the initial state
+        // assignment doesn't re-fire onPicked.
+        item.Click += (_, _) =>
+        {
+            if (item.IsChecked) onPicked();
+        };
+        item.RegisterPropertyChangedCallback(
+            RadioMenuFlyoutItem.IsCheckedProperty,
+            (_, _) =>
+            {
+                if (item.IsChecked) onPicked();
+            });
+    }
+
+    private void OnAudioDevicesChanged(object? sender, EventArgs e)
+    {
+        // Fires on a WASAPI notification thread — marshal to the UI thread
+        // before touching MenuFlyoutSubItem.Items (XAML requires UI-thread
+        // affinity for dependency-object mutations).
+        RefreshMicrophoneSubMenuOnUiThread();
+    }
+
+    private void OnAudioDeviceIdChanged(object? sender, string? newValue)
+    {
+        RefreshMicrophoneSubMenuOnUiThread();
+    }
+
+    private void RefreshMicrophoneSubMenuOnUiThread()
+    {
+        _mainWindow.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (_micSub is not null)
+            {
+                PopulateMicrophoneSubMenu(_micSub);
+            }
+        });
+    }
+
     private void OnEngineStateChanged(object? sender,
         System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -231,6 +331,16 @@ public sealed class SystemTrayManager : IDisposable
 
     public void Dispose()
     {
+        if (_audioService is not null)
+        {
+            _audioService.DevicesChanged -= OnAudioDevicesChanged;
+            _audioService = null;
+        }
+        if (_settings is not null)
+        {
+            _settings.AudioDeviceIdChanged -= OnAudioDeviceIdChanged;
+            _settings = null;
+        }
         _trayIcon?.Dispose();
         _engine.PropertyChanged -= OnEngineStateChanged;
     }
